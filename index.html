@@ -346,11 +346,8 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   #pSpec .bar { height: 8px; }
 
   /* 手機版排列順序：規格 → 滑桿 → 電路圖 → Bode */
-/* ===== 手機版修正：保留原順序，但 Spec Card 黏頂 ===== */
-/* ===== 手機版終極版：精簡 Spec Card + 時間整合 ===== */
 /* ===== 手機版最終版：HUD 與 Spec Card 雙黏頂 ===== */
 @media (max-width: 899px) {
-  
   /* 1. 讓原本的 HUD (時間/生命/分數) 黏在最頂部 */
   .hud {
     position: sticky;
@@ -366,7 +363,7 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   /* 2. 讓 Spec Card 黏在 HUD 下方 */
   #pSpec {
     position: sticky;
-    top: 90px; /* 如果發現跟 HUD 重疊，把這個數字改大 (例如 95px)；如果有縫隙，改小 (例如 85px) */
+    top: 92px; /* 對準 HUD 底部，若重疊調大、有縫調小 */
     z-index: 6;
     background: var(--paper-2);
     padding: 8px 12px 10px;
@@ -419,17 +416,6 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   #pSpec .specs { display: flex; }
   #pSpec .bar { display: block; }
 }
-
-/* 電腦版不顯示手機版專用的標頭 */
-@media (min-width: 900px) {
-  .spec-head-mobile { display: none; }
-}
-
-  #pCtl { margin-top: 4px; }
-  .main { gap: 8px; }
-  .wrap { padding-block: 8px 0; }
-  .actionbar { z-index: 8; }
-}
 </style>
 <div class="wrap">
   <header class="hud" id="hud" hidden>
@@ -463,11 +449,14 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
         <div class="readout num" id="bodeRead"></div>
       </section>
     </div>
-    <div class="colR">
-      <section class="plate" id="pSpec" aria-label="Spec card">
-        <div class="plate-head"><span class="plate-title">Spec Card</span><span class="plate-note num" id="specNote"></span></div>
-        <div class="specs" id="specs"></div>
-      </section>
+       <div class="colR">
+      <!-- 新增這個 wrapper 讓手機版可以完美黏頂 -->
+      <div id="mobileStickyWrapper">
+        <section class="plate" id="pSpec" aria-label="Spec card">
+          <div class="plate-head"><span class="plate-title">Spec Card</span><span class="plate-note num" id="specNote"></span></div>
+          <div class="specs" id="specs"></div>
+        </section>
+      </div>
       <section class="plate" id="pCtl" aria-label="Bench">
         <div class="plate-head"><span class="plate-title">Bench</span><span class="plate-note">拖曳或點 − / +</span></div>
         <div class="ctls" id="ctls"></div>
