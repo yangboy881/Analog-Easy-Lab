@@ -449,6 +449,17 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   #pSpec .specs { display: flex; }
   #pSpec .bar { display: block; }
 }
+/* ===== 新增：成就與排行榜樣式 ===== */
+.ach-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.ach-item { padding: 10px; border: 1px solid var(--edge); background: rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 4px; }
+.ach-item.done { border-color: var(--amber); background: rgba(255, 200, 87, 0.1); }
+.ach-item .a-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.ach-item.done .a-name { color: var(--amber); }
+.ach-item .a-desc { font-size: 11px; color: var(--ink-dim); }
+.lb-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+.lb-table th, .lb-table td { padding: 6px 4px; border-bottom: 1px solid var(--rule); text-align: left; }
+.lb-table th { color: var(--ink-dim); font-weight: normal; font-size: 11px; }
+.lb-table td:last-child { text-align: right; color: var(--amber); font-weight: 600; }
 </style>
 <div class="wrap">
   <header class="hud" id="hud" hidden>
@@ -464,8 +475,23 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 
   <section id="home">
     <div class="home-title"><span class="brand-name">OTA Tuner</span><span class="brand-sub">類比 IC 設計謎題 · 調整電晶體尺寸與偏壓，湊齊五項規格</span></div>
-    <div class="plate"><div class="plate-head"><span class="plate-title">血量選擇</span><span class="plate-note">預設 3 點</span></div>
-      <div class="seg" id="livesSeg"></div><div class="notice" id="notice"></div></div>
+    
+    <!-- 新增：功能按鈕區 -->
+     <div style="display:flex; gap:10px; margin-bottom:12px;">
+      <button class="cta alt" style="flex:1; font-size:14px; min-height:44px; padding:0 4px;" onclick="showStats()">📊 總成績</button>
+      <button class="cta alt" style="flex:1; font-size:16px; min-height:44px; padding:0 10px;" onclick="showAchievements()">🏅 成就</button>
+      <button class="cta alt" style="flex:1; font-size:16px; min-height:44px; padding:0 10px;" onclick="showLeaderboard()">📜 排行榜</button>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head">
+        <span class="plate-title">血量選擇</span>
+        <span class="plate-note">預設 3 點</span>
+      </div>
+      <div class="seg" id="livesSeg"></div>
+      <div class="notice" id="notice"></div>
+    </div>
+
     <div class="cats" id="cats"></div>
   </section>
 
@@ -892,7 +918,7 @@ if (false) module.exports = { MODS, MOD_ORDER, genLevel, decode, attemptScore, e
 const $ = id => document.getElementById(id);
 const RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 const STORE = 'ota-tuner:v2';
-const LEVEL_TIME = 30, SPRINT_TIME = 60, SPRINT_BONUS = 5, SPRINT_REF = 20, PENALTY = 300, NLEV = 8, STEP = 6;
+const LEVEL_TIME = 30, SPRINT_TIME = 60, SPRINT_BONUS = 5, SPRINT_REF = 20, PENALTY = 200, NLEV = 8, STEP = 6;
 const CATS = [
   { id: 'opa', name: 'OPA', sub: '5T OTA', desc: MODS.opa.blurb },
   { id: 'two', name: 'Two-stage', sub: 'Miller 兩級', desc: MODS.two.blurb },
@@ -910,7 +936,8 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(prog)); } cat
 const S = {
   view: 'home', cat: null, sprint: false, lives0: prog.lives || 3, livesLeft: 3, fails: 0,
   idx: 0, levels: [], lv: null, mod: null, pos: {}, tog: {}, res: null,
-  time: LEVEL_TIME, running: false, levelStart: 0, bests: [], weights: [], curBest: 0, sprintN: 0, ended: false
+  time: LEVEL_TIME, running: false, levelStart: 0, bests: [], weights: [], curBest: 0, sprintN: 0, ended: false,
+  skipCount: 0 // <-- 新增這個
 };
 
 /* ---------- small helpers ---------- */
@@ -1238,21 +1265,122 @@ function specList(lv) {
   rows.push(`<li><span>條件</span><span class="num">${MODS[lv.modId].ctxLabel(lv.ctx)}</span></li>`);
   return '<ul class="spec-list">' + rows.join('') + '</ul>';
 }
+/* ========== 新增：成就與排行榜邏輯 ========== */
 
+// 成就定義
+const ACHIEVEMENTS = [
+  { id: 'first_win', name: '初出茅廬', desc: '完成第一關' },
+  { id: 'no_fail', name: '完美主義', desc: '在 8 關中，沒有任何失敗次數' },
+  { id: 'sprint_10', name: '電路狂人', desc: '競速模式闖過第 10 關' },
+  { id: 'sprint_15', name: '超頻大師', desc: '競速模式闖過第 15 關' },
+  { id: 'high_score', name: '神乎其技', desc: '一般模式總分超過 5000 分' },
+  { id: 'low_power', name: '節能減碳', desc: '單關 Power 低於 15 µW 且過關' },
+  { id: 'fast_finish', name: '一氣呵成', desc: '一般模式單關剩餘時間 > 20 秒過關' }
+];
+
+// 檢查並解鎖成就
+function checkAchievements() {
+  if (!prog.achievements) prog.achievements = [];
+  const unlock = (id) => {
+    if (!prog.achievements.includes(id)) {
+      prog.achievements.push(id);
+      toast(`🏅 解鎖成就：${ACHIEVEMENTS.find(a => a.id === id).name}`, 'ok');
+      save();
+    }
+  };
+
+  // 條件判斷
+  const totalCleared = Object.values(prog.cleared).reduce((a, b) => a + b, 0);
+  if (totalCleared >= 1) unlock('first_win');
+  
+  const totalScore = Object.values(prog.best).reduce((a, b) => a + b, 0);
+  if (totalScore >= 5000) unlock('high_score');
+  
+  if (prog.cleared.sprint >= 10) unlock('sprint_10');
+  if (prog.cleared.sprint >= 15) unlock('sprint_15');
+  
+  // 特殊條件 (會在特定事件觸發)
+  if (S.fails === 0 && !S.sprint && S.idx === NLEV - 1 && S.running === false) unlock('no_fail');
+}
+
+// 顯示成就介面
+window.showAchievements = function() {
+  if (!prog.achievements) prog.achievements = [];
+  const list = ACHIEVEMENTS.map(a => {
+    const done = prog.achievements.includes(a.id);
+    return `<div class="ach-item ${done ? 'done' : ''}">
+      <div class="a-name">${done ? '🏅 ' : '🔒 '}${a.name}</div>
+      <div class="a-desc">${a.desc}</div>
+    </div>`;
+  }).join('');
+  
+  show(`<div class="eyebrow">成就系統</div><h2>工程師檔案</h2>
+    <div class="ach-list">${list}</div>
+    <div class="btns"><button class="cta" id="btnCloseModal" type="button">關閉</button></div>`);
+  
+  // 綁定關閉事件
+  setTimeout(() => { const b = document.getElementById('btnCloseModal'); if (b) b.onclick = hide; }, 10);
+};
+
+// 顯示排行榜
+window.showLeaderboard = function() {
+  let records = [];
+  try { records = JSON.parse(localStorage.getItem('ota-tuner:leaderboard') || '[]'); } catch (e) {}
+  
+  let content = '';
+  if (records.length === 0) {
+    content = `<p>目前還沒有任何通關紀錄，趕快去挑戰吧！</p>`;
+  } else {
+    // 依分數排序
+    records.sort((a, b) => b.score - a.score);
+    
+    // [修改這裡] 增加 name 欄位
+    const rows = records.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td>${r.name || '無名工程師'}</td>
+      <td>${r.mode}</td>
+      <td>${r.score}</td>
+      <td>${r.date}</td>
+    </tr>`).join('');
+    
+    // [修改這裡] 表頭加上「名字」
+    content = `<table class="lb-table">
+        <thead><tr><th>#</th><th>名字</th><th>模式</th><th>分數</th><th>日期</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+  
+  show(`<div class="eyebrow">排行榜</div><h2>本機紀錄</h2>
+    ${content}
+    <div class="btns"><button class="cta" id="btnCloseModal" type="button">關閉</button></div>`);
+
+  // 綁定關閉事件
+  setTimeout(() => { const b = document.getElementById('btnCloseModal'); if (b) b.onclick = hide; }, 10);
+};
 /* ---------- home ---------- */
 function showHome() {
   S.view = 'home'; S.running = false; hide();
   $('game').hidden = true; $('actionbar').hidden = true; $('home').hidden = false; $('hud').hidden = true;
   const L = prog.lives || 3; S.lives0 = L;
+  
   $('livesSeg').innerHTML = [3, 5, 7].map(n => `<button type="button" class="seg-b ${n === L ? 'on' : ''}" data-n="${n}" aria-pressed="${n === L}"><b>${n} 點血</b><span>總分 ×${Math.round(LIFE_MULT[n] * 100)}%</span></button>`).join('');
   document.querySelectorAll('.seg-b').forEach(b => b.addEventListener('click', () => { prog.lives = +b.dataset.n; save(); showHome(); }));
+  
   $('notice').innerHTML = `<b>公告</b>　選 3 點血：總分 ×100%；5 點血：×90%；7 點血：×80%。每次按 Check 若 5 項沒有全過，就扣 1 點血，結算時每用掉 1 點血再扣 ${PENALTY} 分。血歸零後一般模式仍可繼續（每次失敗照扣），競速模式會直接結束。`;
-  $('cats').innerHTML = CATS.map(c => {
+  
+  // 生成分類按鈕
+    // 生成分類按鈕
+  let catHtml = CATS.map(c => {
     const best = prog.best[c.id] || 0, cl = prog.cleared[c.id] || 0;
     return `<button type="button" class="cat" data-c="${c.id}"><span class="cat-n">${c.name}</span><span class="cat-s">${c.sub}</span><span class="cat-d">${c.desc}</span>
       <span class="cat-f"><span>最高 <b class="num">${best}</b></span><span>通關 <b class="num">${cl}/${NLEV}</b></span></span></button>`;
-  }).join('') + `<button type="button" class="cat sprint" data-c="sprint"><span class="cat-n">競速 SPRINT</span><span class="cat-s">60 秒倒數 · 無上限</span>
-    <span class="cat-d">五項全過 +${SPRINT_BONUS} 秒。四種電路隨機亂序，1–5 關簡單、6–10 關中等、11 關起困難。</span><span class="cat-f"><span>最高 <b class="num">${prog.best.sprint || 0}</b></span><span>最遠 <b class="num">${prog.cleared.sprint || 0} 關</b></span></span></button>`;
+  }).join('');
+  
+    catHtml += `<button type="button" class="cat sprint" data-c="sprint"><span class="cat-n">競速 SPRINT</span><span class="cat-s">60 秒倒數 · 無上限</span>
+    <span class="cat-d">五項全過 +${SPRINT_BONUS} 秒。<br><b style="color:var(--amber)">※ 若按跳過，結算時每跳過 1 關扣 30 分。</b><br>四種電路隨機亂序，1–5 關簡單、6–10 關中等、11 關起困難。
+    </span><span class="cat-f"><span>最高 <b class="num">${prog.best.sprint || 0}</b></span><span>最遠 <b class="num">${prog.cleared.sprint || 0} 關</b></span></span></button>`;
+
+   $('cats').innerHTML = catHtml;
   document.querySelectorAll('.cat').forEach(b => b.addEventListener('click', () => startRun(b.dataset.c)));
 }
 
@@ -1260,7 +1388,9 @@ function showHome() {
 function seedOf(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 function startRun(cat) {
   S.sprint = cat === 'sprint'; S.cat = cat; S.lives0 = prog.lives || 3; S.livesLeft = S.lives0; S.fails = 0; S.idx = 0; S.bests = []; S.weights = []; S.ended = false; S.sprintN = 0;
+  S.skipCount = 0; // <-- 新增這行，每次開局歸零
   S.levels = [];
+  
   if (!S.sprint) {
     const rr = mulberry32((Math.random() * 1e9) | 0);
     for (let i = 0; i < NLEV; i++) {
@@ -1269,15 +1399,19 @@ function startRun(cat) {
       S.weights.push(levelWeight(i));
     }
   } else { S.sprintTime = SPRINT_TIME; }
+  
   $('home').hidden = true; $('game').hidden = false; $('actionbar').hidden = false; $('hud').hidden = false; S.view = 'game';
   $('btnSkip').hidden = !S.sprint;
+  
   if (S.sprint) { S.time = SPRINT_TIME; nextSprintLevel(true); } else { S.time = LEVEL_TIME; loadLevel(0); }
 }
+
 function loadLevel(i) {
   S.idx = i; S.lv = S.levels[i]; S.mod = MODS[S.lv.modId]; S.curBest = 0; S.time = LEVEL_TIME;
   S.pos = {}; S.mod.sliders.forEach(s => { S.pos[s.k] = 500; }); S.tog = {}; S.mod.toggles.forEach(t => { S.tog[t.k] = 0; });
   buildGame(); renderHud(); refresh(); showIntro();
 }
+
 const sprintRng = () => (S._sr || (S._sr = mulberry32((Math.random() * 1e9) | 0)));
 function nextSprintLevel(first) {
   S.sprintN++;
@@ -1288,10 +1422,11 @@ function nextSprintLevel(first) {
   buildGame(); renderHud(); refresh();
   if (first) showIntro(); else S.running = true;
 }
+
 function showIntro() {
   const lv = S.lv, m = S.mod;
-  show(`<div class="eyebrow">${S.sprint ? '競速模式' : `第 ${S.idx + 1} / ${NLEV} 關`} · ${m.name}</div><h2>${S.sprint ? '60 秒倒數' : m.full}</h2>
-    <p>${S.sprint ? `五項全過按 Check 才會計分並 +${SPRINT_BONUS} 秒；沒全過扣 1 點血。可以按「跳過」換題。` : `每關 ${LEVEL_TIME} 秒。調整滑桿讓 5 項規格達標後按 Check；沒有全過會扣 1 點血，但可以繼續調整。`}</p>
+  show(`<div class="eyebrow">${S.sprint ? '競速模式' : `第 ${S.idx + 1} / ${S.cat === 'test' ? '1' : NLEV} 關`} · ${m.name}</div><h2>${S.sprint ? '60 秒倒數' : m.full}</h2>
+    <p>${S.sprint ? `五項全過按 Check 才會計分並 +${SPRINT_BONUS} 秒；沒全過扣 1 點血。可以按「跳過」換題，但每跳過 1 關結算會扣 30 分。` : `每關 ${LEVEL_TIME} 秒。調整滑桿讓 5 項規格達標後按 Check；沒有全過會扣 1 點血，但會進入下一關。`}</p>
     ${specList(lv)}<div class="btns"><button class="cta" id="btnGo" type="button">開始</button></div>`);
   bind('btnGo', () => { hide(); S.running = true; S.levelStart = S.time; });
 }
@@ -1304,15 +1439,54 @@ function doCheck() {
   const tf = S.sprint ? 1 - (S.levelStart - S.time) / SPRINT_REF : S.time / LEVEL_TIME;
   const a = attemptScore(lv, res.v, tf);
   S.curBest = Math.max(S.curBest, a.score);
-  if (a.all) { levelDone(a); return; }
-  S.fails++; S.livesLeft = Math.max(0, S.livesLeft - 1); renderHud();
-  toast(`${a.n} / 5 項達標（+${a.n * 100} 分）· 失去 1 點血，結算 −${PENALTY} 分`, 'bad');
-  if (S.sprint && S.livesLeft <= 0) { commitLevel(); endRun('血量歸零'); }
+
+  // 如果五項全過
+  if (a.all) { 
+    levelDone(a); 
+    return; 
+  }
+
+  // 如果沒有全過，扣除生命值與懲罰分
+  S.fails++; 
+  S.livesLeft = Math.max(0, S.livesLeft - 1); 
+  renderHud();
+
+  // 彈出失敗視窗
+  show(`<div class="eyebrow">${S.sprint ? '競速模式' : `第 ${S.idx + 1} / ${NLEV} 關`}</div><h2>未達標</h2>
+    <p>僅有 <b>${a.n} / 5</b> 項達標（+${a.n * 100} 分）。失去 1 點血，結算將扣除 ${PENALTY} 分。</p>
+    <p>目前剩餘生命：<b style="color:var(--red)">${S.livesLeft}</b> 點。</p>
+    <div class="btns"><button class="cta" id="btnNext" type="button">${S.livesLeft <= 0 ? '查看總成績' : (S.sprint ? '繼續挑戰' : '下一關')}</button></div>`);
+    
+  bind('btnNext', () => { 
+    hide(); 
+    
+    // 血量歸零 -> 結束遊戲
+    if (S.livesLeft <= 0) {
+      endRun('血量歸零');
+      return;
+    }
+
+    // 競速模式 -> 繼續下一題
+    if (S.sprint) {
+      nextSprintLevel(false);
+      return;
+    }
+
+    // 一般模式 -> 判斷是否為最後一關
+    const isLast = (S.idx === NLEV - 1);
+    if (isLast) {
+      endRun('完成所有關卡');
+    } else {
+      loadLevel(S.idx + 1); 
+    }
+  });
 }
+
 function commitLevel() {
   if (S.sprint) { S.bests.push(S.curBest); S.weights.push(S.idxW); }
   else { S.bests[S.idx] = S.curBest; }
 }
+
 function levelDone(a) {
   S.running = false; commitLevel();
   const w = weightOf(), lv = S.lv;
@@ -1324,24 +1498,21 @@ function levelDone(a) {
   }
   const last = S.idx === NLEV - 1;
   renderHud();
-  show(`<div class="eyebrow">第 ${S.idx + 1} / ${NLEV} 關 · 全部達標</div><h2>五項全過</h2><div class="stars">${STAR.repeat(5)}</div>
+  show(`<div class="eyebrow">第 ${S.idx + 1} / ${S.cat === 'test' ? '1' : NLEV} 關 · 全部達標</div><h2>五項全過</h2><div class="stars">${STAR.repeat(5)}</div>
     <ul class="spec-list"><li class="hit"><span>5 項規格 × 100</span><span class="num">500</span></li>
     <li class="hit"><span>FoM 評比（1–200）</span><span class="num">${a.fom}</span></li>
     <li><span>本關得分</span><span class="num">${a.score}</span></li><li><span>關卡權重</span><span class="num">× ${w.toFixed(1)}</span></li></ul>
     <p>FoM 權重：Power 40% · Area 25% · Gain 12% · GBW 12% · PM 6% · 時間 5%。每項要比規格多出約兩倍的餘裕才算滿分。</p>
     <div class="btns"><button class="cta" id="btnNext" type="button">${last ? '查看總成績' : '下一關'}</button></div>`);
-  bind('btnNext', () => { hide(); if (last) endRun('完成 8 關'); else loadLevel(S.idx + 1); });
+  bind('btnNext', () => { hide(); if (last) endRun(`完成 ${S.cat === 'test' ? '1' : '8'} 關`); else loadLevel(S.idx + 1); });
 }
+
 function timeUp() {
   S.running = false;
   
-  // [新增] 時間到時，自動結算當前達標數，避免 0 分
   if (!S.sprint) {
-    // 計算時間因子（因為時間已經到了，所以 tf 為 0）
     const tf = 0; 
-    // 取得當前達標結果
     const a = attemptScore(S.lv, S.res.v, tf); 
-    // 如果當前分數比之前按過的最高分還高，就更新
     S.curBest = Math.max(S.curBest, a.score); 
   }
 
@@ -1349,32 +1520,87 @@ function timeUp() {
   commitLevel(); renderHud();
   const last = S.idx === NLEV - 1;
   
-  show(`<div class="eyebrow">第 ${S.idx + 1} / ${NLEV} 關</div><h2>時間到</h2>
+  show(`<div class="eyebrow">第 ${S.idx + 1} / ${S.cat === 'test' ? '1' : NLEV} 關</div><h2>時間到</h2>
     <p>系統已自動為你結算當前狀態，本關採計最高的一次 Check：<b class="num">${S.curBest}</b> 分。</p>
     <div class="btns"><button class="cta" id="btnNext" type="button">${last ? '查看總成績' : '下一關'}</button></div>`);
-  bind('btnNext', () => { hide(); if (last) endRun('完成 8 關'); else loadLevel(S.idx + 1); });
+  bind('btnNext', () => { hide(); if (last) endRun(`完成 ${S.cat === 'test' ? '1' : '8'} 關`); else loadLevel(S.idx + 1); });
 }
+
 function skipLevel() {
   if (!S.running || !S.sprint) return;
-  commitLevel(); toast(`跳過第 ${S.sprintN} 關，保留已拿到的 ${S.curBest} 分`, ''); nextSprintLevel(false);
+  S.skipCount++; // <-- 每次跳過就加 1
+  commitLevel(); 
+  toast(`跳過第 ${S.sprintN} 關（結算扣 30 分），保留已拿到的 ${S.curBest} 分`, 'bad'); 
+  nextSprintLevel(false);
 }
+
 function endRun(why) {
   S.ended = true; S.running = false;
   const t = totals(), key = S.sprint ? 'sprint' : S.cat;
   const cleared = S.sprint ? Math.max(0, S.sprintN - (why === '血量歸零' || why === '時間到' ? 1 : 0)) : S.bests.filter(b => b >= 500).length;
   const newBest = t.net > (prog.best[key] || 0);
+  
   if (newBest) prog.best[key] = t.net;
   if (!S.sprint) prog.cleared[key] = Math.max(prog.cleared[key] || 0, cleared); else prog.cleared.sprint = Math.max(prog.cleared.sprint || 0, cleared);
+  
   save(); renderHud();
+
+  // 計算跳過扣分
+  let skipPen = S.skipCount * 30;
+  t.net = Math.max(0, t.net - skipPen);
+
+  // 檢查成就
+  checkAchievements();
+
+  // 顯示結算畫面 (包含輸入名字與儲存按鈕)
   show(`<div class="eyebrow">${why}</div><h2>${S.sprint ? '競速結算' : '總成績'}</h2>
     <div class="bigscore num">${t.net}</div>${newBest ? '<p class="pb">個人新紀錄</p>' : ''}
-    <ul class="spec-list"><li><span>各關加權總分</span><span class="num">${Math.round(t.gross)}</span></li>
-    <li><span>血量加成（${S.lives0} 點血）</span><span class="num">× ${Math.round(t.mult * 100)}%</span></li>
-    <li class="${S.fails ? 'miss' : ''}"><span>失敗 ${S.fails} 次</span><span class="num">− ${t.pen}</span></li>
-    <li><span>全過關卡</span><span class="num">${cleared} / ${S.sprint ? S.bests.length : NLEV}</span></li></ul>
+    <ul class="spec-list">
+      <li><span>各關加權總分</span><span class="num">${Math.round(t.gross)}</span></li>
+      <li><span>血量加成（${S.lives0} 點血）</span><span class="num">× ${Math.round(t.mult * 100)}%</span></li>
+      <li class="${S.fails ? 'miss' : ''}"><span>失敗 ${S.fails} 次</span><span class="num">− ${t.pen}</span></li>
+      ${S.skipCount > 0 ? `<li class="miss"><span>跳過 ${S.skipCount} 次</span><span class="num">− ${skipPen}</span></li>` : ''}
+      <li><span>全過關卡</span><span class="num">${cleared} / ${S.sprint ? S.bests.length : NLEV}</span></li>
+    </ul>
+    
+    <div style="margin-top: 15px; border-top: 1px solid var(--rule); padding-top: 10px;">
+      <p style="font-size: 12px; margin-bottom: 6px;">是否將此成績上傳至排行榜？</p>
+      <input type="text" id="playerName" placeholder="輸入你的名字（預設：無名工程師）" style="width:100%; padding: 8px; background: var(--paper-2); border: 1px solid var(--edge); color: var(--ink); font-family: var(--font-mono); margin-bottom: 10px;">
+      <button class="cta alt" style="width:100%; min-height:40px; font-size:14px;" id="btnSaveScore" type="button">儲存至排行榜</button>
+    </div>
+
     <div class="btns"><button class="cta" id="again" type="button">再玩一次</button><button class="cta alt" id="home2" type="button">回首頁</button></div>`);
-  bind('again', () => { hide(); startRun(S.cat); }); bind('home2', () => showHome());
+
+  // 綁定儲存按鈕的事件
+  bind('btnSaveScore', () => {
+    if (t.net > 0) {
+      const nameInput = document.getElementById('playerName').value.trim();
+      const playerName = nameInput || '無名工程師';
+      try {
+        let lb = JSON.parse(localStorage.getItem('ota-tuner:leaderboard') || '[]');
+        const d = new Date();
+        const dateStr = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const modeName = S.sprint ? '競速' : (S.cat === 'rand' ? '隨機' : MODS[S.cat].name);
+        
+        lb.push({ name: playerName, mode: modeName, score: t.net, date: dateStr });
+        lb.sort((a, b) => b.score - a.score);
+        lb = lb.slice(0, 20); // 只保留前 20 筆
+        localStorage.setItem('ota-tuner:leaderboard', JSON.stringify(lb));
+        toast('✅ 成績已儲存至排行榜！', 'ok');
+        document.getElementById('btnSaveScore').disabled = true;
+        document.getElementById('btnSaveScore').textContent = '已儲存';
+      } catch (e) {
+        toast('儲存失敗', 'bad');
+      }
+    } else {
+      toast('分數為 0，無法上傳', 'bad');
+    }
+  });
+
+  bind('again', () => { hide(); startRun(S.cat); }); 
+  bind('home2', () => showHome());
 }
+
 function askHome() {
   if (S.view !== 'game' || S.ended) { showHome(); return; }
   const was = S.running;
