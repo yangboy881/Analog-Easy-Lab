@@ -330,6 +330,32 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .pips { flex-wrap: wrap; max-width: 120px; }
 .stars svg:nth-child(4) { animation-delay: .54s; } .stars svg:nth-child(5) { animation-delay: .72s; }
 @media (max-width: 560px) { .home-title .brand-name { font-size: 32px; } .cats { grid-template-columns: 1fr; } .cat { min-height: 0; } .seg-b b { font-size: 13px; } }
+
+/* ===== 手機版修正：Spec Card 黏頂，滑桿在下，數值永遠看得到 ===== */
+@media (max-width: 899px) {
+  #pSpec {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 6;
+    background: var(--paper-2);
+    padding: 8px 12px 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  }
+  #pSpec .specs { gap: 6px; }
+  #pSpec .spec .rd { font-size: 13px; }
+  #pSpec .bar { height: 8px; }
+
+  /* 手機版排列順序：規格 → 滑桿 → 電路圖 → Bode */
+  #pSpec { order: 1; }
+  #pCtl  { order: 2; }
+  #pSch  { order: 3; }
+  #pBode { order: 4; }
+
+  #pCtl { margin-top: 4px; }
+  .main { gap: 8px; }
+  .wrap { padding-block: 8px 0; }
+  .actionbar { z-index: 8; }
+}
 </style>
 <div class="wrap">
   <header class="hud" id="hud" hidden>
