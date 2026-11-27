@@ -346,10 +346,29 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   #pSpec .bar { height: 8px; }
 
   /* 手機版排列順序：規格 → 滑桿 → 電路圖 → Bode */
-  #pSpec { order: 1; }
-  #pCtl  { order: 2; }
-  #pSch  { order: 3; }
-  #pBode { order: 4; }
+/* ===== 手機版修正：保留原順序，但 Spec Card 黏頂 ===== */
+@media (max-width: 899px) {
+  #pSpec {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 6;
+    background: var(--paper-2);
+    padding: 8px 12px 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    /* 加上負的 margin，讓它稍微滿版一點 */
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  #pSpec .specs { gap: 6px; }
+  #pSpec .spec .rd { font-size: 13px; }
+  #pSpec .bar { height: 8px; }
+
+  /* 注意：這裡把 order 拿掉了，讓它維持你原本的 HTML 順序 */
+  
+  .main { gap: 8px; }
+  .wrap { padding-block: 8px 0; }
+  .actionbar { z-index: 8; }
+}
 
   #pCtl { margin-top: 4px; }
   .main { gap: 8px; }
