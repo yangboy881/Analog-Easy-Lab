@@ -347,27 +347,83 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 
   /* 手機版排列順序：規格 → 滑桿 → 電路圖 → Bode */
 /* ===== 手機版修正：保留原順序，但 Spec Card 黏頂 ===== */
+/* ===== 手機版終極版：精簡 Spec Card + 時間整合 ===== */
 @media (max-width: 899px) {
+  /* 1. 隱藏手機版不需要的元件 (大標題、進度條) */
+  #pSpec .plate-title { display: none; }
+  #pSpec .bar { display: none; }
+
+  /* 2. 將 Spec Card 黏在頂部，並變成精簡的兩欄網格 */
   #pSpec {
     position: sticky;
     top: env(safe-area-inset-top, 0px);
     z-index: 6;
     background: var(--paper-2);
-    padding: 8px 12px 10px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-    /* 加上負的 margin，讓它稍微滿版一點 */
-    margin-left: -4px;
-    margin-right: -4px;
+    /* 縮小 padding 節省空間 */
+    padding: 6px 10px 8px; 
+    margin: 0 -4px;
+    border: 1px solid var(--edge);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   }
-  #pSpec .specs { gap: 6px; }
-  #pSpec .spec .rd { font-size: 13px; }
-  #pSpec .bar { height: 8px; }
 
-  /* 注意：這裡把 order 拿掉了，讓它維持你原本的 HTML 順序 */
+  /* 3. 頂部狀態列 (時間 + 生命 + 關卡名) */
+  .spec-head-mobile {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
   
+  .hud-mini { display: flex; gap: 12px; align-items: flex-end; }
+  .hud-mini .stat .k { font-size: 8px; letter-spacing: .1em; }
+  .hud-mini .stat .v { font-size: 16px; line-height: 1; }
+  .hud-mini .pips { height: 14px; gap: 3px; }
+  .hud-mini .pip { width: 6px; height: 12px; }
+  .hud-mini .stat .v.warn { animation: blink .8s steps(2) infinite; color: var(--red); }
+  
+  #specNote { font-size: 10px; text-align: right; }
+
+  /* 4. 規格表變成兩欄排列 */
+  #pSpec .specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 12px;
+  }
+
+  #pSpec .spec { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: baseline; 
+    gap: 4px; 
+  }
+  #pSpec .spec .nm { font-size: 9px; }
+  #pSpec .spec .rd { font-size: 11px; }
+  #pSpec .spec .rd small { font-size: 9px; }
+  
+  /* 5. 飽和度標籤縮小，並跨欄顯示 */
+  #pSpec .satrow { 
+    grid-column: 1 / -1; 
+    gap: 4px; 
+    margin-top: 2px; 
+    padding-top: 2px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+  }
+  #pSpec .satrow .nm { font-size: 9px; margin-right: 2px; }
+  #pSpec .sat { padding: 0 4px; font-size: 9px; }
+
+  /* 6. 調整遊戲主區塊，確保底部 CHECK 按鈕不被遮擋 */
   .main { gap: 8px; }
   .wrap { padding-block: 8px 0; }
   .actionbar { z-index: 8; }
+}
+
+/* 電腦版不顯示手機版專用的標頭 */
+@media (min-width: 900px) {
+  .spec-head-mobile { display: none; }
 }
 
   #pCtl { margin-top: 4px; }
@@ -409,10 +465,18 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
       </section>
     </div>
     <div class="colR">
-      <section class="plate" id="pSpec" aria-label="Spec card">
-        <div class="plate-head"><span class="plate-title">Spec Card</span><span class="plate-note num" id="specNote"></span></div>
-        <div class="specs" id="specs"></div>
-      </section>
+      <!-- 修改後的程式碼 -->
+<section class="plate" id="pSpec" aria-label="Spec card">
+  <!-- 新增一個標頭列來放時間跟生命，並保留原本的 specNote -->
+  <div class="spec-head-mobile">
+    <div class="hud-mini">
+      <div class="stat"><span class="k">TIME</span><span class="v num" id="mobileTime">00:30</span></div>
+      <div class="stat"><span class="k">LIVES</span><span class="pips" id="mobileLives"></span></div>
+    </div>
+    <span class="plate-note num" id="specNote"></span>
+  </div>
+  <div class="specs" id="specs"></div>
+</section>
       <section class="plate" id="pCtl" aria-label="Bench">
         <div class="plate-head"><span class="plate-title">Bench</span><span class="plate-note">拖曳或點 − / +</span></div>
         <div class="ctls" id="ctls"></div>
@@ -1101,7 +1165,11 @@ function refresh() {
 /* ---------- HUD ---------- */
 function renderHud() {
   const L = S.lives0;
-  $('lives').innerHTML = Array.from({ length: L }, (_, i) => `<span class="pip ${i < S.livesLeft ? '' : 'off'}"></span>`).join('');
+  const livesHTML = Array.from({ length: L }, (_, i) => `<span class="pip ${i < S.livesLeft ? '' : 'off'}"></span>`).join('');
+  $('lives').innerHTML = livesHTML;
+  // [新增] 同步給手機版的 Spec Card
+  $('mobileLives').innerHTML = livesHTML; 
+  
   $('score').textContent = totals().net;
   $('sheetLabel').textContent = S.sprint ? `競速 · 第 ${S.sprintN} 關 · ${['簡單', '中等', '困難'][sprintTier(S.sprintN)]}` : `${S.cat === 'rand' ? '隨機' : MODS[S.cat].name} · 第 ${S.idx + 1} / ${NLEV} 關`;
   renderTime();
