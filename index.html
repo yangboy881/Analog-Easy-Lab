@@ -332,23 +332,11 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 @media (max-width: 560px) { .home-title .brand-name { font-size: 32px; } .cats { grid-template-columns: 1fr; } .cat { min-height: 0; } .seg-b b { font-size: 13px; } }
 
 /* ===== 手機版修正：Spec Card 黏頂，滑桿在下，數值永遠看得到 ===== */
-@media (max-width: 899px) {
-  #pSpec {
-    position: sticky;
-    top: env(safe-area-inset-top, 0px);
-    z-index: 6;
-    background: var(--paper-2);
-    padding: 8px 12px 10px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-  }
-  #pSpec .specs { gap: 6px; }
-  #pSpec .spec .rd { font-size: 13px; }
-  #pSpec .bar { height: 8px; }
 
-  /* 手機版排列順序：規格 → 滑桿 → 電路圖 → Bode */
-/* ===== 手機版最終版：HUD 與 Spec Card 雙黏頂 ===== */
+/* ===== 手機版終極版：極簡狀態列 + 大參數 + 好拉的滑桿 ===== */
 @media (max-width: 899px) {
-  /* 1. 讓原本的 HUD (時間/生命/分數) 黏在最頂部 */
+  
+  /* 1. 把原本巨大的 HUD 壓縮成極簡狀態列 */
   .hud {
     position: sticky;
     top: 0;
@@ -356,29 +344,62 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
     background: var(--paper-2);
     border-bottom: 1px solid var(--edge);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-    padding-top: 8px; 
-    padding-bottom: 0;
+    padding: 4px 10px 4px; /* 大幅縮小上下空間 */
+    grid-template-columns: 1fr auto; /* 標題跟時間並排 */
+    gap: 4px 10px;
   }
 
-  /* 2. 讓 Spec Card 黏在 HUD 下方 */
-  #pSpec {
+  /* 隱藏不需要的標題與關卡資訊，節省空間 */
+  .brand { display: none; } 
+  
+  /* 狀態列橫向排列 */
+  .hud-stats { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    width: 100%;
+    justify-content: flex-start;
+    padding-bottom: 0;
+  }
+  
+  /* 縮小時間與分數的字體 */
+  .stat { flex-direction: row; align-items: baseline; gap: 6px; }
+  .stat .k { font-size: 10px; }
+  .stat .v { font-size: 16px; } /* 原本是 20px */
+  
+  /* 把小血條縮短 */
+  .pips { height: 12px; gap: 2px; max-width: none; margin-left: auto; }
+  .pip { width: 6px; height: 12px; }
+  
+  /* 首頁按鈕縮小 */
+  .ghost { min-height: 28px; padding: 0 8px; font-size: 10px; margin-left: 4px; }
+  
+  /* 進度條變細 */
+  .timebar { margin: 0 -10px; height: 2px; }
+
+  /* 2. 讓 Spec Card 黏在極簡狀態列下方 (狀態列變矮了，這裡也要跟著改小) */
+  #mobileStickyWrapper {
     position: sticky;
-    top: 92px; /* 對準 HUD 底部，若重疊調大、有縫調小 */
+    top: 38px; /* 狀態列變矮了，這裡改成 38px 剛好貼合，若有縫隙可微調 40px */
     z-index: 6;
     background: var(--paper-2);
-    padding: 8px 12px 10px;
     margin: 0 -4px;
-    border: 1px solid var(--edge);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   }
 
-  /* 3. 將 Spec Card 內部改成兩欄排列，大幅節省高度 */
+  /* 3. 放大 Spec Card 的字體，讓你看參數更清楚 */
+  #pSpec {
+    padding: 10px 12px 12px;
+    border: 1px solid var(--edge);
+    background: transparent;
+  }
+  #pSpec .plate-head { display: none; } /* 隱藏 SPEC CARD 大標題 */
+  
   #pSpec .specs {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px 16px;
+    gap: 8px 16px;
   }
-  
   #pSpec .spec {
     display: flex;
     justify-content: space-between;
@@ -386,10 +407,11 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
     gap: 4px;
   }
   
-  /* 保留原本好讀的字體大小，但移除進度條以節省空間 */
-  #pSpec .spec .nm { font-size: 10px; }
-  #pSpec .spec .rd { font-size: 13px; }
-  #pSpec .bar { display: none; } /* 隱藏進度條 */
+  /* 🔥 把參數名稱跟數值放大，看得更清楚 */
+  #pSpec .spec .nm { font-size: 11px; }
+  #pSpec .spec .rd { font-size: 15px; font-weight: 600; }
+  #pSpec .spec .rd small { font-size: 10px; }
+  #pSpec .bar { display: none; } /* 隱藏進度條，省空間 */
   
   /* 飽和度標籤跨欄顯示 */
   #pSpec .satrow { 
@@ -405,10 +427,21 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   #pSpec .satrow .nm { font-size: 10px; margin-right: 2px; }
   #pSpec .sat { padding: 2px 6px; font-size: 10px; }
 
-  /* 4. 調整主區塊與底部按鈕 */
-  .main { gap: 10px; margin-top: 12px; }
+  /* 4. 讓滑桿更好拉 (稍微加大間距與滑塊) */
+  .main { gap: 10px; margin-top: 10px; }
   .wrap { padding-block: 8px 0; }
-  .actionbar { z-index: 15; } 
+  .actionbar { z-index: 15; }
+  
+  /* 加大滑桿的觸控範圍 */
+  .ctl-row { grid-template-columns: 40px 1fr 40px; gap: 8px; }
+  .step { width: 40px; height: 40px; font-size: 18px; }
+  input[type=range] { height: 40px; }
+  input[type=range]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
+}
+
+/* 電腦版保持原樣，不套用包裹容器 */
+@media (min-width: 900px) {
+  #mobileStickyWrapper { display: contents; }
 }
 
 /* 電腦版強制隱藏手機版專用的排版，保持原本左右並排 */
