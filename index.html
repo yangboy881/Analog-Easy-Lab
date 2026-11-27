@@ -1166,10 +1166,15 @@ function refresh() {
 function renderHud() {
   const L = S.lives0;
   const livesHTML = Array.from({ length: L }, (_, i) => `<span class="pip ${i < S.livesLeft ? '' : 'off'}"></span>`).join('');
-  $('lives').innerHTML = livesHTML;
-  // [新增] 同步給手機版的 Spec Card
-  $('mobileLives').innerHTML = livesHTML; 
   
+  // 更新原本的頂部狀態
+  $('lives').innerHTML = livesHTML;
+  
+  // 👇 這是新增的：同步更新手機版 Spec Card 裡的血量 👇
+  const ml = $('mobileLives');
+  if (ml) ml.innerHTML = livesHTML;
+  // 👆 ------------------------------------------------- 👆
+
   $('score').textContent = totals().net;
   $('sheetLabel').textContent = S.sprint ? `競速 · 第 ${S.sprintN} 關 · ${['簡單', '中等', '困難'][sprintTier(S.sprintN)]}` : `${S.cat === 'rand' ? '隨機' : MODS[S.cat].name} · 第 ${S.idx + 1} / ${NLEV} 關`;
   renderTime();
@@ -1177,7 +1182,18 @@ function renderHud() {
 function renderTime() {
   const t = $('time'), b = $('timebar'), tot = S.sprint ? SPRINT_TIME : LEVEL_TIME;
   t.textContent = mmss(S.time);
-  const warn = S.time <= 10 && S.time > 0; t.classList.toggle('warn', warn); b.classList.toggle('warn', warn);
+  
+  const warn = S.time <= 10 && S.time > 0; 
+  t.classList.toggle('warn', warn); 
+  b.classList.toggle('warn', warn);
+  
+  // [新增] 同步給手機版的 Spec Card，並加上防呆判斷
+  const mt = $('mobileTime');
+  if (mt) {
+    mt.textContent = mmss(S.time);
+    mt.classList.toggle('warn', warn);
+  }
+  
   b.style.transform = `scaleX(${clamp(S.time / tot, 0, 1).toFixed(4)})`;
 }
 let toastT = 0;
