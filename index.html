@@ -552,7 +552,7 @@ MODS.opa = {
     { k: 'w1', name: '輸入對 M1/M2', unit: 'W/L', lim: [1, 400] },
     { k: 'w3', name: '負載鏡 M3/M4', unit: 'W/L', lim: [0.5, 100] },
     { k: 'it', name: '尾電流 M5', unit: 'µA', lim: [1, 150] },
-    { k: 'L', name: '通道長度 L', unit: 'µm', lim: [0.18, 2] }
+    { k: 'L', name: '通道長度 L (套用全體)', unit: 'µm', lim: [0.18, 2] }
   ],
   toggles: [],
   specs: [
@@ -628,7 +628,7 @@ MODS.two = {
   genCtx(d, rng) { return { cl: +(lerp(2, 12, d) * (0.85 + 0.3 * rng())).toFixed(1), vout: 0.9 }; },
   ctxLabel(c) { return 'CL ' + c.cl + ' pF'; },
   sample(rng) { return { pos: { w1: rng() * 1000, it: rng() * 1000, w6: rng() * 1000, i2: rng() * 1000, cc: rng() * 1000, L: rng() * 1000 }, tog: { rz: rng() < 0.5 ? 1 : 0 } }; },
-  accept(r) { return r.v.gain > 55 && r.v.gbw > 1 && r.v.pm > 40 && r.v.pwr < 450; },
+  accept(r) { return r.v.gain > 55 && r.v.gain < 82 && r.v.gbw > 1 && r.v.pm > 40 && r.v.pwr < 450; },
   solve(p, ctx) {
     const it = p.it * 1e-6, id1 = it / 2, i2 = p.i2 * 1e-6, L = p.L, CL = ctx.cl * 1e-12, Cc = p.cc * 1e-12;
     const lt = (LAMN + LAMP) / L, w3 = 30;
@@ -745,7 +745,7 @@ MODS.ldo = {
   genCtx(d, rng) { return { iload: +lerp(5, 40, d * (0.8 + 0.4 * rng())).toFixed(0), vdrop: +lerp(0.4, 0.25, d).toFixed(2), cout: +lerp(1, 4.7, rng()).toFixed(1), esr: +lerp(0.5, 0.15, rng()).toFixed(2) }; },
   ctxLabel(c) { return `Iload ${c.iload} mA · 壓差 ${c.vdrop} V · Cout ${c.cout} µF · ESR ${c.esr} Ω`; },
   sample(rng) { return { pos: { wp: rng() * 1000, wea: rng() * 1000, iea: rng() * 1000, L: rng() * 1000 }, tog: {} }; },
-  accept(r) { return r.v.loop > 35 && r.v.ugf > 5 && r.v.pm > 40 && r.v.pwr < 150; },
+  accept(r) { return r.v.loop > 35 && r.v.loop < 65 && r.v.ugf > 5 && r.v.pm > 40 && r.v.pwr < 150; },
   solve(p, ctx) {
     const IL = ctx.iload * 1e-3, L = p.L, lamN = LAMN / L, lamP = LAMP / L;
     const vovp = vovOf(IL, KP, p.wp), gmp = gmOf(IL, vovp);
@@ -813,21 +813,50 @@ function roundTarget(x, sp) {
    so every generated level is guaranteed solvable. */
 function genLevel(modId, d, seed) {
   const mod = MODS[modId], rng = mulberry32(seed);
-  let ctx = mod.genCtx(d, rng), ref = null, res = null;
-  for (let tries = 0; tries < 20000 && !ref; tries++) {
-    if (tries === 8000) ctx = mod.genCtx(Math.max(0, d - 0.3), rng);
-    const s = mod.sample(rng, d, ctx);
-    const r = mod.solve(decode(mod, s.pos, s.tog), ctx);
-    if (!r.bad.length && mod.accept(r, ctx)) { ref = s; res = r; }
+  let ctx = mod.genCtx(d, rng), ref = null, res = null, specs = null;
+  
+  // 我們把生成邏輯包在一個迴圈裡，直到找到「開局不會直接過關」的題目
+  let attempt = 0;
+  while (attempt < 50) {
+    attempt++;
+    // 重置隨機狀態，避免卡死
+    const localRng = mulberry32(seed + attempt);
+    ctx = mod.genCtx(d, localRng);
+    ref = null; res = null;
+
+    for (let tries = 0; tries < 20000 && !ref; tries++) {
+      if (tries === 8000) ctx = mod.genCtx(Math.max(0, d - 0.3), localRng);
+      const s = mod.sample(localRng, d, ctx);
+      const r = mod.solve(decode(mod, s.pos, s.tog), ctx);
+      if (!r.bad.length && mod.accept(r, ctx)) { ref = s; res = r; }
+    }
+    if (!ref) continue; // 如果這輪找不到參考設計，換下一輪
+
+    specs = mod.specs.map(sp => {
+      const rv = res.v[sp.k], sl = slackOf(sp, d);
+      let target, band;
+      if (sl.abs !== undefined) { band = sl.abs; target = sp.type === 'min' ? rv - band : rv + band; }
+      else { band = sl.rel * Math.abs(rv); target = sp.type === 'min' ? rv * (1 - sl.rel) : rv * (1 + sl.rel); }
+      return Object.assign({}, sp, { target: roundTarget(target, sp), band });
+    });
+
+    // 檢查預設狀態 (滑桿全在 500)
+    const defaultPos = {}, defaultTog = {};
+    mod.sliders.forEach(s => { defaultPos[s.k] = 500; });
+    mod.toggles.forEach(t => { defaultTog[t.k] = 0; });
+    const defaultRes = mod.solve(decode(mod, defaultPos, defaultTog), ctx);
+    
+    // 計算預設狀態達標了幾項
+    let defaultPassCount = 0;
+    specs.forEach(sp => { if (specPass(sp, defaultRes.v[sp.k])) defaultPassCount++; });
+
+    // 如果開局達標 3 項或以上，就重新生成 (你可以把 3 改成 2，難度會更高)
+    if (defaultPassCount < 3) {
+      return { modId, d, ctx, specs, ref, refV: res.v };
+    }
   }
-  if (!ref) throw new Error('no reference design for ' + modId + ' d=' + d);
-  const specs = mod.specs.map(sp => {
-    const rv = res.v[sp.k], sl = slackOf(sp, d);
-    let target, band;
-    if (sl.abs !== undefined) { band = sl.abs; target = sp.type === 'min' ? rv - band : rv + band; }
-    else { band = sl.rel * Math.abs(rv); target = sp.type === 'min' ? rv * (1 - sl.rel) : rv * (1 + sl.rel); }
-    return Object.assign({}, sp, { target: roundTarget(target, sp), band });
-  });
+  
+  // 如果真的找不到，就退回原本的寫法，避免遊戲崩潰
   return { modId, d, ctx, specs, ref, refV: res.v };
 }
 
@@ -1305,11 +1334,23 @@ function levelDone(a) {
 }
 function timeUp() {
   S.running = false;
+  
+  // [新增] 時間到時，自動結算當前達標數，避免 0 分
+  if (!S.sprint) {
+    // 計算時間因子（因為時間已經到了，所以 tf 為 0）
+    const tf = 0; 
+    // 取得當前達標結果
+    const a = attemptScore(S.lv, S.res.v, tf); 
+    // 如果當前分數比之前按過的最高分還高，就更新
+    S.curBest = Math.max(S.curBest, a.score); 
+  }
+
   if (S.sprint) { commitLevel(); endRun('時間到'); return; }
   commitLevel(); renderHud();
   const last = S.idx === NLEV - 1;
+  
   show(`<div class="eyebrow">第 ${S.idx + 1} / ${NLEV} 關</div><h2>時間到</h2>
-    <p>本關採計你最高的一次 Check：<b class="num">${S.curBest}</b> 分${S.curBest ? '' : '（沒有按過 Check）'}。</p>
+    <p>系統已自動為你結算當前狀態，本關採計最高的一次 Check：<b class="num">${S.curBest}</b> 分。</p>
     <div class="btns"><button class="cta" id="btnNext" type="button">${last ? '查看總成績' : '下一關'}</button></div>`);
   bind('btnNext', () => { hide(); if (last) endRun('完成 8 關'); else loadLevel(S.idx + 1); });
 }
