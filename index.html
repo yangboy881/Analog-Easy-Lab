@@ -225,6 +225,12 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .cta:active { transform: translateY(1px); }
 .cta:disabled { opacity: .45; cursor: default; }
 .cta.alt { background: transparent; color: var(--ink); border: 1px solid var(--edge); }
+#btnAdvHub { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; white-space: normal; line-height: 1.2; }
+@media (max-width: 700px) { #btnAdvHub span { display: none; } }
+.hrow { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.hrow > .cta { flex: 1 1 132px; min-width: 0; min-height: 46px; padding: 0 8px; letter-spacing: .06em; }
+#btnAdvHub span { font-size: 10.5px; letter-spacing: .08em; opacity: .72; }
+@media (max-width: 380px) { .hrow > .cta { font-size: 12px !important; letter-spacing: .02em; } }
 
 /* ---------- overlays ---------- */
 .overlay {
@@ -460,6 +466,9 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .lb-table th, .lb-table td { padding: 6px 4px; border-bottom: 1px solid var(--rule); text-align: left; }
 .lb-table th { color: var(--ink-dim); font-weight: normal; font-size: 11px; }
 .lb-table td:last-child { text-align: right; color: var(--amber); font-weight: 600; }
+.lb-note { margin: 12px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink-dim); }
+.lb-note b { color: var(--ink); }
+.lb-fr { padding: 1px 5px; border: 1px solid var(--cyan); font-size: 9px; letter-spacing: .08em; color: var(--cyan); }
 /* ===== 新手專區（獨立教學模式） ===== */
 .cat.tutor { border-color: var(--green); background: linear-gradient(180deg, rgba(91, 227, 163, .16), var(--plate) 70%); }
 .cat.tutor:hover, .cat.tutor:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px rgba(91, 227, 163, .14); }
@@ -501,6 +510,8 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .lesson.go { border-color: var(--green); background: rgba(91, 227, 163, .07); }
 .lesson.go .ln, .lesson.go .lm .go2 { color: var(--green); }
 .lesson.go .lt { color: #d8fff0; }
+.lesson.lab .lm .go2 { color: var(--amber); }
+.lesson.adv .lm .go2 { color: var(--green); }
 .hub-foot { margin: 16px 0 24px; font-size: 11.5px; line-height: 1.7; color: var(--ink-dim); }
 .hub-foot b { color: var(--ink); font-weight: 600; }
 
@@ -537,6 +548,8 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .fig .val { fill: var(--amber); font-size: 12px; font-weight: 600; }
 .fig .box { fill: rgba(111, 216, 255, .08); stroke: var(--edge); }
 .fig .arrow { fill: var(--ink-dim); }
+.fig .grid { fill: none; stroke: rgba(255, 255, 255, .1); stroke-width: 1; }
+.fig .mark { fill: none; stroke: var(--green); stroke-width: 1.2; stroke-dasharray: 5 4; }
 .quiz { margin: 18px 0 6px; padding: 14px; border: 1px solid var(--edge); background: rgba(5, 22, 46, .45); }
 .quiz .qk { font-size: 10.5px; letter-spacing: .18em; color: var(--cyan); text-transform: uppercase; }
 .quiz .q { margin: 6px 0 10px; font-weight: 600; line-height: 1.6; }
@@ -582,22 +595,31 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .field .fv { font-family: var(--font-mono); font-size: 13px; color: var(--amber); text-align: right; white-space: nowrap; }
 .field input[type=range] { width: 100%; margin: 0; }
 .field input[type=number] { width: 100%; padding: 6px 8px; background: var(--paper-2); border: 1px solid var(--edge); color: var(--ink); font-family: var(--font-mono); font-size: 13px; }
-.readout { font-family: var(--font-mono); font-size: 13px; line-height: 2; }
-.readout .row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed rgba(255, 255, 255, .07); }
-.readout .row:last-child { border-bottom: 0; }
-.readout b { color: var(--amber); font-weight: 600; }
-.readout .ok { color: var(--green); }
-.readout .bad { color: var(--red); }
-.meter { position: relative; height: 12px; margin: 12px 0 6px; border: 1px solid var(--edge); background: rgba(5, 22, 46, .75); }
-.meter .band { position: absolute; top: 0; bottom: 0; background: rgba(91, 227, 163, .18); border-left: 1px solid var(--green); border-right: 1px solid var(--green); }
-.meter .dot { position: absolute; top: -5px; width: 2px; height: 20px; background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.frow { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 2px 20px; margin: 2px 0 6px; }
+.frow .field { margin: 4px 0; }
+.vfield { display: block; margin: 4px 0 2px; font-size: 12px; }
+.vfield .fl { display: block; margin-bottom: 2px; color: var(--ink-dim); letter-spacing: .04em; }
+.vfield input[type=range] { width: 100%; margin: 0; }
+.vfield .fv { display: block; text-align: right; font-family: var(--font-mono); font-size: 12.5px; color: var(--amber); }
+.panel .readout { display: block; font-family: var(--font-mono); font-size: 13px; line-height: 2; color: var(--ink); }
+.panel .readout .row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed rgba(255, 255, 255, .07); }
+.panel .readout .row:last-child { border-bottom: 0; }
+.panel .readout b { color: var(--amber); font-weight: 600; }
+.panel .readout .ok { color: var(--green); }
+.panel .readout .bad { color: var(--red); }
+.meter { position: relative; height: 16px; margin: 12px 0 6px; border: 1px solid var(--edge); background: linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.07)); }
+.meter .band { position: absolute; top: 0; bottom: 0; background: rgba(91, 227, 163, .3); border-left: 1px solid var(--green); border-right: 1px solid var(--green); }
+.meter .dot { position: absolute; top: -6px; width: 2px; height: 28px; background: var(--amber); box-shadow: 0 0 6px var(--amber); }
 .meter-x { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-dim); }
 .plot { border: 1px solid var(--edge); background: rgba(5, 22, 46, .45); padding: 4px; }
 .plot svg { display: block; width: 100%; height: auto; }
+.plot path, .plot line, .plot rect { stroke-linecap: round; }
+.plot path { fill: none; }
+.plot rect.tri { stroke: none; }
 .plot .ax { fill: none; stroke: var(--rule); stroke-width: 1; }
 .plot .grid { stroke: rgba(255, 255, 255, .06); stroke-width: 1; }
 .plot .curve { fill: none; stroke: var(--cyan); stroke-width: 2.2; stroke-linejoin: round; }
-.plot .tri { fill: rgba(255, 200, 87, .12); }
+.plot .tri { fill: rgba(255, 200, 87, .16); }
 .plot .op { fill: var(--amber); stroke: #0b1b30; stroke-width: 1.5; }
 .plot .lab { fill: var(--ink-dim); font-size: 10px; letter-spacing: .04em; }
 .plot .val { fill: var(--amber); font-size: 10.5px; }
@@ -643,13 +665,13 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
     <div class="home-title"><span class="brand-name">OTA Tuner</span><span class="brand-sub">類比 IC 設計謎題 · 調整電晶體尺寸與偏壓，湊齊五項規格</span></div>
     
     <!-- 新增：功能按鈕區 -->
-     <div style="display:flex; gap:10px; margin-bottom:12px;">
-      <button class="cta alt" style="flex:1; font-size:14px; min-height:44px; padding:0 4px;" onclick="showStats()">📊 總成績</button>
-      <button class="cta alt" style="flex:1; font-size:16px; min-height:44px; padding:0 10px;" onclick="showAchievements()">🏅 成就</button>
-      <button class="cta alt" style="flex:1; font-size:16px; min-height:44px; padding:0 10px;" onclick="showLeaderboard()">📜 排行榜</button>
+     <div class="hrow">
+      <button class="cta alt" id="btnStats" style="font-size:14px;" onclick="showStats()">📊 總成績</button>
+      <button class="cta alt" id="btnAch" style="font-size:16px;" onclick="showAchievements()">🏅 成就</button>
+      <button class="cta alt" id="btnLb" style="font-size:16px;" onclick="showLeaderboard()">📜 排行榜</button>
     </div>
-    <div style="display:flex; gap:10px; margin-bottom:12px;">
-      <button class="cta alt" id="btnAdvHub" type="button" style="flex:1; min-height:46px; font-size:14px; padding:0 10px;">🔬 進階專區<span style="font-size:10.5px; letter-spacing:.08em; opacity:.72; margin-left:8px;">BGR · ADC · PLL · Charge Pump</span></button>
+    <div class="hrow">
+      <button class="cta alt" id="btnAdvHub" type="button">🔬 進階專區<span>BGR · ADC · PLL · Charge Pump</span></button>
     </div>
 
     <div class="plate">
@@ -716,7 +738,7 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
       <button class="ghost hub-back" id="advHome" type="button">首頁</button>
     </div>
     <div class="lessons" id="advList"></div>
-    <p class="adv-note"><b>開發中</b>　這一區沿用新手專區的閱讀版面，不影響成績。ADC / PLL 的內容會在之後的版本補齊（介面先留好）。</p>
+    <p class="adv-note"><b>開發中</b>　這一區沿用新手專區的閱讀版面，不影響成績。ADC / PLL 已經可以先進去一層看子主題（SAR、Delta-Sigma、Pipeline、Flash / Integer-N、Fractional-N、DLL），完整內容會在之後的版本補齊。</p>
   </section>
 
   <section id="advView" hidden aria-label="進階課程">
@@ -912,8 +934,8 @@ MODS.two = {
     const bad = [];
     if (!okTail) bad.push('M5');
     if (!okIn) bad.push('M1', 'M2');
-    if (!okM6) bad.push('M6');
-    if (!okM7) bad.push('M7');
+    if (!okM6) { bad.push('M6'); if (vov6 > 0.9) bad.push('M7'); }
+    if (!okM7 && bad.indexOf('M7') < 0) bad.push('M7');
     const A0 = gm1 * ro1 * gm6 * ro2 * (bad.length ? 0.05 : 1);
     const fp1 = 1 / (TP * gm6 * ro1 * ro2 * Cc), p2 = gm6 / (TP * CL), z = gm6 / (TP * Cc);
     const P = [fp1, p2], Z = p.rz ? [z] : [], R = p.rz ? [] : [z];
@@ -922,7 +944,9 @@ MODS.two = {
     let hint;
     if (!okTail) hint = { c: 'bad', m: `<b>M5 離開飽和</b>：尾端只剩 ${vtail.toFixed(2)} V。加大輸入對 W/L，或降低尾電流。` };
     else if (!okIn) hint = { c: 'bad', m: `<b>M1/M2 離開飽和</b>：第一級鏡像把汲極拉太低。加大輸入對 W/L 或降低尾電流。` };
-    else if (!okM6) hint = { c: 'bad', m: `<b>M6 離開飽和</b>：第二級電流與 M6 不匹配（比值 ${ratio.toFixed(2)}，需 0.5～2）。把 M6 W/L 調大，或降低 i2。` };
+    else if (!okM6) hint = ratio < 0.5
+      ? { c: 'bad', m: `<b>M6 離開飽和</b>：比值 ${ratio.toFixed(2)} &lt; 0.5，表示 M6 對第二級電流 ${p.i2} µA 太寬——它能拉的電流比 i2 還多，只好靠 |Vds| 變小（滑進三極區）來限流，輸出被推到 VDD 附近。把 M6 W/L <b>調小</b>，或<b>加大</b> i2。` }
+      : { c: 'bad', m: `<b>M6 離開飽和</b>：M6 的 Vov 已達 ${vov6.toFixed(2)} V（需 ≤ 0.9 V），輸出只剩 ${(VDD - vov6).toFixed(2)} V，M7 沒有 Vds 餘裕。加大 M6 W/L，或降低 i2。` };
     else if (!okM7) hint = { c: 'bad', m: `<b>M7 離開飽和</b>：第二級電流太大（比值 ${ratio.toFixed(2)}，需 0.5～2）。降低 i2，或加大 M6 W/L。` };
     else hint = { c: 'ok', m: `<b>兩級都在飽和區</b>。GBW = gm1/(2πCc)，次極點 = gm6/(2πCL)，右半平面零點 = gm6/(2πCc)。PM 不夠時加大 gm6，或開啟 Rz。` };
     return {
@@ -1581,41 +1605,98 @@ window.showAchievements = function() {
   setTimeout(() => { const b = document.getElementById('btnCloseModal'); if (b) b.onclick = hide; }, 10);
 };
 
-// 顯示排行榜
+// 顯示排行榜（單機 localStorage；用「成績碼」離線交換）
+const LB_KEY = 'ota-tuner:leaderboard';
+function lbRead() {
+  try {
+    const a = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+    return Array.isArray(a) ? a : [];
+  } catch (e) { return []; }
+}
+function lbWrite(list) {
+  try { localStorage.setItem(LB_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+}
+function lbEncode(list) {
+  const slim = list.slice(0, 10).map(r => ({ n: r.name || '無名工程師', m: r.mode || '', s: +r.score || 0, d: r.date || '' }));
+  return 'OTA1.' + btoa(unescape(encodeURIComponent(JSON.stringify(slim)))).replace(/=+$/, '');
+}
+function lbDecode(code) {
+  const body = String(code || '').trim().replace(/\s+/g, '');
+  if (body.indexOf('OTA1.') !== 0) throw new Error('格式不對（要以 OTA1. 開頭）');
+  const b64 = body.slice(5);
+  const json = decodeURIComponent(escape(atob(b64)));
+  const arr = JSON.parse(json);
+  if (!Array.isArray(arr)) throw new Error('內容不是成績清單');
+  return arr.filter(r => r && typeof r.s === 'number' && isFinite(r.s)).map(r => ({
+    name: String(r.n || '好友').slice(0, 16),
+    mode: String(r.m || ''),
+    score: Math.max(0, Math.round(r.s)),
+    date: String(r.d || ''),
+    fr: 1
+  }));
+}
+
 window.showLeaderboard = function() {
-  let records = [];
-  try { records = JSON.parse(localStorage.getItem('ota-tuner:leaderboard') || '[]'); } catch (e) {}
-  
+  const records = lbRead();
   let content = '';
   if (records.length === 0) {
     content = `<p>目前還沒有任何通關紀錄，趕快去挑戰吧！</p>`;
   } else {
-    // 依分數排序
     records.sort((a, b) => b.score - a.score);
-    
-    // [修改這裡] 增加 name 欄位
     const rows = records.map((r, i) => `<tr>
       <td>${i + 1}</td>
-      <td>${r.name || '無名工程師'}</td>
+      <td>${r.name || '無名工程師'}${r.fr ? ' <span class="lb-fr">好友</span>' : ''}</td>
       <td>${r.mode}</td>
       <td>${r.score}</td>
       <td>${r.date}</td>
     </tr>`).join('');
-    
-    // [修改這裡] 表頭加上「名字」
     content = `<table class="lb-table">
         <thead><tr><th>#</th><th>名字</th><th>模式</th><th>分數</th><th>日期</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
   }
-  
-  show(`<div class="eyebrow">排行榜</div><h2>本機紀錄</h2>
+  show(`<div class="eyebrow">排行榜 · 本機</div><h2>本機紀錄</h2>
     ${content}
+    <p class="lb-note"><b>這一頁只存在這台裝置</b>（localStorage），沒有連線伺服器，也不會自動上傳。<br>想跟朋友比：按「匯出成績碼」把自己的成績變成一串文字貼給對方，對方用「匯入好友碼」貼進來，就會標成「好友」。</p>
+    <div class="btns"><button class="cta alt" id="lbExport" type="button">匯出成績碼</button><button class="cta alt" id="lbImport" type="button">匯入好友碼</button></div>
     <div class="btns"><button class="cta" id="btnCloseModal" type="button">關閉</button></div>`);
-
-  // 綁定關閉事件
-  setTimeout(() => { const b = document.getElementById('btnCloseModal'); if (b) b.onclick = hide; }, 10);
+  bind('btnCloseModal', hide);
+  bind('lbExport', () => {
+    const n = lbRead().length;
+    if (!n) { toast('還沒有成績可以匯出', 'bad'); return; }
+    showLbCode('export');
+  });
+  bind('lbImport', () => showLbCode('import'));
 };
+
+function showLbCode(mode) {
+  const isExp = mode === 'export';
+  const code = isExp ? lbEncode(lbRead()) : '';
+  show(`<div class="eyebrow">排行榜 · ${isExp ? '匯出' : '匯入'}</div><h2>${isExp ? '成績碼' : '貼上好友的成績碼'}</h2>
+    <p class="lb-note">${isExp
+      ? '下面這串文字包含你前 10 筆成績。複製給朋友，他貼進「匯入好友碼」就會出現在他的排行榜（標記為好友）。'
+      : '把朋友給你的 <b>OTA1.</b> 開頭文字貼進來。只會新增成績，不會覆蓋你自己的紀錄。'}</p>
+    <textarea id="lbCode" spellcheck="false" style="width:100%; min-height:120px; padding:10px; background:var(--paper-2); border:1px solid var(--edge); color:var(--ink); font-family:var(--font-mono); font-size:11.5px; line-height:1.5; word-break:break-all;">${isExp ? code : ''}</textarea>
+    <div class="btns">${isExp
+      ? '<button class="cta" id="lbCopy" type="button">複製</button><button class="cta alt" id="lbBack" type="button">返回</button>'
+      : '<button class="cta" id="lbPaste" type="button">匯入</button><button class="cta alt" id="lbBack" type="button">返回</button>'}</div>`);
+  bind('lbBack', () => window.showLeaderboard());
+  bind('lbCopy', () => {
+    const t = document.getElementById('lbCode');
+    t.select();
+    try { document.execCommand('copy'); toast('已複製成績碼', 'ok'); } catch (e) { toast('請手動複製（已全選）', 'bad'); }
+  });
+  bind('lbPaste', () => {
+    const raw = document.getElementById('lbCode').value;
+    let add = [];
+    try { add = lbDecode(raw); } catch (e) { toast('匯入失敗：' + e.message, 'bad'); return; }
+    if (!add.length) { toast('裡面沒有可用的成績', 'bad'); return; }
+    const list = lbRead().concat(add).sort((a, b) => b.score - a.score).slice(0, 20);
+    lbWrite(list);
+    toast(`已匯入 ${add.length} 筆好友成績`, 'ok');
+    window.showLeaderboard();
+  });
+}
 // 顯示總成績（首頁「📊 總成績」按鈕會呼叫）
 window.showStats = function () {
   const rows = [['opa', 'OPA'], ['two', 'Two-stage'], ['cs', '電流源'], ['ldo', 'LDO'], ['rand', '隨機'], ['sprint', '競速']]
@@ -1710,6 +1791,7 @@ function startTutorial() {
   TUT.startPos = Object.assign({}, S.pos);
   $('home').hidden = true; $('game').hidden = false; $('actionbar').hidden = false; $('hud').hidden = false;
   $('tutHub').hidden = true; $('lessonView').hidden = true;
+  hideStudy();
   $('btnSkip').hidden = true; $('btnCheck').textContent = '檢查';
   $('tutReset').onclick = () => {
     S.pos = Object.assign({}, TUT.startPos); TUT.moved = false; TUT.passed = {}; TUT.all = false;
@@ -1766,12 +1848,12 @@ const TUT_LESSONS = [
     s: 'DC GAIN、GBW、PHASE MARGIN、POWER、AREA 各是什麼？≥ 與 ≤ 要怎麼讀？',
     body: `
 <p>遊戲右上角的 <b>SPEC CARD</b> 就是你的成績單。每一列都是「<b>目前值</b> / <b>目標值</b>」：</p>
-<div class="fx">DC GAIN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;52.3 dB&nbsp;&nbsp;/ ≥ 40 dB
-GBW&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9.6 MHz&nbsp;/ ≥ 8 MHz
-PHASE MARGIN&nbsp;&nbsp;61°&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ ≥ 50°
+<div class="fx">DC GAIN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;45.0 dB&nbsp;&nbsp;/ ≥ 40 dB
+GBW&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.2 MHz&nbsp;/ ≥ 8 MHz
+PHASE MARGIN&nbsp;&nbsp;72°&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ ≥ 50°
 POWER&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;43 µW&nbsp;&nbsp;&nbsp;/ ≤ 60 µW
 AREA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32 µm²&nbsp;/ ≤ 80 µm²
-<small>左邊＝你現在的電路，右邊＝題目要你做到的事</small></div>
+<small>左邊＝你現在的電路，右邊＝題目要你做到的事（示範用的這組剛好是教學關卡的一組達標解）</small></div>
 <p><b>≥</b> 代表「不可以比目標小」，<b>≤</b> 代表「不可以比目標大」。達標的列會變綠，沒過的列會變紅。</p>
 <h2>五個欄位到底在說什麼</h2>
 <table>
@@ -1804,7 +1886,7 @@ AREA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32 µm²&nbsp;/ ≤ 80
     <button class="qbtn" type="button" data-ok="0">AREA</button>
     <button class="qbtn" type="button" data-ok="1">PHASE MARGIN</button>
   </div>
-  <div class="ans" hidden><b>解析</b>：PM 越大越穩定（目標通常是 ≥ 45°～60°）；POWER 與 AREA 都是越小越好，DC GAIN 與 GBW 則是越大越好。</div>
+  <div class="ans" hidden><b>解析</b>：PM 越大越穩定（各關目標從 ≥ 30° 到 ≥ 85° 不等，引導關卡是 ≥ 50°）；POWER 與 AREA 都是越小越好，DC GAIN 與 GBW 則是越大越好。</div>
 </div>`
   },
 
@@ -1907,9 +1989,9 @@ AREA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32 µm²&nbsp;/ ≤ 80
 Id = ½ · µCox · (W/L) · Vov²</div>
 <p><b>W/L</b> 是通道「多寬 / 多短」的比值。同樣的 Vov 下，<b>W/L 越大 → 電流越大</b>；W/L 固定時，<b>Vov 越大 → 電流以平方成長</b>。</p>
 <h2>小訊號：gm 與 ro</h2>
-<div class="fx">gm = 2·Id / Vov　（電流越大、Vov 越小，gm 越大）
+<div class="fx">gm = 2·Id / Vov　（電流越大、Vov 越小，gm 越大；遊戲在分母多加了 0.073 V 的修正，避免 Vov → 0 時 gm 爆掉）
 ro = 1 / (λ·Id)，λ ∝ 1/L　（L 越長，ro 越大）
-單級增益 Av ≈ gm × ro</div>
+單級增益 Av ≈ gm × ro　（5T OTA 的輸出阻抗其實是 ro2 ∥ ro4，gm 用輸入對的 gm1）</div>
 <p>這條式子解釋了整個遊戲：<b>gm 是「推得多用力」，ro 是「輸出撐得多穩」</b>，兩個一起決定增益。而 gm 又決定頻寬（GBW ≈ gm / 2πCL），所以「快」和「省電」天生衝突。</p>
 <div class="callout warn"><b>沒有白吃的午餐</b>：加長 L 讓 ro 變大、增益變高，但面積以 L² 成長，而且閘極電容變大、鏡像極點下降，PM 會變差。</div>
 <h2>三個旋鈕各自在幹嘛</h2>
@@ -2025,7 +2107,8 @@ AREA ≈ (2·W1 + 2·W3 + 0.69·It) × L²
     s: '為什麼要第二級？Cc 在做什麼？五步設計流程、Slew Rate 與偏壓點一次看懂。',
     body: `
 <p>單級 5T OTA 的增益大約 <b>gm·ro ≈ 40 dB</b>。如果規格要求 ≥ 64 dB，一級怎麼調都補不完——最直接的做法就是<b>再接一級</b>，讓總增益變成兩級的乘積。</p>
-<div class="fx">A0 ≈ (gm1 · ro1) × (gm6 · ro7)      ← 第一級 × 第二級
+<div class="fx">A0 ≈ (gm1 · R1) × (gm6 · R2)      ← 第一級 × 第二級
+R1 = ro2 ∥ ro4（第一級輸出節點 n2）、R2 = ro6 ∥ ro7（輸出節點 Vout）
 第一級：差分對 + 鏡像負載（就是 5T OTA）
 第二級：共源極 M6 + 電流源負載 M7
 補償：Cc 跨接在 n2 與 Vout 之間（Miller 補償）</div>
@@ -2046,9 +2129,9 @@ AREA ≈ (2·W1 + 2·W3 + 0.69·It) × L²
   <path class="thin" d="M106 110 V132"/><circle class="thin" cx="106" cy="140" r="8"/>
   <path class="thin" d="M106 148 V156"/><path class="thin" d="M94 156 H118 M98 162 H114 M102 168 H110"/>
   <text class="lbl" x="118" y="138">M5 It</text>
-  <path class="hot" d="M196 84 V32 H286 M316 32 H386 V84"/>
-  <rect class="box" x="286" y="26" width="30" height="12"/>
-  <text class="lbl" x="290" y="22">Rz</text><text class="lbl" x="332" y="24">Cc</text>
+  <path class="hot" d="M196 84 V32 H322 M352 32 H386 V84"/>
+  <rect class="box" x="322" y="26" width="30" height="12"/>
+  <text class="lbl" x="326" y="22">Rz</text><text class="lbl" x="358" y="24">Cc</text>
   <path class="w" d="M386 84 V118"/><path class="w" d="M374 118 H398 M374 124 H398"/>
   <path class="w" d="M386 124 V138"/><path class="w" d="M374 138 H398 M378 144 H394 M382 150 H390"/>
   <text class="lbl" x="402" y="116">CL</text>
@@ -2058,21 +2141,21 @@ AREA ≈ (2·W1 + 2·W3 + 0.69·It) × L²
 <h2>Miller 補償：為什麼要接那顆 Cc</h2>
 <p>接成負回授時，n2 和 Vout 各是一個極點。兩個極點靠太近，相位在 GBW 附近就會累積到 −180°，電路開始振鈴甚至振盪。把 Cc 跨在兩級之間，會產生兩個效果：</p>
 <ul>
-<li><b>主極點被推到更低頻</b>（因為 Miller 效應把 Cc 放大成 gm6·Cc）</li>
+<li><b>主極點被推到更低頻</b>（Miller 效應把 Cc 等效放大成 (1+A2)·Cc ≈ gm6·R2·Cc，等於在 n2 掛了一顆巨大的電容）</li>
 <li><b>次極點被推到更高頻</b>——這就是「極點分裂」</li>
 </ul>
-<div class="fx">主極點 fp1 ≈ 1 / (2π · gm6 · ro1 · ro2 · Cc)
+<div class="fx">主極點 fp1 ≈ 1 / (2π · gm6 · R1 · R2 · Cc)
 次極點 fp2 ≈ gm6 / (2π · CL)
 GBW ≈ gm1 / (2π · Cc)      ← 只跟 Cc 有關，跟 CL 無關
 右半平面零點 fz ≈ gm6 / (2π · Cc)   ← 會把相位再往下拉
-<small>Rz 跟 Cc 串聯可以把這個零點搬到左半平面（甚至拿來抵掉 fp2）</small></div>
+<small>Rz 跟 Cc 串聯可以把這個零點搬到左半平面（甚至拿來抵掉 fp2）；遊戲把每個節點化簡成一個等效 ro，所以 R1·R2 就寫成 ro1·ro2</small></div>
 <h2>五步設計流程（白話版）</h2>
 <ol>
-<li><b>先定 Cc</b>。一般 Cc 會比 CL 小：太大浪費面積、太小容易被寄生電容影響。</li>
+<li><b>先定 Cc</b>。Cc 通常比 CL 小，但有下限：太小則 fp2 不夠高、PM 不夠（常用起點 Cc ≥ 0.22·CL）；太大則浪費面積、GBW 也跟著掉。</li>
 <li><b>用相位裕度定第二級 gm6</b>。φm = 90° − tan⁻¹(ft / fp2)。若要求 φm ≈ 63°，代表 fp2 ≈ 2·ft；再由 fp2 = gm6/(2πCL)、ft = gm1/(2πCc) 反推 gm6。</li>
 <li><b>用 Slew Rate 定電流</b>。SR 受兩個限制：第一級只能對 Cc 充放電（I11/Cc），第二級還要推 CL（I12/(Cc+CL)）。<b>兩個條件都要滿足</b>，取小的那個。</li>
-<li><b>用 DC 增益定 Vov</b>。A0 = (2ID/Vov)·(ro∥ro)·gm6·(ro∥ro)，而 I12 = I13 → 反推出第二級該有的 Vov。</li>
-<li><b>最後才 sizing</b>。M9/M10 決定 Vgs13，用來把 Veff13 調到剛好的值；MC 的尺寸由 Rc = 1/(Kn′·(W/L)·(Vgs−Vt)) 決定。</li>
+<li><b>用 DC 增益定 Vov</b>。A0 ≈ gm8·(ro8∥ro10) × gm13·(ro12∥ro13)，其中 gm = 2ID/Veff；第二級電流 I12 = I13 固定之後，A0 就只剩 Veff13 一個未知數 → 反推出第二級該有的 Vov。</li>
+<li><b>最後才 sizing</b>。M9/M10 決定 Vgs13，用來把 Veff13 調到剛好的值；Rc 通常用一顆工作在三極區的 MOS（MC）當電阻，Rc = 1/(Kn′·(W/L)·(Vgs−Vt))。</li>
 </ol>
 <div class="callout warn"><b>最容易翻車的地方：偏壓點</b>。n2 與 Vout 的直流電位決定 M8、M10、M12、M13 在不在飽和區。Vout 太低 → 第二級輸出管滑進三極區 → ro 變小 → 增益直接掉。<br>口訣：<b>Vout 太低就讓「往下拉」變弱</b>——M9/M10 加大，或 M13 減小。</div>
 <h2>在遊戲裡怎麼對應</h2>
@@ -2086,6 +2169,7 @@ GBW ≈ gm1 / (2π · Cc)      ← 只跟 Cc 有關，跟 CL 無關
 <tr><td>補償電容 Cc</td><td>Cc</td><td>GBW（↓）、PM（↑）</td></tr>
 <tr><td>Rz 開關</td><td>零點位置</td><td>PM（↑）、面積（+10 µm²）</td></tr>
 </tbody></table>
+<p><b>名稱對照</b>：PPT 的五步流程用的是 M12（第二級電流源）/ M13（第二級驅動）與 M8–M10（第一級、偏壓），遊戲則簡化成 M6 / M7——同一個位置的元件，只是編號不同。</p>
 <p>注意遊戲裡 <b>GBW 只看 Cc</b>、<b>PM 看 fp2 與零點</b>：所以「Cc 拉大」會犧牲頻寬換穩定，「M6/M7 拉大」是把次極點推高、同時也把增益做高。</p>
 <div class="quiz">
   <div class="qk">小試身手 1 / 2</div>
@@ -2121,19 +2205,19 @@ ro = 1 / (λ · I)         λ ∝ 1/L（L 越長，ro 越大）
 <p>要讓電流「釘住」，就要讓 <b>輸出阻抗 Rout 越大越好</b>：Rout 大，同樣的 Vds 變化只造成很小的 ΔI。這堂課就是把 Rout 從一顆 ro 一路加大到 gm·ro²，同時看清每一種做法要付多少 <b>headroom</b>。</p>
 <figure class="fig">
 <svg viewBox="0 0 340 190" role="img" aria-label="三種電流鏡的最低輸出電壓比較：simple、cascode、wide-swing">
-  <text class="lbl" x="6" y="26">simple</text>
-  <text class="lbl" x="6" y="76">cascode</text>
-  <text class="lbl" x="6" y="126">wide-swing</text>
-  <path class="grid" d="M70 34 H290 M70 84 H290 M70 134 H290"/>
-  <rect class="box" x="70" y="26" width="24" height="16"/><text class="val" x="100" y="38">Vov</text>
-  <rect class="box" x="70" y="76" width="108" height="16"/><text class="val" x="184" y="88">Vth + 2Vov</text>
-  <rect class="box" x="70" y="126" width="48" height="16"/><text class="val" x="124" y="138">2Vov</text>
-  <path class="thin" d="M70 152 V22"/><path class="thin" d="M70 152 H290"/>
-  <path class="arrow" d="M290 152 l-6 -3 v6 z"/><text class="lbl" x="292" y="156">V</text>
-  <path class="mark" d="M270 20 V156"/><text class="lbl" x="266" y="168" text-anchor="end">可用範圍上限</text>
-  <text class="lbl" x="70" y="170">0</text>
+  <text class="lbl" x="4" y="28">simple</text>
+  <text class="lbl" x="4" y="78">cascode</text>
+  <text class="lbl" x="4" y="128">wide-swing</text>
+  <path class="grid" d="M108 40 H300 M108 90 H300 M108 140 H300"/>
+  <rect class="box" x="108" y="28" width="21" height="16"/><text class="val" x="134" y="41">Vov</text>
+  <rect class="box" x="108" y="78" width="96" height="16"/><text class="val" x="210" y="91">Vth + 2Vov</text>
+  <rect class="box" x="108" y="128" width="43" height="16"/><text class="val" x="157" y="141">2Vov</text>
+  <path class="thin" d="M108 162 V22"/><path class="thin" d="M108 162 H296"/>
+  <path class="arrow" d="M300 162 l-8 -4 v8 z"/><text class="lbl" x="302" y="166">V</text>
+  <text class="lbl" x="106" y="178" text-anchor="middle">0</text>
+  <text class="lbl" x="300" y="178" text-anchor="middle">1.8 V</text>
 </svg>
-<figcaption>最低輸出電壓（以 Vov = 0.2 V、Vth = 0.5 V 示意）：simple 最省 headroom 但最不準；cascode 最準但吃掉 0.9 V；wide-swing 把 cascode 的 bias 壓到 Vov，換回 0.5 V。</figcaption>
+<figcaption>最低輸出電壓（以 Vov = 0.2 V、Vth = 0.5 V 示意）：simple 最省 headroom 但最不準；cascode 最準但吃掉 0.9 V；wide-swing 把 cascode 的閘極偏壓整個降一個 Vth，換回 0.5 V。</figcaption>
 </figure>
 <h2>三種鏡像的取捨</h2>
 <table>
@@ -2148,9 +2232,9 @@ ro = 1 / (λ · I)         λ ∝ 1/L（L 越長，ro 越大）
 <div class="fx">Rout(cascode) ≈ gm·ro² = (2I/Vov) · (1/(λI))²
 跟單顆 ro = 1/(λI) 相比，大約多了 gm·ro 倍（幾十～幾百倍）
 代價：輸出端要多堆一個 Vgs → 最低 Vout 從 Vov 變成 Vth + 2Vov</div>
-<div class="callout"><b>為什麼會多一個 Vth？</b>因為 cascode 那顆的閘極通常接在「Vth + Vov」的偏壓上，輸出節點必須高到讓它維持飽和。這個 Vth 就是被白白吃掉的電壓。</div>
+<div class="callout"><b>為什麼會多一個 Vth？</b>cascode 的飽和條件是 <b>Vout ≥ V_G(cascode) − Vth</b>。傳統接法把它的閘極接在 2Vgs ≈ 2Vth + 2Vov，所以 Vout,min = Vth + 2Vov——這一個 Vth 就是被白白吃掉的電壓。</div>
 <h2>wide-swing 在省什麼</h2>
-<p>wide-swing（又稱 wide-swing cascode、low-voltage cascode）用一組額外的偏壓電路，把 cascode 的閘極壓到 <b>Vov</b> 而不是 Vth + Vov。輸出端最低電壓就從 Vth + 2Vov 降到 2Vov——在 1.8 V（甚至 1 V）的低壓製程裡，這 0.5 V 往往就是「能不能用」的差別。</p>
+<p>wide-swing（又稱 wide-swing cascode、low-voltage cascode）用一組額外的偏壓電路，把 cascode 的閘極改偏在 <b>Vth + 2Vov</b>（比傳統的 2Vgs 少一個 Vth）。輸出端最低電壓就從 Vth + 2Vov 降到 2Vov——在 1.8 V（甚至 1 V）的低壓製程裡，這 0.5 V 往往就是「能不能用」的差別。</p>
 <ul>
 <li><b>好處</b>：同樣的 Rout，多出約一個 Vth 的輸出擺幅。</li>
 <li><b>代價</b>：偏壓電路要自己生一組 Vov，面積、功耗、設計時間都增加；而且 wide-swing 的節點對失配、雜訊更敏感。</li>
@@ -2177,7 +2261,7 @@ ro = 1 / (λ · I)         λ ∝ 1/L（L 越長，ro 越大）
     <button class="qbtn" type="button" data-ok="1">wide-swing 的最低輸出電壓少了一個 Vth</button>
     <button class="qbtn" type="button" data-ok="0">wide-swing 不需要偏壓電路</button>
   </div>
-  <div class="ans" hidden><b>解析</b>：wide-swing 把 cascode 閘極偏在 Vov，最低 Vout 從 Vth + 2Vov 降到 2Vov；但偏壓電路因此更複雜，這才是它的代價。</div>
+  <div class="ans" hidden><b>解析</b>：wide-swing 把 cascode 的閘極偏壓降一個 Vth（改偏在 Vth + 2Vov），最低 Vout 就從 Vth + 2Vov 降到 2Vov；但偏壓電路因此更複雜，這才是它的代價。</div>
 </div>`
   },
 
@@ -2234,7 +2318,7 @@ function labOhm(doc) {
 </div>`;
   const q = id => doc.querySelector('#' + id);
   const R = () => 1e3 * Math.pow(10, st.pos / 1000 * 3);
-  const scale = I => clamp(Math.log10(I) / 3 * 100, 0, 100);
+  const scale = I => clamp((Math.log10(I) + 6) / 3 * 100, 0, 100);   // 1 µA → 0%、1 mA → 100%
   const paint = () => {
     const r = R(), i = VDD / r, ok = i >= task.lo * 1e-6 && i <= task.hi * 1e-6;
     q('lRv').textContent = fmtOhm(r);
@@ -2332,19 +2416,19 @@ function labIvid(doc) {
 <div class="hub-eyebrow">實驗 03 · 元件曲線</div>
 <h1>Vds–Id：線性區與飽和區</h1>
 <p class="lead">固定 Vgs，慢慢把 Vds 拉高：Vds &lt; Vov 時通道還沒夾止，電流像可變電阻一樣往上衝；Vds ≥ Vov 之後通道夾止、電流幾乎變平——這就是<b>飽和區</b>，也是放大器工作的地方。</p>
-<div class="lab-grid wide">
-  <div class="panel"><div class="panel-h">輸出特性 Id–Vds</div><div class="plot" id="vPlot"></div>
-    <div class="meter-x" style="margin-top:6px"><span>粗線＝現在的 Vgs</span><span>細線＝Vgs ± 0.15 V</span></div>
+<div class="panel"><div class="panel-h">輸出特性 Id–Vds</div><div class="plot" id="vPlot"></div>
+  <div class="meter-x" style="margin-top:6px"><span>粗線＝現在的 Vgs</span><span>細線＝Vgs ± 0.15 V</span></div>
+</div>
+<div class="panel" style="margin-top:14px">
+  <div class="panel-h">偏壓</div>
+  <div class="frow">
+    <div class="vfield"><span class="fl">Vgs</span><input type="range" id="vVgs" min="0" max="1000" step="1" value="${st.vgs}"><span class="fv" id="vVgsv"></span></div>
+    <div class="vfield"><span class="fl">W/L</span><input type="range" id="vWl" min="0" max="1000" step="1" value="${st.wl}"><span class="fv" id="vWlv"></span></div>
+    <div class="vfield"><span class="fl">Vds（工作點）</span><input type="range" id="vVds" min="0" max="1000" step="1" value="${st.vds}"><span class="fv" id="vVdsv"></span></div>
   </div>
-  <div class="panel">
-    <div class="panel-h">偏壓</div>
-    <div class="field"><span class="fl">Vgs</span><input type="range" id="vVgs" min="0" max="1000" step="1" value="${st.vgs}"><span class="fv" id="vVgsv"></span></div>
-    <div class="field"><span class="fl">W/L</span><input type="range" id="vWl" min="0" max="1000" step="1" value="${st.wl}"><span class="fv" id="vWlv"></span></div>
-    <div class="field"><span class="fl">Vds</span><input type="range" id="vVds" min="0" max="1000" step="1" value="${st.vds}"><span class="fv" id="vVdsv"></span></div>
-    <div class="readout" id="vOut" style="margin-top:8px"></div>
-    <div class="lab-msg" id="vMsg"></div>
-  </div>
-</div>`;
+  <div class="readout" id="vOut"></div>
+</div>
+<div class="lab-msg" id="vMsg" style="margin-top:10px"></div>`;
   const q = id => doc.querySelector('#' + id);
   const fId = i => i >= 1e-3 ? (i * 1e3).toFixed(2) + ' mA' : (i * 1e6).toFixed(0) + ' µA';
   const draw = () => {
@@ -2375,20 +2459,22 @@ function labIvid(doc) {
     }
     const iOp = idOf(vds, vgs), sat = vds >= vov && vov > 0.02;
     const region = vov <= 0.02 ? '截止區' : sat ? '飽和區' : '線性區';
-    const regColor = vov <= 0.02 ? 'var(--ink-dim)' : sat ? 'var(--green)' : 'var(--amber)';
     q('vPlot').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Id 對 Vds 曲線，工作點 ${region}">
       <rect class="tri" x="${ml}" y="${mt}" width="${Math.max(0, X(Math.min(vov, VDD)) - ml)}" height="${H - mb - mt}"/>
       ${grid.join('')}
-      ${vov > 0.02 && vov < VDD ? `<line class="mark" x1="${X(vov)}" y1="${mt}" x2="${X(vov)}" y2="${H - mb}"/><text class="val" x="${X(vov) + 4}" y="${mt + 12}">Vov = ${vov.toFixed(2)} V</text>` : ''}
-      <path class="thin" d="${path(vgs - 0.15)}" opacity=".45"/>
-      <path class="thin" d="${path(vgs + 0.15)}" opacity=".45"/>
+      ${vov > 0.02 && vov < VDD ? `<line class="mark" x1="${X(vov)}" y1="${mt}" x2="${X(vov)}" y2="${H - mb}"/><text class="val" x="${X(vov) - 6}" y="${mt + 30}" text-anchor="end">Vov = ${vov.toFixed(2)} V</text>` : ''}
+      <path class="thin" d="${path(vgs - 0.15)}" opacity=".3" stroke="var(--cyan)"/>
+      <path class="thin" d="${path(vgs + 0.15)}" opacity=".3" stroke="var(--cyan)"/>
       <path class="curve" d="${path(vgs)}"/>
       <line x1="${X(vds)}" y1="${H - mb}" x2="${X(vds)}" y2="${Y(iOp)}" stroke="var(--amber)" stroke-dasharray="3 3" stroke-width="1"/>
       <circle class="op" cx="${X(vds)}" cy="${Y(iOp)}" r="4.5"/>
       <text class="val" x="${X(vds) + 7}" y="${Y(iOp) - 7}">${fId(iOp)}</text>
       <text class="lab" x="${ml}" y="${mt - 5}">Id</text>
       <text class="lab" x="${W - mr}" y="${H - mb + 30}" text-anchor="end">Vds (V)</text>
-      <text x="${ml + 8}" y="${mt + 16}" fill="${regColor}" font-size="12" font-weight="600">${region}</text>
+      ${vov > 0.02 && vov < VDD ? `<text x="${ml + Math.max(0, X(vov) - ml) / 2}" y="${mt + 15}" text-anchor="middle" fill="var(--amber)" font-size="11">線性區</text>
+      <text x="${(X(vov) + W - mr) / 2}" y="${mt + 15}" text-anchor="middle" fill="var(--green)" font-size="11">飽和區</text>` : ''}
+      ${vov > 0.02 && vov >= VDD ? `<text x="${(ml + W - mr) / 2}" y="${mt + 15}" text-anchor="middle" fill="var(--green)" font-size="11">整段都在線性區</text>` : ''}
+      ${vov <= 0.02 ? `<text x="${(ml + W - mr) / 2}" y="${mt + 15}" text-anchor="middle" fill="var(--ink-dim)" font-size="11">截止區（沒有通道）</text>` : ''}
     </svg>`;
     q('vVgsv').textContent = vgs.toFixed(2) + ' V';
     q('vWlv').textContent = wl.toFixed(1);
@@ -2398,7 +2484,7 @@ function labIvid(doc) {
       <div class="row"><span>工作點區域</span><b class="${sat ? 'ok' : 'bad'}">${region}</b></div>
       <div class="row"><span>Id（工作點）</span><b>${fId(iOp)}</b></div>
       <div class="row"><span>Id（飽和預測）</span><b>${fId(idSat)}</b></div>
-      <div class="row"><span>ro = 1/(λ·Id)</span><b>${(1 / (LAMN / 0.5 * iOp) / 1e3).toFixed(1)} kΩ</b></div>`;
+      <div class="row"><span>ro = 1/(λ·Id)｜L 0.5 µm</span><b>${(1 / (LAMN / 0.5 * iOp) / 1e3).toFixed(1)} kΩ</b></div>`;
     q('vMsg').className = 'lab-msg ' + (sat ? 'ok' : '');
     q('vMsg').innerHTML = vov <= 0.02
       ? '<b>截止（cutoff）</b>：Vgs 還沒超過 Vth，通道沒形成，幾乎沒有電流。'
@@ -2410,6 +2496,130 @@ function labIvid(doc) {
     st[['vgs', 'wl', 'vds'][n]] = +e.target.value; draw();
   }));
   draw();
+}
+
+/* --- 實驗 04：gm / ro / Av / GBW 計算器 --- */
+function labCalc(doc) {
+  const st = LAB.calc || (LAB.calc = { w1: 45, w3: 10, it: 24, L: 0.5, cl: 3 });
+  doc.innerHTML = `
+<div class="hub-eyebrow">實驗 04 · 估算工具</div>
+<h1>gm / ro / Gain / GBW 計算器</h1>
+<p class="lead">用和遊戲同一組簡化模型（平方律 + λ、忽略寄生電容與 body effect）算一次手算流程。數字會和遊戲規格卡很接近，但不完全相同——差異就是模型省略掉的東西。</p>
+<div class="panel">
+  <div class="panel-h">輸入（5T OTA 的偏壓）</div>
+  <div class="frow">
+    <div class="vfield"><span class="fl">輸入對 W/L</span><input type="number" id="cW1" min="1" max="400" step="1" value="${st.w1}"></div>
+    <div class="vfield"><span class="fl">負載鏡 W/L</span><input type="number" id="cW3" min="0.5" max="100" step="0.5" value="${st.w3}"></div>
+    <div class="vfield"><span class="fl">尾電流 It（µA）</span><input type="number" id="cIt" min="1" max="150" step="1" value="${st.it}"></div>
+    <div class="vfield"><span class="fl">通道長 L（µm）</span><input type="number" id="cL" min="0.18" max="2" step="0.02" value="${st.L}"></div>
+    <div class="vfield"><span class="fl">負載電容 CL（pF）</span><input type="number" id="cCl" min="0.5" max="20" step="0.5" value="${st.cl}"></div>
+  </div>
+  <div class="lab-actions"><button class="ghost" id="cStart" type="button">教學起始（全部最大）</button><button class="ghost" id="cTut" type="button">教學達標組合</button></div>
+  <p class="lab-hint"><b>模型</b>：Kn′ = 200 µA/V²、Kp′ = 70 µA/V²、Vth = 0.5 V、λn = 0.02/L、λp = 0.025/L。gm = 2Id/(Vov + 0.073)（遊戲為了避免 Vov→0 時 gm 爆掉加的小偏移）。<br><b>兩個預設</b>：「全部最大」是教學模式的起點（增益看起來很高、但 PM 幾乎歸零、面積爆表）；「達標組合」是同一關真的能過的一組解，可以對照它在教學模式裡的樣子。</p>
+</div>
+<div class="panel" style="margin-top:14px">
+  <div class="panel-h">結果</div>
+  <div class="readout" id="cOut"></div>
+  <div class="fx" id="cWork" style="font-size:12.5px"></div>
+</div>`;
+  const q = id => doc.querySelector('#' + id);
+  const calc = () => {
+    const w1 = clamp(+q('cW1').value || 1, 1, 400), w3 = clamp(+q('cW3').value || 1, 0.5, 100);
+    const it = clamp(+q('cIt').value || 1, 1, 150), L = clamp(+q('cL').value || 0.18, 0.18, 2);
+    const cl = clamp(+q('cCl').value || 1, 0.5, 20);
+    st.w1 = w1; st.w3 = w3; st.it = it; st.L = L; st.cl = cl;
+    const id = it * 1e-6 / 2;
+    const vov1 = vovOf(id, KN, w1), gm1 = gmOf(id, vov1), gm3 = gmOf(id, vovOf(id, KP, w3));
+    const ro = 1 / ((LAMN + LAMP) / L * id);
+    const av = gm1 * ro, avDb = 20 * Math.log10(av);
+    const gbw = gm1 / (TP * cl * 1e-12);
+    const pwr = VDD * it * 1e-6;
+    const area = (2 * w1 + 2 * w3 + AREA_TAIL * it) * L * L;
+    q('cOut').innerHTML = `
+      <div class="row"><span>Vov1</span><b>${(vov1 * 1e3).toFixed(0)} mV</b></div>
+      <div class="row"><span>gm1</span><b>${(gm1 * 1e6).toFixed(0)} µS</b></div>
+      <div class="row"><span>gm3（鏡像）</span><b>${(gm3 * 1e6).toFixed(0)} µS</b></div>
+      <div class="row"><span>ro1 ∥ ro3</span><b>${(ro / 1e3).toFixed(0)} kΩ</b></div>
+      <div class="row"><span>Av = gm1 · ro</span><b class="${avDb >= 40 ? 'ok' : 'bad'}">${av.toFixed(0)} = ${avDb.toFixed(1)} dB</b></div>
+      <div class="row"><span>GBW = gm1/(2πCL)</span><b class="${gbw / 1e6 >= 8 ? 'ok' : 'bad'}">${(gbw / 1e6).toFixed(2)} MHz</b></div>
+      <div class="row"><span>POWER = VDD × It</span><b>${(pwr * 1e6).toFixed(0)} µW</b></div>
+      <div class="row"><span>AREA</span><b>${area.toFixed(0)} µm²</b></div>`;
+    q('cWork').innerHTML =
+`Vov1 = √(2·Id / (Kn′·W/L1)) = √(2·${(id * 1e6).toFixed(0)}µ / (200µ·${w1})) = ${(vov1 * 1e3).toFixed(0)} mV
+gm1  = 2·Id / (Vov1 + 0.073) = ${(gm1 * 1e6).toFixed(0)} µS
+ro   = 1 / ((λn+λp)/L · Id) = ${(ro / 1e3).toFixed(0)} kΩ
+Av   = ${(gm1 * 1e6).toFixed(0)}µ × ${(ro / 1e3).toFixed(0)}k = ${av.toFixed(0)} → ${avDb.toFixed(1)} dB
+GBW  = ${(gm1 * 1e6).toFixed(0)}µ / (2π·${cl}p) = ${(gbw / 1e6).toFixed(2)} MHz
+<small>忽略：Cgs/Cgd、鏡像極點、body effect、速度飽和。PM 請看遊戲規格卡。</small>`;
+  };
+  doc.querySelectorAll('input').forEach(el => el.addEventListener('input', calc));
+  q('cStart').addEventListener('click', () => { q('cW1').value = 400; q('cW3').value = 100; q('cIt').value = 150; q('cL').value = 2; q('cCl').value = 3; calc(); });
+  q('cTut').addEventListener('click', () => { q('cW1').value = 100; q('cW3').value = 20; q('cIt').value = 24; q('cL').value = 0.5; q('cCl').value = 3; calc(); });
+  calc();
+}
+
+/* --- 實驗 05：三種電流鏡比較 --- */
+function labMirror(doc) {
+  const st = LAB.mirror || (LAB.mirror = { iref: 250, wm: 500, L: 550, vout: 620 });
+  doc.innerHTML = `
+<div class="hub-eyebrow">實驗 05 · 電流鏡</div>
+<h1>simple / cascode / wide-swing</h1>
+<p class="lead">同一個 Iref 下，三種鏡像的輸出阻抗差很多。把 Vout 拉低，看誰先掉進三極區——<b>精度</b>與 <b>headroom</b> 永遠在交換。</p>
+<div class="panel">
+  <div class="panel-h">偏壓</div>
+  <div class="frow">
+    <div class="vfield"><span class="fl">Iref</span><input type="range" id="mRef" min="0" max="1000" step="1" value="${st.iref}"><span class="fv" id="mRefv"></span></div>
+    <div class="vfield"><span class="fl">鏡像 W/L</span><input type="range" id="mWl" min="0" max="1000" step="1" value="${st.wm}"><span class="fv" id="mWlv"></span></div>
+    <div class="vfield"><span class="fl">通道長 L</span><input type="range" id="mL" min="0" max="1000" step="1" value="${st.L}"><span class="fv" id="mLv"></span></div>
+    <div class="vfield"><span class="fl">Vout</span><input type="range" id="mVout" min="0" max="1000" step="1" value="${st.vout}"><span class="fv" id="mVoutv"></span></div>
+  </div>
+</div>
+<div class="panel" style="margin-top:14px">
+  <div class="panel-h">比較（Iout = Iref）</div>
+  <table>
+    <thead><tr><th>型式</th><th>Rout</th><th>ΔI</th><th>最低 Vout</th><th>狀態</th></tr></thead>
+    <tbody id="mBody"></tbody>
+  </table>
+  <p class="lab-hint"><b>ΔI</b> 只算「有限 Rout」造成的系統誤差（假設參考支路也堆了同樣的 Vds）；真實晶片還有失配（∝ 1/√(W·L)）、雜訊與佈局寄生。</p>
+</div>
+<div class="lab-msg" id="mMsg" style="margin-top:10px"></div>`;
+  const q = id => doc.querySelector('#' + id);
+  const paint = () => {
+    const iref = 2 + st.iref / 1000 * 98;
+    const wm = Math.pow(10, st.wm / 1000 * 2.3);
+    const L = 0.18 * Math.pow(4 / 0.18, st.L / 1000);
+    const vout = 0.4 + st.vout / 1000 * 1.2;
+    const iout = iref * 1e-6;
+    const vov = vovOf(iout, KN, wm), gm = gmOf(iout, vov), lam = LAMN / L;
+    const ro = 1 / (lam * iout);
+    const modes = [
+      { nm: 'simple', rout: ro, vmin: vov, ref: VTH + vov },
+      { nm: 'cascode', rout: (gm * ro + 2) * ro, vmin: VTH + 2 * vov, ref: 2 * (VTH + vov) },
+      { nm: 'wide-swing', rout: (gm * ro + 2) * ro, vmin: 2 * vov, ref: 2 * vov }
+    ];
+    const rows = modes.map(m => {
+      const ok = vout >= m.vmin;
+      const err = Math.abs(vout - m.ref) / (m.rout * iout) * 100;
+      const eShow = ok ? (err < 0.01 ? err.toFixed(3) : err.toFixed(2)) + '%' : '—';
+      return `<tr><td class="num">${m.nm}</td><td class="num">${(20 * Math.log10(m.rout)).toFixed(1)} dBΩ</td>
+        <td class="num ${ok ? '' : 'bad'}">${eShow}</td><td class="num">${m.vmin.toFixed(2)} V</td>
+        <td class="${ok ? 'ok' : 'bad'}">${ok ? '飽和' : '三極區'}</td></tr>`;
+    }).join('');
+    q('mBody').innerHTML = rows;
+    q('mRefv').textContent = iref.toFixed(1) + ' µA';
+    q('mWlv').textContent = wm.toFixed(1);
+    q('mLv').textContent = L.toFixed(2) + ' µm';
+    q('mVoutv').textContent = vout.toFixed(2) + ' V';
+    const good = modes.filter(m => vout >= m.vmin).map(m => m.nm);
+    q('mMsg').className = 'lab-msg ' + (good.length ? 'ok' : 'bad');
+    q('mMsg').innerHTML = good.length === 0
+      ? `<b>Vout = ${vout.toFixed(2)} V 太低了</b>：三種鏡像都會掉進三極區，Rout 崩掉、電流完全不受控。實務上要靠 wide-swing 或降低 Vov 把最低電壓壓下來。`
+      : `<b>可以工作的：${good.join('、')}</b>。Vov = ${(vov * 1e3).toFixed(0)} mV → simple 只要 ${vov.toFixed(2)} V 就能飽和，但 Rout 只有 ${(20 * Math.log10(ro)).toFixed(1)} dBΩ；<br>cascode 多花一個 Vth（最低 ${(VTH + 2 * vov).toFixed(2)} V）換到 ${(20 * Math.log10(modes[1].rout)).toFixed(1)} dBΩ；<br>wide-swing 把這一個 Vth 省回來（最低 ${(2 * vov).toFixed(2)} V），代價是偏壓電路。`;
+  };
+  ['mRef', 'mWl', 'mL', 'mVout'].forEach((id, n) => q(id).addEventListener('input', e => {
+    st[['iref', 'wm', 'L', 'vout'][n]] = +e.target.value; paint();
+  }));
+  paint();
 }
 
 function renderLessonList() {
@@ -2476,7 +2686,7 @@ function openLesson(i) {
   S.view = 'lesson'; S.running = false; S.tutorial = false; S.sprint = false;
   hide();
   $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
-  $('tutHub').hidden = true; $('lessonView').hidden = false;
+  hideStudy(); $('lessonView').hidden = false;
   $('lessonCrumb').textContent = `第 ${i + 1} / ${TUT_LESSONS.length} 課 · ${l.tag}`;
   $('lessonDoc').innerHTML = `<div class="hub-eyebrow">${l.tag} · 閱讀 ${l.min}</div><h1>${l.t}</h1><p class="lead">${l.s}</p>${l.body}`;
   $('lessonPrev').disabled = i === 0;
@@ -2485,12 +2695,245 @@ function openLesson(i) {
   window.scrollTo(0, 0);
 }
 
+/* ---------- 練習區：實驗台 ---------- */
+const LAB_FN = { ohm: labOhm, pwr: labPwr, ivid: labIvid, calc: labCalc, mirror: labMirror };
+function openLab(id) {
+  const fn = LAB_FN[id]; if (!fn) return;
+  S.view = 'lab'; S.running = false; S.tutorial = false; S.sprint = false;
+  hide();
+  $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
+  hideStudy(); $('labView').hidden = false;
+  const meta = LABS.find(l => l.id === id);
+  $('labCrumb').textContent = meta ? `${meta.tag} · ${meta.t}` : '';
+  fn($('labDoc'));
+  window.scrollTo(0, 0);
+}
+
+
+
+/* ---------- 進階專區 ---------- */
+const ADV = [
+  {
+    id: 'bgr', tag: '參考電路', min: '7 分鐘', st: 'ready',
+    t: 'BGR 帶隙參考電壓',
+    s: '把「隨溫度下降的 VBE」和「隨溫度上升的 PTAT」加在一起，得到一顆幾乎不隨溫度、電源、製程變動的 1.2 V。',
+    body: `
+<p>整顆晶片的電壓、電流、時間，最後都要有一個「絕對的尺」。這把尺就是 <b>bandgap reference（BGR）</b>：輸出大約 1.2 V——這是把矽的能隙電壓外插到 0 K 的結果（室溫能隙約 1.12 eV，外插值約 1.17–1.2 V）。VBE 的溫度曲線往下外插時剛好也會碰到這個電壓，所以在此附近可以把溫度係數補到接近零。</p>
+<h2>兩個溫度係數相反的東西</h2>
+<ul>
+<li><b>VBE（CTAT）</b>：BJT 的基射極電壓約 −2 mV/°C，溫度越高越小。</li>
+<li><b>ΔVBE（PTAT）</b>：兩顆 <b>電流密度不同</b> 的 BJT，ΔVBE = VT·ln(N)，而 VT = kT/q 正比於絕對溫度，所以它隨溫度上升。</li>
+</ul>
+<div class="fx">Vref = VBE + (R2/R1) · ΔVBE
+     = VBE + (R2/R1) · VT · ln(N)
+     ↑ CTAT（往下）      ↑ PTAT（往上）
+選 R2/R1 讓兩項的溫度係數剛好抵消 → ∂Vref/∂T ≈ 0</div>
+<figure class="fig">
+<svg viewBox="0 0 420 200" role="img" aria-label="CTAT 與 PTAT 溫度係數互相抵消的示意圖">
+  <path class="thin" d="M52 168 H386 M52 168 V26"/>
+  <text class="lbl" x="36" y="24">V</text><text class="lbl" x="384" y="184">T</text>
+  <path class="hot" d="M64 56 L360 128"/><text class="val" x="298" y="148">VBE · CTAT</text>
+  <path class="thin" d="M64 132 L360 58"/><text class="lbl" x="304" y="52">PTAT</text>
+  <path class="mark" d="M64 96 H360"/><text class="lbl" x="66" y="90">Vref ≈ 1.2 V（幾乎水平）</text>
+  <text class="lbl" x="64" y="182">−40 °C</text><text class="lbl" x="332" y="182">125 °C</text>
+</svg>
+<figcaption>BGR 的核心就是把一條往下斜的線和一條往上斜的線加成水平線；斜率沒對好，輸出就會隨溫度漂。</figcaption>
+</figure>
+<h2>實作上會踩到的四個坑</h2>
+<ol>
+<li><b>啟動電路（start-up）</b>：BGR 有「零電流」這個穩定解，上電後可能一直不啟動。所以一定要有 start-up 把電路踢出死點，而且啟動完要自己關掉，否則會偷吃電流。</li>
+<li><b>運算放大器的 offset</b>：offset 會被 R2/R1 放大，直接變成輸出誤差。講究的設計會用 chopper / auto-zero，或把 BJT 比例 N 做大。</li>
+<li><b>失配與佈局</b>：兩顆 BJT 的 N 比例、電阻的比值都要匹配；用 unit device、common-centroid、dummy 是基本動作。</li>
+<li><b>低壓限制</b>：傳統 BGR 輸出 1.2 V，電源只有 1 V 時放不下。這時要改用 fractional BGR（輸出 &lt; 1 V）或 current-mode BGR。</li>
+</ol>
+<div class="callout"><b>和作業的連結</b>：HW2 的 bias circuit 也要求「start-up circuit」——原因完全一樣：電流鏡 + 自偏壓有零電流的穩定解，沒有 startup 就可能整顆不工作。</div>
+<h2>規格怎麼看</h2>
+<table>
+<thead><tr><th>規格</th><th>意思</th><th>典型值</th></tr></thead>
+<tbody>
+<tr><td>Vref</td><td>輸出參考電壓</td><td class="num">1.2 V</td></tr>
+<tr><td>TC</td><td>溫度係數（ppm/°C）</td><td class="num">10–50 ppm/°C</td></tr>
+<tr><td>PSRR</td><td>電源變動傳到輸出的比例</td><td class="num">−40 ~ −70 dB</td></tr>
+<tr><td>Iq</td><td>自身消耗電流</td><td class="num">幾 µA ~ 幾十 µA</td></tr>
+</tbody></table>
+<div class="quiz">
+  <div class="qk">小試身手</div>
+  <p class="q">BGR 一定要加 start-up 電路，最主要的原因是？</p>
+  <div class="qbtns">
+    <button class="qbtn" type="button" data-ok="1">自偏壓電路存在「零電流」的穩定解，不啟動就永遠沒電流</button>
+    <button class="qbtn" type="button" data-ok="0">start-up 會提高 PSRR</button>
+    <button class="qbtn" type="button" data-ok="0">start-up 用來補償 BJT 的溫度係數</button>
+  </div>
+  <div class="ans" hidden><b>解析</b>：電流鏡組成的自偏壓有兩個穩定點：零電流與正常工作點。start-up 只是把電路推到正常工作點，推上去之後要關掉才不會多耗電。</div>
+</div>`
+  },
+  {
+    id: 'chp', tag: '電源電路', min: '6 分鐘', st: 'ready',
+    t: 'Charge Pump 電荷泵',
+    s: '用電容和開關把電壓一階一階往上搬：Dickson 架構、漣波、效率，以及 PLL 裡面那個同名但完全不同的 charge pump。',
+    body: `
+<p>電荷泵（charge pump）顧名思義：<b>用電容搬電荷</b>。它不含電感，靠兩相不重疊的時脈把電容一會兒接輸入、一會兒串上去，電壓就一階一階堆高。優點是可以用標準 CMOS 做在晶片上，缺點是電流能力小、漣波大。</p>
+<h2>Dickson 架構</h2>
+<figure class="fig">
+<svg viewBox="0 0 420 210" role="img" aria-label="三級 Dickson 電荷泵：二極體串接與兩相時脈電容">
+  <path class="w" d="M24 62 H48"/><text class="lbl" x="22" y="52">Vin</text>
+  <path class="w" d="M62 62 l-14 -8 v16 z"/><path class="w" d="M62 50 V74"/>
+  <path class="w" d="M62 62 H122"/><circle class="w" cx="110" cy="62" r="2.6" fill="currentColor"/>
+  <path class="w" d="M136 62 l-14 -8 v16 z"/><path class="w" d="M136 50 V74"/>
+  <path class="w" d="M136 62 H194"/><circle class="w" cx="182" cy="62" r="2.6" fill="currentColor"/>
+  <path class="w" d="M208 62 l-14 -8 v16 z"/><path class="w" d="M208 50 V74"/>
+  <path class="w" d="M208 62 H300"/><circle class="w" cx="262" cy="62" r="2.6" fill="currentColor"/>
+  <text class="lbl" x="304" y="58">Vout</text>
+  <path class="w" d="M110 62 V104"/><path class="w" d="M98 104 H122 M98 112 H122"/><path class="w" d="M110 112 V150"/>
+  <path class="w" d="M182 62 V104"/><path class="w" d="M170 104 H194 M170 112 H194"/><path class="w" d="M182 112 V176"/>
+  <path class="w" d="M262 62 V104"/><path class="w" d="M250 104 H274 M250 112 H274"/><path class="w" d="M262 112 V150"/>
+  <path class="thin" d="M92 150 H174 M190 150 H274"/><text class="lbl" x="92" y="144">φ1</text>
+  <path class="thin" d="M92 176 H274"/><text class="lbl" x="278" y="180">φ2</text>
+</svg>
+<figcaption>三級 Dickson：每一級把電容「墊高」一個 Vin 的電平，電荷只能往右流（二極體或 diode-connected MOS）。</figcaption>
+</figure>
+<div class="fx">理想（無負載）：Vout = N · Vin
+有負載、有二極體壓降 Vd：
+Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
+漣波 ΔV ≈ Iout / (f · C)          ← 想壓小就加大 C 或提高 f
+效率 η ≈ Vout / ((N + 1) · Vin)   ← 級數越多、寄生電容越吃效率</div>
+<h2>三個設計重點</h2>
+<ul>
+<li><b>時脈不能重疊</b>：兩相若同時導通，電荷會倒流，輸出直接塌掉。所以要用 non-overlapping clock generator。</li>
+<li><b>二極體壓降</b>：用 diode-connected MOS 會損失一個 Vth；低壓設計改用 <b>static CTS</b>（charge transfer switch）或交叉耦合把閘極過驅，把這一個 Vth 補回來。</li>
+<li><b>寄生電容</b>：每級電容的下極板有對地寄生 Cp，會白白吃掉 charge sharing 的效率，所以效率隨級數增加而下降。實務上 2–4 級最常見。</li>
+</ul>
+<div class="callout warn"><b>同名不同物</b>：PLL 裡也有一個「charge pump」，它是把 PFD 的 up/down 脈衝轉成電流脈衝灌進迴路濾波器，不是用來升壓的。兩者都叫 charge pump，但功能、規格、設計重點完全不同。</div>
+<h2>用在哪裡</h2>
+<p>Flash / EEPROM 需要 12–20 V 的寫入電壓；LCD 驅動、MEMS、電容式觸控、White LED 驅動也都需要高於 VDD 的電壓。它們的共同點是<b>電流很小</b>——這正是電荷泵最適合的地方。</p>
+<div class="quiz">
+  <div class="qk">小試身手</div>
+  <p class="q">三級 Dickson 電荷泵，Vin = 1.2 V，二極體壓降 0.3 V，無負載時輸出大約多少？</p>
+  <div class="qbtns">
+    <button class="qbtn" type="button" data-ok="0">3.6 V</button>
+    <button class="qbtn" type="button" data-ok="1">2.7 V</button>
+    <button class="qbtn" type="button" data-ok="0">1.2 V</button>
+  </div>
+  <div class="ans" hidden><b>解析</b>：Vout ≈ N·(Vin − Vd) = 3 × (1.2 − 0.3) = <b>2.7 V</b>。理想公式 N·Vin 忽略了二極體壓降，實務上一定要扣掉。</div>
+</div>`
+  },
+  {
+    id: 'adc', tag: '資料轉換', min: '即將推出', st: 'soon',
+    t: 'ADC 類比數位轉換',
+    s: '把連續的類比電壓變成離散的位元：取樣、量化、編碼。',
+    subs: [
+      { id: 'sar', t: 'SAR 逐次逼近', s: '電容陣列 + 比較器，一個 clock 決定一個 bit；中速中精度、功耗低，最常見的選擇。' },
+      { id: 'ds', t: 'Delta-Sigma', s: 'oversampling 加上 noise shaping，把量化雜訊推到高頻再濾掉；低速高精度（audio、sensor）。' },
+      { id: 'pipe', t: 'Pipeline 流水線', s: '多級「減法 + 放大」串起來，每級只處理幾個 bit；高速中高精度（影像、通訊）。' },
+      { id: 'flash', t: 'Flash 全並列', s: '2^N−1 個比較器同時比，最快但面積與功耗爆炸；常當作高速系統裡的第一級。' }
+    ],
+    body: `
+<p>ADC 的三件事永遠不變：<b>取樣</b>（Nyquist / 抗混疊濾波）、<b>量化</b>（LSB、SNR ≈ 6.02N + 1.76 dB）、<b>架構選擇</b>（速度 vs 解析度 vs 功耗）。這一頁先留位置，之後會補上各架構的完整教學與互動練習。</p>
+<h2>之後會補上</h2>
+<ul>
+<li><b>SAR ADC</b>：逐次逼近，電容陣列 + 比較器，中速中精度最常見。</li>
+<li><b>Delta-Sigma ADC</b>：oversampling + noise shaping，低速高精度（audio、sensor）。</li>
+<li><b>Pipeline ADC</b>：多級流水線，高速中高精度（影像、通訊）。</li>
+<li><b>Flash ADC</b>：2^N−1 個比較器，最快但面積與功耗爆炸。</li>
+</ul>
+<div class="callout"><b>現況</b>：介面已預留，內容與互動實驗會在後續版本加入。</div>`
+  },
+  {
+    id: 'pll', tag: '時脈', min: '即將推出', st: 'soon',
+    t: 'PLL 鎖相迴路',
+    s: '用相位比較把輸出時脈鎖在參考頻率上，順便做倍頻、除頻與去抖動。',
+    subs: [
+      { id: 'intn', t: 'Integer-N PLL', s: '整數除頻，架構最單純；輸出頻率只能是參考頻率的整數倍，解析度與迴路頻寬互相牽制。' },
+      { id: 'fracn', t: 'Fractional-N PLL', s: '小數除頻（DSM 或 injection-locked），頻率解析度細很多；代價是要處理量化雜訊與突波。' },
+      { id: 'dll', t: 'DLL 延遲鎖定', s: '鎖「相位」不鎖頻率，用延遲線對齊時脈；常用在 DDR 與時脈同步，穩定性比 PLL 好。' }
+    ],
+    body: `
+<p>PLL 的四個積木：<b>PFD</b>（相位頻率偵測）、<b>charge pump</b>、<b>loop filter</b>、<b>VCO</b>，再加上除頻器組成回授。鎖定後輸出頻率 = N × 參考頻率。</p>
+<h2>之後會補上</h2>
+<ul>
+<li><b>Integer-N PLL</b>：整數除頻，架構簡單；缺點是參考突波與頻率解析度綁在一起。</li>
+<li><b>Fractional-N PLL</b>：小數除頻（DSM 或 injection-locked），解析度高但要多處理量化雜訊。</li>
+<li><b>DLL / 延遲鎖定迴路</b>：鎖相位不鎖頻率，常用在時脈同步與 DDR。</li>
+<li><b>規格</b>：jitter、phase noise、鎖定時間、spur、迴路頻寬。</li>
+</ul>
+<div class="callout"><b>現況</b>：介面已預留，內容與互動實驗會在後續版本加入。</div>`
+  }
+];
+
+
+let advCur = { id: null, sub: null };
+
+function renderAdvList() {
+  $('advList').innerHTML = ADV.map(a => `<button type="button" class="lesson adv" data-adv="${a.id}">
+    <span class="ln">${a.tag}<span class="badge${a.st === 'soon' ? ' soon' : ''}" style="margin-left:6px">${a.st === 'soon' ? '即將推出' : '可閱讀'}</span></span>
+    <span class="lt">${a.t}</span>
+    <span class="ls">${a.s}</span>
+    ${a.subs ? `<span class="adv-subs">${a.subs.map(s => `<span>${s.t}</span>`).join('')}</span>` : ''}
+    <span class="lm"><span>${a.st === 'soon' ? (a.subs ? a.subs.length + ' 個主題' : '先看大綱') : '閱讀 ' + a.min}</span><span class="go2">${a.st === 'soon' ? '預覽 ▸' : '開始 ▸'}</span></span>
+  </button>`).join('');
+  $('advList').querySelectorAll('[data-adv]').forEach(b => b.addEventListener('click', () => openAdv(b.dataset.adv)));
+}
+
+function showAdvHub() {
+  S.view = 'adv'; S.running = false; S.tutorial = false; S.sprint = false;
+  hide();
+  $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
+  hideStudy(); $('advHub').hidden = false;
+  $('pTut').hidden = true; $('statLives').hidden = false; $('statScore').hidden = false;
+  $('btnCheck').textContent = 'Check'; $('btnSkip').hidden = true;
+  advCur = { id: null, sub: null };
+  renderAdvList();
+  window.scrollTo(0, 0);
+}
+
+function openAdv(id, subId) {
+  const a = ADV.find(x => x.id === id); if (!a) return;
+  const sub = subId ? (a.subs || []).find(s => s.id === subId) : null;
+  advCur = { id, sub: sub ? subId : null };
+  S.view = 'adv'; S.running = false; S.tutorial = false; S.sprint = false;
+  hide();
+  $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
+  hideStudy(); $('advView').hidden = false;
+
+  if (sub) {
+    $('advCrumb').textContent = `${a.tag} · ${sub.t} · 即將推出`;
+    $('advDoc').innerHTML = `<div class="hub-eyebrow">${a.tag} · 即將推出</div><h1>${sub.t}</h1>
+      <p class="lead">${sub.s}</p>
+      <div class="callout"><b>現況</b>：這一層的完整教學、電路方塊與互動練習還在製作中，之後會補上。介面先留好，不會影響成績。</div>
+      <p class="lab-hint">◂ 按左上角「${a.t}」回到上一層。</p>`;
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  if (a.subs) {
+    $('advCrumb').textContent = `${a.tag} · ${a.t}`;
+    $('advDoc').innerHTML = `<div class="hub-eyebrow">進階專區 · ${a.tag}</div><h1>${a.t}</h1>
+      <p class="lead">${a.s}</p>
+      <div class="lessons" id="advSubList">
+        ${a.subs.map(s => `<button type="button" class="lesson" data-sub="${s.id}">
+          <span class="ln">${a.t} · 子主題</span>
+          <span class="lt" style="font-size:21px">${s.t}</span>
+          <span class="ls">${s.s}</span>
+          <span class="lm"><span>內容製作中</span><span class="done">敬請期待 ▸</span></span>
+        </button>`).join('')}
+      </div>
+      <p class="lab-hint" style="margin-top:16px">◂ 按左上角回到進階專區。</p>`;
+    $('advSubList').querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', () => openAdv(a.id, b.dataset.sub)));
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  $('advCrumb').textContent = `${a.tag} · ${a.t}${a.st === 'soon' ? ' · 預覽' : ''}`;
+  $('advDoc').innerHTML = `<div class="hub-eyebrow">進階專區 · ${a.tag}</div><h1>${a.t}</h1><p class="lead">${a.s}</p>${a.body}`;
+  window.scrollTo(0, 0);
+}
 
 /* ---------- home ---------- */
 function showHome() {
   S.view = 'home'; S.running = false; S.tutorial = false; S.sprint = false; hide();
   $('game').hidden = true; $('actionbar').hidden = true; $('home').hidden = false; $('hud').hidden = true;
   $('tutHub').hidden = true; $('lessonView').hidden = true;
+  hideStudy();
   $('pTut').hidden = true; $('statLives').hidden = false; $('statScore').hidden = false;
   $('btnCheck').textContent = 'Check'; $('btnSkip').hidden = true;
   const L = prog.lives || 3; S.lives0 = L;
@@ -2513,8 +2956,8 @@ function showHome() {
     </span><span class="cat-f"><span>最高 <b class="num">${prog.best.sprint || 0}</b></span><span>最遠 <b class="num">${prog.cleared.sprint || 0} 關</b></span></span></button>`;
 
   catHtml += `<button type="button" class="cat tutor" data-c="tutor"><span class="cat-n">新手專區</span><span class="cat-s">TUTORIAL · 教學與練習</span>
-    <span class="cat-d">四篇紙上教學：規格卡怎麼看、V = I × R、MOS 的 gm/ro、5T OTA 分析，再進 7 步引導練習把壞掉的電路救回來。<br><b style="color:var(--green)">不計分、不扣血、不影響成績</b>，隨時可以回首頁。</span>
-    <span class="cat-f"><span>教學選單 · 4 課 + 練習</span><span><b>進入 ▸</b></span></span></button>`;
+    <span class="cat-d">六篇紙上教學：規格卡、V = I × R、MOS 的 gm/ro、5T OTA、Two-Stage Miller 補償、電流鏡 cascode/wide-swing；再加五個互動實驗（歐姆定律、功率分壓、Vds–Id 曲線、規格計算器、電流鏡比較）與 7 步引導練習。<br><b style="color:var(--green)">不計分、不扣血、不影響成績</b>，隨時可以回首頁。</span>
+    <span class="cat-f"><span>教學選單 · 6 課 + 6 練習</span><span><b>進入 ▸</b></span></span></button>`;
 
    $('cats').innerHTML = catHtml;
   document.querySelectorAll('.cat').forEach(b => b.addEventListener('click', () => {
@@ -2544,6 +2987,7 @@ function startRun(cat) {
   
   $('home').hidden = true; $('game').hidden = false; $('actionbar').hidden = false; $('hud').hidden = false; S.view = 'game';
   $('tutHub').hidden = true; $('lessonView').hidden = true;
+  hideStudy();
   $('btnSkip').hidden = !S.sprint;
   
   if (S.sprint) { S.time = SPRINT_TIME; nextSprintLevel(true); } else { S.time = LEVEL_TIME; loadLevel(0); }
@@ -2682,6 +3126,9 @@ function endRun(why) {
   if (S.tutorial) { leaveTutorial(); return; }
   S.ended = true; S.running = false;
   const t = totals(), key = S.sprint ? 'sprint' : S.cat;
+  // 跳過扣分要先算，個人最佳（與排行榜）才會跟畫面上顯示的總分一致
+  const skipPen = S.skipCount * 30;
+  t.net = Math.max(0, t.net - skipPen);
   const cleared = S.sprint ? Math.max(0, S.sprintN - (why === '血量歸零' || why === '時間到' ? 1 : 0)) : S.bests.filter(b => b >= 500).length;
   const newBest = t.net > (prog.best[key] || 0);
   
@@ -2689,10 +3136,6 @@ function endRun(why) {
   if (!S.sprint) prog.cleared[key] = Math.max(prog.cleared[key] || 0, cleared); else prog.cleared.sprint = Math.max(prog.cleared.sprint || 0, cleared);
   
   save(); renderHud();
-
-  // 計算跳過扣分
-  let skipPen = S.skipCount * 30;
-  t.net = Math.max(0, t.net - skipPen);
 
   // 檢查成就
   checkAchievements();
@@ -2748,7 +3191,7 @@ function endRun(why) {
 
 function askHome() {
   if (S.tutorial) { leaveTutorial(); return; }
-  if (S.view === 'tuthub' || S.view === 'lesson') { showHome(); return; }
+  if (S.view === 'tuthub' || S.view === 'lesson' || S.view === 'lab' || S.view === 'adv') { showHome(); return; }
   if (S.view !== 'game' || S.ended) { showHome(); return; }
   const was = S.running;
   show(`<div class="eyebrow">離開本局</div><h2>回到首頁？</h2><p>目前這一局的進度不會保留。</p>
@@ -2778,7 +3221,15 @@ bind('lessonBack', () => showTutHub());
 bind('lessonGo', () => startTutorial());
 bind('lessonPrev', () => { if (tutCur > 0) openLesson(tutCur - 1); });
 bind('lessonNext', () => { if (tutCur < TUT_LESSONS.length - 1) openLesson(tutCur + 1); });
-$('lessonDoc').addEventListener('click', e => {
+bind('tabLesson', () => tutTab('lesson'));
+bind('tabPractice', () => tutTab('practice'));
+bind('labBack', () => showTutHub('practice'));
+bind('labHome', () => showHome());
+bind('btnAdvHub', () => showAdvHub());
+bind('advHome', () => showHome());
+bind('advHome2', () => showHome());
+bind('advBack', () => { if (advCur.sub) openAdv(advCur.id); else showAdvHub(); });
+function onQuizClick(e) {
   const b = e.target.closest('.qbtn'); if (!b) return;
   const q = b.closest('.quiz'); if (!q || q.dataset.done) return;
   q.dataset.done = '1';
@@ -2787,11 +3238,12 @@ $('lessonDoc').addEventListener('click', e => {
   if (!ok) b.classList.add('bad');
   const a = q.querySelector('.ans'); if (a) a.hidden = false;
   toast(ok ? '答對了 ✅ 看解析確認觀念' : '再想想，解析就在下面', ok ? 'ok' : 'bad');
-});
+}
+['lessonDoc', 'labDoc', 'advDoc'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', onQuizClick); });
 
 showHome();
 requestAnimationFrame(t => { last = t; requestAnimationFrame(tick); });
-window.__otaDebug = { S, doCheck, startRun, genLevel, MODS, startTutorial, leaveTutorial, tutorialCheck, refresh, TUT, TUT_STEPS, TUT_LESSONS, TUT_READ, showTutHub, showHome, openLesson };
+window.__otaDebug = { S, doCheck, startRun, genLevel, MODS, startTutorial, leaveTutorial, tutorialCheck, refresh, TUT, TUT_STEPS, TUT_LESSONS, TUT_READ, showTutHub, showHome, openLesson, LABS, LAB, openLab, labOhm, labPwr, labIvid, labCalc, labMirror, tutTab, ADV, showAdvHub, openAdv, lbEncode, lbDecode, lbRead, lbWrite, showLeaderboard, showLbCode };
 
 })();
 </script>
