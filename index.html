@@ -466,6 +466,40 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
 .lb-note { margin: 12px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink-dim); }
 .lb-note b { color: var(--ink); }
 .lb-fr { padding: 1px 5px; border: 1px solid var(--cyan); font-size: 9px; letter-spacing: .08em; color: var(--cyan); }
+/* ===== 排行榜 v2：分榜籤 / 獎牌 / 我的紀錄 ===== */
+.lb-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.lb-tab {
+  padding: 6px 10px; border: 1px solid var(--edge); background: transparent; color: var(--ink-dim);
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; cursor: pointer; touch-action: manipulation;
+}
+.lb-tab:hover, .lb-tab:focus-visible { border-color: var(--cyan); color: var(--ink); }
+.lb-tab.on { border-color: var(--amber); color: var(--amber); background: rgba(255, 200, 87, .1); }
+.lb-tab .c { margin-left: 4px; opacity: .55; }
+.lb-sum { margin: 10px 0 0; font-size: 11.5px; letter-spacing: .04em; color: var(--ink-dim); }
+.lb-sum b { font-size: 13px; color: var(--amber); }
+.lb-wrap { margin-top: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--rule); }
+.lb-wrap .lb-table { width: 100%; min-width: 0; margin-top: 0; font-size: 11.5px; }
+.lb-wrap .lb-table th { padding: 7px 6px; border-bottom: 1px solid var(--edge); white-space: nowrap; }
+.lb-wrap .lb-table td { padding: 7px 6px; white-space: nowrap; }
+.lb-wrap .lb-table th:first-child, .lb-wrap .lb-table td:first-child { width: 40px; text-align: center; }
+.lb-table td.rk { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.lb-table td.nm { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.lb-table td.md { color: var(--ink); }
+.lb-table td.sc, .lb-table th.sc { text-align: right; color: var(--amber); font-weight: 600; font-variant-numeric: tabular-nums; }
+.lb-table td.fl, .lb-table th.fl { text-align: right; font-size: 11px; color: var(--ink-dim); }
+.lb-table td.dt { text-align: right; font-size: 10.5px; font-weight: 400; color: var(--ink-dim); letter-spacing: 0; }
+.lb-table tr.me td { background: rgba(255, 200, 87, .08); }
+.lb-table tr.me td.nm { color: var(--amber); font-weight: 600; }
+.lb-lv { margin-left: 5px; padding: 0 4px; border: 1px solid var(--rule); font-size: 10px; color: var(--ink-dim); }
+.lb-fv { margin-left: 4px; font-size: 10px; color: var(--red); }
+/* 窄螢幕：表格橫向空間不夠，日期欄收起來，避免要左右滑 */
+@media (max-width: 430px) {
+  .lb-wrap .lb-table { font-size: 11px; }
+  .lb-wrap .lb-table th:nth-child(5), .lb-wrap .lb-table td:nth-child(5) { display: none; }
+  .lb-wrap .lb-table th:nth-child(4), .lb-wrap .lb-table td:nth-child(4) { width: 56px; }
+  .lb-table td.nm { max-width: 88px; }
+}
+
 /* ===== 新手專區（獨立教學模式） ===== */
 .cat.tutor { border-color: var(--green); background: linear-gradient(180deg, rgba(91, 227, 163, .16), var(--plate) 70%); }
 .cat.tutor:hover, .cat.tutor:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px rgba(91, 227, 163, .14); }
@@ -809,32 +843,48 @@ html[data-theme="shark"] .lab2 .panel { background: linear-gradient(180deg, rgba
 .hub-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 @media (max-width: 560px) { .hub-actions { gap: 6px; } .hub-actions .ghost { padding: 0 8px; } }
 
-/* 鯊魚女僕角色（僅 shark 風格顯示） */
+/* 鯨魚女僕角色（僅 shark 風格顯示）：img/mascot/whale_maid_1..3.png 每次開站隨機挑一張，抓不到就退回內建 SVG */
 .shark-hero, .shark-mini { display: none; }
-html[data-theme="shark"] .shark-mini { display: block; width: 52px; height: auto; flex: 0 0 auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35)); }
+html[data-theme="shark"] .shark-mini {
+  display: flex; align-items: center; justify-content: center;
+  position: relative; width: 54px; height: 54px; flex: 0 0 auto;
+}
 html[data-theme="shark"] .shark-hero {
   display: flex; align-items: center; gap: 14px; margin: 0 0 14px; padding: 12px 16px 12px 12px;
   border: 1px solid var(--edge); border-radius: var(--r-m); overflow: hidden;
   background: linear-gradient(120deg, rgba(92, 231, 220, .12), rgba(255, 179, 209, .12));
   box-shadow: 0 10px 26px rgba(0, 0, 0, .32);
 }
+/* 固定方形框：立繪絕對置中（不撐版面），SVG 只當尺寸保底；有圖時 SVG 隱藏，避免 PNG 透明處透出線稿 */
 html[data-theme="shark"] .shark-hero .shark-art {
-  width: 96px; height: auto; flex: 0 0 auto; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .35));
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 118px; height: 118px; flex: 0 0 auto;
   animation: sharkBob 4s ease-in-out infinite;
 }
+.shark-art > svg, .shark-mini > svg {
+  display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .35));
+}
+.shark-art > img, .shark-mini > img {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: block; height: 100%; width: auto; max-width: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .45));
+}
+.shark-art > img ~ svg, .shark-mini > img ~ svg { visibility: hidden; }
 .shark-bubble { min-width: 0; }
 .shark-bubble b { display: block; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: .06em; color: var(--ink); }
 .shark-bubble span { display: block; margin-top: 3px; font-size: 12px; line-height: 1.65; color: var(--ink-dim); }
+.shark-bubble .shark-credit { margin-top: 5px; font-size: 10px; line-height: 1.5; opacity: .66; }
 @keyframes sharkBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
 @media (prefers-reduced-motion: reduce) { html[data-theme="shark"] .shark-hero .shark-art { animation: none; } }
 @media (max-width: 420px) {
   html[data-theme="shark"] .shark-hero { gap: 10px; padding: 10px 12px 10px 8px; }
-  html[data-theme="shark"] .shark-hero .shark-art { width: 72px; }
+  html[data-theme="shark"] .shark-hero .shark-art { width: 88px; height: 88px; }
+  html[data-theme="shark"] .shark-mini { width: 42px; height: 42px; }
   .shark-bubble b { font-size: 15px; }
   .shark-bubble span { font-size: 11.5px; }
 }
 
-/* ---------- 鯊魚女僕：深海配色 + 圓角 ---------- */
+/* ---------- 鯨魚女僕：深海配色 + 圓角 ---------- */
 html[data-theme="shark"] {
   --paper: #062431;
   --paper-2: #0a3142;
@@ -941,15 +991,16 @@ html[data-theme="shark"] .pip { box-shadow: 0 0 8px rgba(92, 231, 220, .5); }
       <span class="tb-l">UI 風格</span>
       <div class="theme-seg" id="themeSeg" role="group" aria-label="介面風格">
         <button class="theme-swp on" type="button" data-theme-opt="default" aria-pressed="true"><i class="sw"></i>預設 · 工程藍圖</button>
-        <button class="theme-swp" type="button" data-theme-opt="shark" aria-pressed="false"><i class="sw"></i>鯊魚女僕 · 深海</button>
+        <button class="theme-swp" type="button" data-theme-opt="shark" aria-pressed="false"><i class="sw"></i>鯨魚女僕 · 深海</button>
       </div>
     </div>
 
     <div class="shark-hero">
-      <svg class="shark-art" viewBox="0 0 120 136" aria-hidden="true"><use href="#sharkMaid"/></svg>
+      <div class="shark-art"><img src="img/mascot/whale_maid.png" alt="鯨魚女僕" data-mascot="hero" onerror="this.remove()"><svg viewBox="0 0 120 136" aria-hidden="true"><use href="#sharkMaid"/></svg></div>
       <div class="shark-bubble">
         <b>要一起把 gm/ID 調到 5–20 嗎？</b>
-        <span>我是這片海域的值班女僕。Vov 拉小一點、gm/ID 就會浮上來；想看她長什麼樣，進「新手專區 → 教學區 → CIC018 元件關係圖」。風格隨時可以切回原本的工程藍圖。</span>
+        <span>我是這片海域的值班女僕。Vov 拉小一點、gm/ID 就會浮上來；想看她長什麼樣，進「新手專區 → 教學區 → SIM180 元件關係圖」。風格隨時可以切回原本的工程藍圖。</span>
+        <span class="shark-credit">插圖：DeepSeek 娘非官方同人二創 · 版權歸原作者所有</span>
       </div>
     </div>
 
@@ -964,7 +1015,7 @@ html[data-theme="shark"] .pip { box-shadow: 0 0 8px rgba(92, 231, 220, .5); }
         <span class="ab-eyebrow">Advanced Zone · 進階專區</span>
         <span class="ab-title">進階專區<em>🎮 5 道習題 × 4 難度</em></span>
         <span class="ab-sub">AIC 知識 11 篇 · 熱門類比 IP 5 項（BGR / LDO / CP / ADC / PLL）· 題目練習區 5 道：動手調參數、系統會記錄你的通關星星</span>
-        <span class="ab-chips"><i>BGR</i><i>LDO</i><i>CP</i><i>ADC</i><i>PLL</i><i class="new">NEW · 習題 5 道</i><i class="new">NEW · 製程參數表</i></span>
+        <span class="ab-chips"><i>BGR</i><i>LDO</i><i>CP</i><i>ADC</i><i>PLL</i><i class="new">NEW · 習題 5 道</i><i class="new">NEW · 模型參數表</i></span>
       </span>
       <span class="ab-right">
         <span class="ab-prog">習題通關 <b id="advProg">0 / 20</b></span>
@@ -992,7 +1043,7 @@ html[data-theme="shark"] .pip { box-shadow: 0 0 8px rgba(92, 231, 220, .5); }
         <p class="hub-sub">「教學區」讀觀念、「練習區」動手試。這裡全部<b>不計分、不扣血、不寫入紀錄</b>，隨時可以按「首頁」回去。</p>
       </div>
       <div class="hub-actions">
-        <svg class="shark-mini" viewBox="0 0 120 136" aria-hidden="true"><use href="#sharkMaid"/></svg>
+        <span class="shark-mini"><img src="img/mascot/whale_maid_face.png" alt="" data-mascot="face" onerror="this.remove()"><svg viewBox="0 0 120 136" aria-hidden="true"><use href="#sharkMaid"/></svg></span>
         <button class="ghost hub-back js-theme" id="hubTheme" type="button">🎨 風格</button>
         <button class="ghost hub-back" id="hubHome" type="button">首頁</button>
       </div>
@@ -1966,66 +2017,145 @@ window.showAchievements = function() {
 
 // 顯示排行榜（單機 localStorage；用「成績碼」離線交換）
 const LB_KEY = 'ota-tuner:leaderboard';
+// 分榜定義：競速跟一般模式分數不可比，各電路也各自排名
+const LB_BOARDS = [['all', '全部'], ['sprint', '競速'], ['opa', 'OPA'], ['two', 'Two-stage'], ['cs', '電流源'], ['ldo', 'LDO'], ['rand', '隨機']];
+let lbTab = 'all';
+
+function lbEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 function lbRead() {
   try {
     const a = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
-    return Array.isArray(a) ? a : [];
+    return Array.isArray(a) ? a.filter(r => r && isFinite(+r.score)) : [];
   } catch (e) { return []; }
 }
 function lbWrite(list) {
-  try { localStorage.setItem(LB_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+  try { localStorage.setItem(LB_KEY, JSON.stringify(list.slice(0, 40))); } catch (e) {}
+}
+function lbBoardName(k) { const b = LB_BOARDS.find(x => x[0] === k); return b ? b[1] : k; }
+// 舊紀錄沒有 k 欄位，用模式名稱回推榜別
+function lbKeyOf(r) {
+  if (r && r.k && LB_BOARDS.some(b => b[0] === r.k)) return r.k;
+  const m = String((r && r.mode) || '');
+  if (m.indexOf('競速') === 0) return 'sprint';
+  if (m.indexOf('隨機') === 0) return 'rand';
+  if (m.indexOf('Two') === 0) return 'two';
+  if (m.indexOf('電流源') === 0) return 'cs';
+  if (m === 'LDO') return 'ldo';
+  if (m === 'OPA') return 'opa';
+  return 'opa';
+}
+function lbSort(list) { return list.sort((a, b) => (+b.score || 0) - (+a.score || 0)); }
+// 寫入一筆成績：同一張榜、同一個名字只留最高分，回傳該榜名次
+function lbAdd(rec) {
+  const list = lbRead();
+  const k = lbKeyOf(rec);
+  const name = String(rec.name || '無名工程師').slice(0, 16);
+  const row = {
+    name: name, mode: rec.mode || lbBoardName(k), k: k,
+    score: Math.max(0, Math.round(+rec.score || 0)), date: rec.date || '',
+    lv: +rec.lv || 0, fails: +rec.fails || 0, me: 1
+  };
+  const i = list.findIndex(r => lbKeyOf(r) === k && String(r.name || '') === name);
+  if (i >= 0) {
+    if (row.score >= (+list[i].score || 0)) list[i] = Object.assign({}, list[i], row);
+    else { list[i].me = 1; if (row.lv) list[i].lv = row.lv; list[i].fails = row.fails; }
+  } else {
+    list.push(row);
+  }
+  const sorted = lbSort(list);
+  lbWrite(sorted);
+  const rank = sorted.filter(r => lbKeyOf(r) === k).findIndex(r => String(r.name || '') === name) + 1;
+  return { list: sorted, rank: rank };
 }
 function lbEncode(list) {
-  const slim = list.slice(0, 10).map(r => ({ n: r.name || '無名工程師', m: r.mode || '', s: +r.score || 0, d: r.date || '' }));
+  const slim = list.slice(0, 10).map(r => ({
+    n: r.name || '無名工程師', m: r.mode || '', k: lbKeyOf(r),
+    s: +r.score || 0, d: r.date || '', l: +r.lv || 0
+  }));
   return 'OTA1.' + btoa(unescape(encodeURIComponent(JSON.stringify(slim)))).replace(/=+$/, '');
 }
 function lbDecode(code) {
   const body = String(code || '').trim().replace(/\s+/g, '');
   if (body.indexOf('OTA1.') !== 0) throw new Error('格式不對（要以 OTA1. 開頭）');
-  const b64 = body.slice(5);
-  const json = decodeURIComponent(escape(atob(b64)));
-  const arr = JSON.parse(json);
+  let arr;
+  try { arr = JSON.parse(decodeURIComponent(escape(atob(body.slice(5))))); }
+  catch (e) { throw new Error('成績碼壞掉了（可能複製不完整）'); }
   if (!Array.isArray(arr)) throw new Error('內容不是成績清單');
   return arr.filter(r => r && typeof r.s === 'number' && isFinite(r.s)).map(r => ({
     name: String(r.n || '好友').slice(0, 16),
     mode: String(r.m || ''),
+    k: String(r.k || ''),
     score: Math.max(0, Math.round(r.s)),
     date: String(r.d || ''),
+    lv: +r.l || 0,
     fr: 1
   }));
 }
 
-window.showLeaderboard = function() {
-  const records = lbRead();
-  let content = '';
-  if (records.length === 0) {
-    content = `<p>目前還沒有任何通關紀錄，趕快去挑戰吧！</p>`;
+window.showLeaderboard = function (tab) {
+  if (typeof tab === 'string' && LB_BOARDS.some(b => b[0] === tab)) lbTab = tab;
+  const all = lbRead();
+  const list = lbSort(lbTab === 'all' ? all.slice() : all.filter(r => lbKeyOf(r) === lbTab));
+  const tabs = LB_BOARDS.map(([k, n]) => {
+    const c = k === 'all' ? all.length : all.filter(r => lbKeyOf(r) === k).length;
+    return `<button class="lb-tab ${lbTab === k ? 'on' : ''}" type="button" data-lbtab="${k}">${n}<span class="c">${c || '·'}</span></button>`;
+  }).join('');
+  const medal = ['🥇', '🥈', '🥉'];
+  let body;
+  if (!list.length) {
+    body = `<p class="lb-note">${lbTab === 'all'
+      ? '目前還沒有任何成績，先去挑一關試試！結算畫面按「儲存至排行榜」就會出現在這裡。'
+      : `「${lbBoardName(lbTab)}」榜還是空的，去打一場吧。`}</p>`;
   } else {
-    records.sort((a, b) => b.score - a.score);
-    const rows = records.map((r, i) => `<tr>
-      <td>${i + 1}</td>
-      <td>${r.name || '無名工程師'}${r.fr ? ' <span class="lb-fr">好友</span>' : ''}</td>
-      <td>${r.mode}</td>
-      <td>${r.score}</td>
-      <td>${r.date}</td>
+    const rows = list.map((r, i) => `<tr class="${r.me ? 'me' : ''}">
+      <td class="rk">${i < 3 ? medal[i] : i + 1}</td>
+      <td class="nm">${lbEsc(r.name || '無名工程師')}${r.fr ? ' <span class="lb-fr">好友</span>' : ''}</td>
+      <td class="md">${lbEsc(r.mode || lbBoardName(lbKeyOf(r)))}${r.lv ? `<span class="lb-lv">${r.lv} 血</span>` : ''}${r.fails ? `<span class="lb-fv">失敗 ${r.fails}</span>` : ''}</td>
+      <td class="sc">${+r.score || 0}</td>
+      <td class="dt">${lbEsc(r.date || '')}</td>
     </tr>`).join('');
-    content = `<table class="lb-table">
-        <thead><tr><th>#</th><th>名字</th><th>模式</th><th>分數</th><th>日期</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+    body = `<div class="lb-wrap"><table class="lb-table">
+        <thead><tr><th>#</th><th>名字</th><th>模式 · 難度</th><th class="sc">分數</th><th class="dt">日期</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
   }
-  show(`<div class="eyebrow">排行榜 · 本機</div><h2>本機紀錄</h2>
-    ${content}
-    <p class="lb-note"><b>這一頁只存在這台裝置</b>（localStorage），沒有連線伺服器，也不會自動上傳。<br>想跟朋友比：按「匯出成績碼」把自己的成績變成一串文字貼給對方，對方用「匯入好友碼」貼進來，就會標成「好友」。</p>
+  const mine = list.filter(r => r.me).map(r => +r.score || 0);
+  const sum = (mine.length ? `本機最佳 <b>${Math.max.apply(null, mine)}</b>　·　` : '')
+    + `此榜 ${list.length} 筆　·　全部 ${all.length} 筆`;
+  show(`<div class="eyebrow">排行榜 · 本機</div><h2>${lbTab === 'all' ? '總排行榜' : lbBoardName(lbTab) + ' 榜'}</h2>
+    <div class="lb-tabs">${tabs}</div>
+    <p class="lb-sum">${sum}</p>
+    ${body}
+    <p class="lb-note"><b>只存在這台裝置</b>（localStorage），不連伺服器、也不會自動上傳。<br>競速跟一般模式分開排名才公平；同一張榜、同一個名字只保留最高分，你剛存的紀錄會亮成琥珀色。<br>想跟朋友比：按「匯出成績碼」把前 10 筆變成一串文字貼給對方，對方用「匯入好友碼」貼回來就會標成 <span class="lb-fr">好友</span>。</p>
     <div class="btns"><button class="cta alt" id="lbExport" type="button">匯出成績碼</button><button class="cta alt" id="lbImport" type="button">匯入好友碼</button></div>
-    <div class="btns"><button class="cta" id="btnCloseModal" type="button">關閉</button></div>`);
+    <div class="btns"><button class="cta alt" id="lbClear" type="button">清空紀錄</button><button class="cta" id="btnCloseModal" type="button">關閉</button></div>`);
+  document.querySelectorAll('.lb-tab').forEach(b => {
+    b.onclick = () => window.showLeaderboard(b.getAttribute('data-lbtab'));
+  });
   bind('btnCloseModal', hide);
   bind('lbExport', () => {
-    const n = lbRead().length;
-    if (!n) { toast('還沒有成績可以匯出', 'bad'); return; }
+    if (!all.length) { toast('還沒有成績可以匯出', 'bad'); return; }
     showLbCode('export');
   });
   bind('lbImport', () => showLbCode('import'));
+  // 清空要按兩次，避免手滑把紀錄清掉
+  let armed = false, armT = 0;
+  bind('lbClear', (ev) => {
+    const b = ev.currentTarget;
+    if (!armed) {
+      armed = true;
+      b.textContent = '再按一次確認清空';
+      clearTimeout(armT);
+      armT = setTimeout(() => { armed = false; b.textContent = '清空紀錄'; }, 3200);
+      return;
+    }
+    clearTimeout(armT);
+    try { localStorage.removeItem(LB_KEY); } catch (err) {}
+    toast('已清空本機排行榜', 'ok');
+    lbTab = 'all';
+    window.showLeaderboard();
+  });
 };
 
 function showLbCode(mode) {
@@ -2050,9 +2180,22 @@ function showLbCode(mode) {
     let add = [];
     try { add = lbDecode(raw); } catch (e) { toast('匯入失敗：' + e.message, 'bad'); return; }
     if (!add.length) { toast('裡面沒有可用的成績', 'bad'); return; }
-    const list = lbRead().concat(add).sort((a, b) => b.score - a.score).slice(0, 20);
-    lbWrite(list);
-    toast(`已匯入 ${add.length} 筆好友成績`, 'ok');
+    const list = lbRead();
+    let n = 0;
+    add.forEach(r => {
+      const k = lbKeyOf(r);
+      const i = list.findIndex(x => lbKeyOf(x) === k && String(x.name || '') === r.name);
+      if (i >= 0) {
+        if (r.score > (+list[i].score || 0)) {
+          list[i] = Object.assign({}, list[i], { score: r.score, date: r.date, mode: r.mode || list[i].mode });
+        }
+      } else {
+        list.push(Object.assign({}, r, { k: k }));
+        n++;
+      }
+    });
+    lbWrite(lbSort(list));
+    toast(`已匯入 ${n} 筆好友成績`, 'ok');
     window.showLeaderboard();
   });
 }
@@ -2369,7 +2512,7 @@ ro = 1 / (λ·Id)，λ ∝ 1/L　（L 越長，ro 越大）
 單級增益 Av ≈ gm × ro　（5T OTA 的輸出阻抗其實是 ro2 ∥ ro4，gm 用輸入對的 gm1）</div>
 <p>這條式子解釋了整個遊戲：<b>gm 是「推得多用力」，ro 是「輸出撐得多穩」</b>，兩個一起決定增益。而 gm 又決定頻寬（GBW ≈ gm / 2πCL），所以「快」和「省電」天生衝突。</p>
 <div class="callout warn"><b>沒有白吃的午餐</b>：加長 L 讓 ro 變大、增益變高，但面積以 L² 成長，而且閘極電容變大、鏡像極點下降，PM 會變差。</div>
-<div class="callout">這些公式對真實 CIC018 只是近似。<b>第 4 課</b>有一張可以直接點的 gm/ID、gm·ro、fT、ID/W 圖表（0.18 µm 1P6M 1.8 V），可以看到弱／中／強反轉的完整曲線。</div>
+<div class="callout">這些公式對真實元件只是近似。<b>第 4 課</b>有一張可以直接點的 gm/ID、gm·ro、fT、ID/W 圖表（SIM180 模擬模型：0.18 µm 級、1.8 V），可以看到弱／中／強反轉的完整曲線。</div>
 <h2>三個旋鈕各自在幹嘛</h2>
 <table>
 <thead><tr><th>你調的</th><th>對電晶體做了什麼</th></tr></thead>
@@ -2402,18 +2545,20 @@ ro = 1 / (λ·Id)，λ ∝ 1/L　（L 越長，ro 越大）
 
   {
     id: 'gmid', tag: '設計圖表', min: '8 分鐘',
-    t: 'CIC018 元件關係圖：gm/ID、gm·ro、fT',
-    s: '0.18 µm 1P6M 1.8 V 的曲線怎麼看？拉一條 Vov 就能查出 gm/ID、gm/W、gm·ro、fT、ID/W、FOM 與 Vdsat。',
+    t: 'SIM180 元件關係圖：gm/ID、gm·ro、fT',
+    s: 'SIM180（教學用 0.18 µm 級、1.8 V 模擬模型）的曲線怎麼看？拉一條 Vov 就能查出 gm/ID、gm/W、gm·ro、fT、ID/W、FOM 與 Vdsat。',
     body: `
-<p>前幾課講的是公式，真正下線前工程師看的是<b>曲線</b>。把 CIC018（TSMC 0.18 µm 1P6M 1.8 V）的 NMOS / PMOS 掃一遍，把 <b>gm/ID、gm/W、gm·ro、fT、ID/W、FOM、Vdsat</b> 畫在同一組座標上，設計就變成「在圖上挑一個點」——這就是 <b>gm/ID 設計法</b>（Jespers / Murmann 那一套）。</p>
-<div class="fx">這張圖表用的 CIC018 典型參數
+<p>前幾課講的是公式，真正下線前工程師看的是<b>曲線</b>。把 <b>SIM180（模擬元件模型：0.18 µm 級、1.8 V）</b>的 NMOS / PMOS 掃一遍，把 <b>gm/ID、gm/W、gm·ro、fT、ID/W、FOM、Vdsat</b> 畫在同一組座標上，設計就變成「在圖上挑一個點」——這就是 <b>gm/ID 設計法</b>（Jespers / Murmann 那一套）。</p>
+<div class="callout warn"><b>SIM180 是什麼</b>：這是<b>教學用的模擬模型</b>（0.18 µm 級、1.8 V），曲線由 AI 依公開文獻的<b>量級</b>整理成連續模型即時算出，<b>不是任何晶圓廠的 PDK，也不是實測資料</b>。真實製程的曲線請自己跑模擬（HSPICE / Spectre 掃 <code>.dc</code>、<code>.sw0</code>）或拿自己的 PDK 對照。</div>
+<div class="fx">這張圖表用的 SIM180 模擬參數
 Vth0：NMOS +0.45 V、PMOS −0.45 V（1.8 V 元件）
 µCox：NMOS 320 µA/V²、PMOS 80 µA/V²
 Cox ≈ 8.6 fF/µm²（t_ox ≈ 4 nm）、重疊電容 ≈ 0.12 fF/µm
 L 選項：0.18 / 0.36 / 0.72 / 1.44 µm，W 以 10 µm 換算 ID/W
-模型：EKV 連續式（弱 → 中 → 強反轉）＋ 速度飽和 ＋ CLM</div>
+模型：EKV 連續式（弱 → 中 → 強反轉）＋ 速度飽和 ＋ CLM
+資料性質：AI 依公開文獻量級自建的示意曲線，非真實製程資料</div>
 <div class="panel" id="gmPanel" style="margin-top:14px">
-  <div class="panel-h">CIC018 元件圖表 · 可互動</div>
+  <div class="panel-h">SIM180 元件圖表 · 可互動</div>
   <div class="dseg" id="gmCharts" style="margin-bottom:6px">
     <button class="hub-tab on" type="button" data-c="gmid">gm/ID–Vov</button>
     <button class="hub-tab" type="button" data-c="gmw">gm/W–Vov</button>
@@ -2459,7 +2604,7 @@ L 選項：0.18 / 0.36 / 0.72 / 1.44 µm，W 以 10 µm 換算 ID/W
 </ul>
 <div class="callout"><b>延伸閱讀</b>：<b>進階專區 → AIC 知識區 → 「gm/ID 設計法與反轉程度」</b> 有完整的設計流程（指定 gm → 選 gm/ID → 算 Id → 查 W/L），這一課的圖表就是那篇文章的「數據版」。</div>
 <div class="callout"><b>跟遊戲對照</b>：遊戲用平方律，gm = 2·Id / (Vov + 0.073)、ro = 1/(λ·Id)，所以「輸入對 W/L↑ → Vov↓ → gm/ID↑」；你在遊戲裡把 W/L 往上推，其實就是在這張圖上往<b>左上</b>移動。</div>
-<div class="callout warn"><b>資料性質</b>：曲線是用上表參數建立的<b>教學用連續模型</b>（EKV + 速度飽和 + CLM），趨勢與 CIC018 的實際掃描一致，但絕對值有落差。參考值：L = 0.18 µm、Vov = 0.2 V 時，本模型給 gm/ID ≈ 8.3、gm·ro ≈ 21（26 dB）、fT ≈ 21 GHz、ID/W ≈ 23 µA/µm；CIC018 實測 fT 約 30–45 GHz、ID/W 約 20–30 µA/µm，所以 <b>fT 這一項請只看趨勢</b>。真正下線請用 HSPICE / Spectre 掃 <code>.dc</code> 或 <code>.sw0</code>，把 gm、Id、gmbs、gds 抓出來自己畫一份。</div>
+<div class="callout warn"><b>資料性質</b>：曲線是用上表參數建立的<b>教學用連續模型</b>（EKV + 速度飽和 + CLM），趨勢與真實 0.18 µm 級元件的掃描一致，但絕對值有落差。參考值：L = 0.18 µm、Vov = 0.2 V 時，本模型給 gm/ID ≈ 8.3、gm·ro ≈ 21（26 dB）、fT ≈ 21 GHz、ID/W ≈ 23 µA/µm；真實 0.18 µm 級元件（公開文獻量級）的 fT 約 30–45 GHz、ID/W 約 20–30 µA/µm，所以 <b>fT 這一項請只看趨勢</b>。真正下線請用 HSPICE / Spectre 掃 <code>.dc</code> 或 <code>.sw0</code>，把 gm、Id、gmbs、gds 抓出來自己畫一份。</div>
 <div class="quiz">
   <div class="qk">小試身手 1 / 2</div>
   <p class="q">同一個 L、同一條 Id，把 Vov 從 0.4 V 降到 0.1 V，gm/ID 與 fT 分別怎麼變？</p>
@@ -3081,7 +3226,7 @@ function labMirror(doc) {
   paint();
 }
 
-/* ---------- 基礎區：CIC018（0.18 µm 1P6M 1.8 V）元件設計圖表 ---------- */
+/* ---------- 基礎區：SIM180 模擬元件（0.18 µm 級、1.8 V）設計圖表 ---------- */
 const GMVT = 0.02585;
 const C18P = {
   n: { nm: 'NMOS', vth: 0.45, mu: 3.72e-2, cox: 8.6e-3, coxu: 8.6e-15, cov: 0.12e-15, eta: 1.25, theta: 0.06, vsat: 1.5e5, va0: 2.5, va1: 14 },
@@ -3168,7 +3313,14 @@ let gmClipN = 0;
 function gmSvg() {
   const ch = GM_CH.find(c => c.id === GM.chart) || GM_CH[0];
   const p = C18P[GM.type];
-  const W = 470, H = 272, x0 = 58, x1 = 450, y0 = 20, y1 = 214;
+  // 窄螢幕（手機）用另一組 viewBox：SVG 裡的 px = user unit，字才不會跟著被等縮成螞蟻字
+  const host = document.getElementById('gmPlot');
+  const hostW = host ? host.clientWidth : 0;
+  const cw = hostW > 40 ? hostW - 8 : 470;
+  const narrow = cw < 420;
+  const W = narrow ? 330 : 470, H = narrow ? 248 : 272;
+  const x0 = narrow ? 44 : 58, x1 = W - (narrow ? 12 : 20);
+  const y0 = narrow ? 18 : 20, y1 = narrow ? 192 : 214;
   const cid = 'gclip' + (++gmClipN);
   const sx = mkScale(ch.xr[0], ch.xr[1], !!ch.xlog, x0, x1);
   const sy = mkScale(ch.yr[0], ch.yr[1], !!ch.ylog, y1, y0);
@@ -3234,7 +3386,7 @@ function gmSvg() {
     <g clip-path="url(#${cid})">${gg}</g>
     <text class="lab" x="${(x0 + x1) / 2}" y="${H - 6}" text-anchor="middle">${ch.xl}</text>
     <text class="lab" x="${x0}" y="${y0 - 6}">${ch.yl}</text>
-    <text class="val" x="${x1}" y="${y0 - 6}" text-anchor="end">CIC018 1.8 V · ${p.nm} · L ${GM.L} µm</text>
+    <text class="val" x="${x1}" y="${y0 - 6}" text-anchor="end">SIM180 1.8 V · ${p.nm} · L ${GM.L} µm</text>
   </svg>`;
 }
 function gmRows() {
@@ -3279,6 +3431,15 @@ function initGmChart() {
   });
   const r = document.getElementById('gmVov');
   if (r) r.addEventListener('input', e => { GM.vov = +e.target.value; paintGm(); });
+  // 轉向 / 拉窗寬時重畫：窄螢幕會換成另一組 viewBox
+  if (!window.__gmRz) {
+    window.__gmRz = 1;
+    let tm = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(tm);
+      tm = setTimeout(() => { if (document.getElementById('gmPlot')) paintGm(); }, 150);
+    });
+  }
   paintGm();
 }
 
@@ -3445,7 +3606,7 @@ W/L = Id / (½ μCox Vov²)         ← 再由電流反推尺寸</div>
 <tr><td>中反轉</td><td class="num">12–22</td><td>效率與速度平衡，線性度較好</td><td>OTA 輸入對（主流）</td></tr>
 <tr><td>弱反轉</td><td class="num">22–38</td><td>同電流 gm 最大、面積大、速度慢、失配大</td><td>低功耗、subthreshold 電路</td></tr>
 </tbody></table>
-<p class="lab-hint">分界只是粗略指標，會隨製程與 L 移動；想看 CIC018 的實際曲線，到<b>新手專區第 4 課</b>把 Vov 拉一拉，三區的數字立刻對得起來。</p>
+<p class="lab-hint">分界只是粗略指標，會隨模型參數與 L 移動；想看 SIM180 的曲線，到<b>新手專區第 4 課</b>把 Vov 拉一拉，三區的數字立刻對得起來。</p>
 <h2>為什麼工程師愛用</h2>
 <ul>
 <li><b>可預測</b>：給定 gm 與 gm/ID，電流、W/L、面積一次到位，不用來回猜。</li>
@@ -3692,10 +3853,10 @@ Settling ≈ t_slew + n·τ</div>
   },
   {
     id: 'kbproc', tag: '模型與參數', min: '10 分鐘', st: 'ready',
-    t: '製程參數與模型假設',
-    s: '這款遊戲用了哪兩個模型、每一個常數是多少、五道進階習題的滑桿範圍從哪來——全部攤在這裡，方便跟真實的 CIC018 或你自己的 Spectre 結果對照。',
+    t: '模型參數與假設',
+    s: '這款遊戲用了哪兩個模型、每一個常數是多少、五道進階習題的滑桿範圍從哪來——全部攤在這裡，方便跟真實元件或你自己的 Spectre 結果對照。',
     body: `
-<p>被問過「這些數字哪來的」——合理。這頁把遊戲裡所有用到的模型與常數一次寫清楚：<b>主遊戲的平方律模型</b>、<b>基礎區 CIC018 元件圖表的連續模型</b>、<b>五道進階習題的參數範圍</b>，最後一段誠實說「哪裡是簡化、哪裡該自己驗」。</p>
+<p>被問過「這些數字哪來的」——合理。這頁把遊戲裡所有用到的模型與常數一次寫清楚：<b>主遊戲的平方律模型</b>、<b>基礎區 SIM180 元件圖表的連續模型</b>、<b>五道進階習題的參數範圍</b>，最後一段誠實說「哪裡是簡化、哪裡該自己驗」。</p>
 
 <h2>1. 主遊戲（OPA / Two-stage / 電流源 / LDO 關卡）</h2>
 <div class="fx">Vov = VGS − Vth
@@ -3716,10 +3877,10 @@ ro  = 1 / (λ · Id)                    λn = 0.02 / L 、 λp = 0.025 / L（L �
 <tr><td>AVT</td><td class="num">5 mV·µm</td><td>失配 σ、current error 的隨機項</td></tr>
 <tr><td>規格目標</td><td class="num">每關隨機</td><td>由關卡產生器依難度在範圍內抽樣，所以同一種電路每局目標不同</td></tr>
 </tbody></table>
-<div class="callout"><b>為什麼 Vth 用 0.5 V、不是 CIC018 的 0.45 V？</b>主遊戲刻意選對稱、好算的整數，讓「headroom 預算」可以在腦中估：例如 cascode 最低輸出 = 0.5 + 2×0.2 = 0.9 V。基礎區的 CIC018 圖表才用元件實際的 0.45 V 與 mobility 差（µn ≫ µp）。</div>
+<div class="callout"><b>為什麼 Vth 用 0.5 V、不是 SIM180 的 0.45 V？</b>主遊戲刻意選對稱、好算的整數，讓「headroom 預算」可以在腦中估：例如 cascode 最低輸出 = 0.5 + 2×0.2 = 0.9 V。基礎區的 SIM180 圖表才用 0.45 V 與 mobility 差（µn ≫ µp）。</div>
 
-<h2>2. 基礎區：CIC018 元件關係圖的連續模型</h2>
-<p>「CIC018 元件關係圖」那七張圖不是查表，而是用下面這組參數即時算出來的<b>教學用連續模型</b>（EKV 式弱∼強反轉 + 速度飽和 + CLM），目的是讓趨勢（gm/ID↓、fT↑、ID/W↑）跟真實掃描一致。</p>
+<h2>2. 基礎區：SIM180 元件關係圖的連續模型</h2>
+<p>「SIM180 元件關係圖」那七張圖不是查表，而是用下面這組參數即時算出來的<b>教學用連續模型</b>（EKV 式弱∼強反轉 + 速度飽和 + CLM），目的是讓趨勢（gm/ID↓、fT↑、ID/W↑）跟真實掃描一致。</p>
 <table>
 <thead><tr><th>參數</th><th>NMOS</th><th>PMOS</th><th>說明</th></tr></thead>
 <tbody>
@@ -3742,7 +3903,7 @@ Id    = 2·η·µeff·VT² · x² / (1 + Vov/Ecr)
 Cgg   = (2/3)·L·Coxu + 2·Cov
 fT    = 1 / ( 2π · ( Cgg/(gm/L) + 0.7·L/vsat ) )
 FOM   = fT · (gm/ID)</div>
-<div class="callout warn"><b>已知落差</b>：這個模型給的 fT（L = 0.18 µm、Vov = 0.2 V 時約 21 GHz）明顯低於 CIC018 實測的 30–45 GHz，因為它只有一階速度飽和、沒有考慮 source/drain 擴散電容與製程細節。所以 <b>fT 只看趨勢</b>，絕對值請以 PDK 掃描為準。</div>
+<div class="callout warn"><b>已知落差</b>：這個模型給的 fT（L = 0.18 µm、Vov = 0.2 V 時約 21 GHz）明顯低於真實 0.18 µm 級元件的 30–45 GHz，因為它只有一階速度飽和、沒有考慮 source/drain 擴散電容等元件細節。所以 <b>fT 只看趨勢</b>，絕對值請以你自己的模擬結果為準。</div>
 
 <h2>3. 進階習題的參數範圍（滑桿 ←→ 數值）</h2>
 <p>五道練習題的滑桿都是「對數刻度」：位置 0–1000 線性映射到下面這個範圍，所以每一格都是等比例變化，不是等差值。</p>
@@ -3777,7 +3938,7 @@ FOM   = fT · (gm/ID)</div>
 <li><b>進階習題是「行為模型」</b>：LDO 的 droop 用 ΔI·ESR + ΔI·τ/C 估、PLL 用二階近似的 ωn/ζ、CP 用理想電荷搬移公式。真實電路會有非線性、slew 限制與寄生，數字會更醜。</li>
 <li><b>怎麼自己驗</b>：Spectre / HSPICE 掃 <code>.dc</code>（gm、Id、gds、Vth）、<code>.ac</code>（增益、PM、PSRR）、<code>.noise</code>（輸入參考雜訊）、<code>.tran</code>（LDO 負載步階、CP 漣波、PLL 鎖定）、<code>.sw0</code> / <code>.sw1</code>（fT、gm/ID 掃描）。把掃出來的 gm、Id 丟進同樣的公式，兩邊應該只差一階效應。</li>
 </ul>
-<div class="callout"><b>哪裡找這些數字</b>：主遊戲常數在程式碼 <code>VDD / KN / KP / WI / LAMN / LAMP / VTH</code>；CIC018 表在 <code>C18P</code>；每道習題的範圍就是它 <code>lmap(...)</code> 的上下限。想改參數就改這三處，其他全部是推導出來的。</div>
+<div class="callout"><b>哪裡找這些數字</b>：主遊戲常數在程式碼 <code>VDD / KN / KP / WI / LAMN / LAMP / VTH</code>；SIM180 參數表在 <code>C18P</code>；每道習題的範圍就是它 <code>lmap(...)</code> 的上下限。想改參數就改這三處，其他全部是推導出來的。</div>
 `
   },
 ];
@@ -5843,7 +6004,7 @@ function renderAdvList() {
   }).join('');
   $('advList').querySelectorAll('[data-adv]').forEach(b => b.addEventListener('click', () => openAdv(b.dataset.adv)));
   $('advNote').innerHTML = tab === 'kb'
-    ? '<b>AIC 知識區</b>　十一篇工程師日常最常用的知識：body effect、CLM、gm/ID、失配、雜訊、佈局匹配、米勒補償、PSRR、slew rate、偏壓與 startup，再加上<b>「製程參數與模型假設」</b>（這款遊戲每一個數字從哪來、怎麼驗）。每一篇都盡量對回主遊戲的滑桿與規格卡。'
+    ? '<b>AIC 知識區</b>　十一篇工程師日常最常用的知識：body effect、CLM、gm/ID、失配、雜訊、佈局匹配、米勒補償、PSRR、slew rate、偏壓與 startup，再加上<b>「模型參數與假設」</b>（這款遊戲每一個數字從哪來、怎麼驗）。每一篇都盡量對回主遊戲的滑桿與規格卡。'
     : tab === 'ip'
       ? '<b>熱門類比 IP</b>　BGR（5 頁）、LDO（4 頁）、Charge Pump（2 頁）、ADC（4 種架構）、PLL（4 頁 + 3 種架構）。BGR 與 PLL 這次補上了電路圖（OPA / 電流模式核心、PFD、charge pump + loop filter、VCO、除頻鏈）；卡片點進去可翻頁，ADC / PLL 的架構卡片在頁面裡面。'
       : '<b>題目練習區</b>　五道題（BGR / LDO / CP / PLL / ADC），每道都有<b>入門 / 初級 / 中級 / 困難</b>：入門只留一個旋鈕，困難要兩三個規格同時顧好。達標會<b>立刻記一顆 ★</b>（存在本機），不計分、不扣血。';
@@ -5942,7 +6103,7 @@ function showHome() {
   $('livesSeg').innerHTML = [3, 5, 7].map(n => `<button type="button" class="seg-b ${n === L ? 'on' : ''}" data-n="${n}" aria-pressed="${n === L}"><b>${n} 點血</b><span>總分 ×${Math.round(LIFE_MULT[n] * 100)}%</span></button>`).join('');
   document.querySelectorAll('.seg-b').forEach(b => b.addEventListener('click', () => { prog.lives = +b.dataset.n; save(); showHome(); }));
   
-  $('notice').innerHTML = `<b>公告</b>　選 3 點血：總分 ×100%；5 點血：×90%；7 點血：×80%。每次按 Check 若 5 項沒有全過，就扣 1 點血，結算時每用掉 1 點血再扣 ${PENALTY} 分。血歸零後一般模式仍可繼續（每次失敗照扣），競速模式會直接結束。<br><b style="color:var(--amber)">V5 新增</b>　① <b>進階專區改版</b>：首頁換成獨立橫幅（跟新手專區、競速同一排等級的亮度），橫幅直接寫「5 道習題 × 4 難度」並顯示通關進度。<br>② <b>習題通關星星</b>：五道進階習題（LDO / BGR / ADC / PLL / CP）每道四種難度，達標當下立刻記一顆 ★（本機保存，共 20 顆），題目頁頂端有 EXERCISE 編號 + 通關進度條。<br>③ <b>製程參數頁</b>：進階專區 → AIC 知識區 → 「製程參數與模型假設」，把遊戲裡每一個數字（Vth、Kn′、λ、gm 公式、CIC018 表、五道習題的滑桿範圍）與驗證方法寫清楚。<br>④ Charge Pump 知識頁補上 schemdraw 的 Dickson 完整電路圖。<br><b>V4</b>　① 部分關卡會<b>鎖定一根滑桿</b>或<b>收緊一項規格</b>（開場彈窗會標示「本關限制」）。② 進階專區：AIC 知識區、熱門類比 IP、題目練習區。③ 電路圖電流方向、M6 飽和提示、跳過扣分時機已修正。`;
+  $('notice').innerHTML = `<b>公告</b>　選 3 點血：總分 ×100%；5 點血：×90%；7 點血：×80%。每次按 Check 若 5 項沒有全過，就扣 1 點血，結算時每用掉 1 點血再扣 ${PENALTY} 分。血歸零後一般模式仍可繼續（每次失敗照扣），競速模式會直接結束。<br><b style="color:var(--amber)">V5 新增</b>　① <b>進階專區改版</b>：首頁換成獨立橫幅（跟新手專區、競速同一排等級的亮度），橫幅直接寫「5 道習題 × 4 難度」並顯示通關進度。<br>② <b>習題通關星星</b>：五道進階習題（LDO / BGR / ADC / PLL / CP）每道四種難度，達標當下立刻記一顆 ★（本機保存，共 20 顆），題目頁頂端有 EXERCISE 編號 + 通關進度條。<br>③ <b>模型參數頁</b>：進階專區 → AIC 知識區 → 「模型參數與假設」，把遊戲裡每一個數字（Vth、Kn′、λ、gm 公式、SIM180 參數表、五道習題的滑桿範圍）與驗證方法寫清楚。<br>④ Charge Pump 知識頁補上 schemdraw 的 Dickson 完整電路圖。<br>⑤ <b>鯨魚女僕立繪</b>：深海風格那隻角色改成<b>三張隨機</b>（每次開站隨機挑一張：<b>你看又急</b>／<b>鯨打細算</b>／<b>Q 版立繪</b>，檔名 <code>img/mascot/whale_maid_1..3.png</code>；換圖跑 <code>py mascot_prep.py 來源圖 --suffix 1</code>）。圖為非官方同人二創、版權歸原作者所有，抓不到圖會自動退回原本的 SVG。⑥ <b>排行榜分榜</b>：競速跟一般模式分開排名（競速 / OPA / Two-stage / 電流源 / LDO / 隨機各一張榜），每筆記下血數與失敗次數，同一張榜同名只留最高分，前三名有獎牌、自己剛存的紀錄會亮成琥珀色；「匯出／匯入成績碼」可以離線跟朋友比，舊紀錄與舊成績碼都還能用。<br>⑦ <b>製程字樣去識別化</b>：教學區原本寫的晶圓廠製程名（含代號與金屬層堆疊寫法）全部移除，換成自製的模擬名稱 <b>SIM180</b>（＝教學用 0.18 µm 級<b>模擬</b>元件模型），並標明是 AI 依公開文獻量級自建的示意曲線、不是任何晶圓廠的 PDK；真實製程曲線請自己跑模擬。<br><b>V4</b>　① 部分關卡會<b>鎖定一根滑桿</b>或<b>收緊一項規格</b>（開場彈窗會標示「本關限制」）。② 進階專區：AIC 知識區、熱門類比 IP、題目練習區。③ 電路圖電流方向、M6 飽和提示、跳過扣分時機已修正。`;
   
   // 生成分類按鈕
     // 生成分類按鈕
@@ -5957,7 +6118,7 @@ function showHome() {
     </span><span class="cat-f"><span>最高 <b class="num">${prog.best.sprint || 0}</b></span><span>最遠 <b class="num">${prog.cleared.sprint || 0} 關</b></span></span></button>`;
 
   catHtml += `<button type="button" class="cat tutor" data-c="tutor"><span class="cat-n">新手專區</span><span class="cat-s">TUTORIAL · 教學與練習</span>
-    <span class="cat-d">七篇紙上教學：規格卡、V = I × R、MOS 的 gm/ro、<b>CIC018 元件關係圖</b>（gm/ID、gm·ro、fT、ID/W、FOM）、5T OTA、Two-Stage Miller 補償、電流鏡 cascode/wide-swing；再加五個互動實驗（歐姆定律、功率分壓、Vds–Id 曲線、規格計算器、電流鏡比較）與 7 步引導練習。<br><b style="color:var(--green)">不計分、不扣血、不影響成績</b>，隨時可以回首頁。</span>
+    <span class="cat-d">七篇紙上教學：規格卡、V = I × R、MOS 的 gm/ro、<b>SIM180 元件關係圖</b>（gm/ID、gm·ro、fT、ID/W、FOM）、5T OTA、Two-Stage Miller 補償、電流鏡 cascode/wide-swing；再加五個互動實驗（歐姆定律、功率分壓、Vds–Id 曲線、規格計算器、電流鏡比較）與 7 步引導練習。<br><b style="color:var(--green)">不計分、不扣血、不影響成績</b>，隨時可以回首頁。</span>
     <span class="cat-f"><span>教學選單 · 7 課 + 6 練習</span><span><b>進入 ▸</b></span></span></button>`;
 
    $('cats').innerHTML = catHtml;
@@ -6157,7 +6318,7 @@ function endRun(why) {
     </ul>
     
     <div style="margin-top: 15px; border-top: 1px solid var(--rule); padding-top: 10px;">
-      <p style="font-size: 12px; margin-bottom: 6px;">是否將此成績上傳至排行榜？</p>
+      <p style="font-size: 12px; margin-bottom: 6px;">是否將此成績存進排行榜？<span style="color: var(--ink-dim);">（同一張榜、同名只保留最高分）</span></p>
       <input type="text" id="playerName" placeholder="輸入你的名字（預設：無名工程師）" style="width:100%; padding: 8px; background: var(--paper-2); border: 1px solid var(--edge); color: var(--ink); font-family: var(--font-mono); margin-bottom: 10px;">
       <button class="cta alt" style="width:100%; min-height:40px; font-size:14px;" id="btnSaveScore" type="button">儲存至排行榜</button>
     </div>
@@ -6170,16 +6331,12 @@ function endRun(why) {
       const nameInput = document.getElementById('playerName').value.trim();
       const playerName = nameInput || '無名工程師';
       try {
-        let lb = JSON.parse(localStorage.getItem('ota-tuner:leaderboard') || '[]');
         const d = new Date();
         const dateStr = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const boardKey = S.sprint ? 'sprint' : (S.cat || 'opa');
         const modeName = S.sprint ? '競速' : (S.cat === 'rand' ? '隨機' : MODS[S.cat].name);
-        
-        lb.push({ name: playerName, mode: modeName, score: t.net, date: dateStr });
-        lb.sort((a, b) => b.score - a.score);
-        lb = lb.slice(0, 20); // 只保留前 20 筆
-        localStorage.setItem('ota-tuner:leaderboard', JSON.stringify(lb));
-        toast('✅ 成績已儲存至排行榜！', 'ok');
+        const res = lbAdd({ name: playerName, mode: modeName, k: boardKey, score: t.net, date: dateStr, lv: S.lives0, fails: S.fails });
+        toast(`✅ 已儲存：${modeName} 榜第 ${res.rank} 名`, 'ok');
         document.getElementById('btnSaveScore').disabled = true;
         document.getElementById('btnSaveScore').textContent = '已儲存';
       } catch (e) {
@@ -6250,11 +6407,11 @@ function onQuizClick(e) {
 }
 ['lessonDoc', 'labDoc', 'advDoc'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', onQuizClick); });
 
-/* ---------- UI 風格：預設（工程藍圖） / 鯊魚女僕（深海） ---------- */
+/* ---------- UI 風格：預設（工程藍圖） / 鯨魚女僕（深海） ---------- */
 const THEME_KEY = 'ota-tuner:theme';
 const THEMES = {
   default: { name: '預設 · 工程藍圖' },
-  shark: { name: '鯊魚女僕 · 深海' }
+  shark: { name: '鯨魚女僕 · 深海' }
 };
 let theme = 'default';
 try { const t = localStorage.getItem(THEME_KEY); if (t && THEMES[t]) theme = t; } catch (e) {}
@@ -6285,9 +6442,25 @@ document.querySelectorAll('.theme-swp').forEach(b => {
 document.querySelectorAll('.js-theme').forEach(b => b.addEventListener('click', cycleTheme));
 paintTheme();
 
+/* ---------- 立繪三選一：每次開啟網站隨機挑一張（非官方同人二創，版權歸原作者） ---------- */
+const MASCOT_ART = [
+  { src: 'img/mascot/whale_maid_1.png', face: 'img/mascot/whale_maid_face_1.png', label: '你看又急' },
+  { src: 'img/mascot/whale_maid_2.png', face: 'img/mascot/whale_maid_face_2.png', label: '鯨打細算' },
+  { src: 'img/mascot/whale_maid_3.png', face: 'img/mascot/whale_maid_face_3.png', label: 'Q 版立繪' }
+];
+const MASCOT_PICK = MASCOT_ART[Math.floor(Math.random() * MASCOT_ART.length)];
+function paintMascot() {
+  document.querySelectorAll('img[data-mascot]').forEach(img => {
+    const face = img.dataset.mascot === 'face';
+    img.src = face ? MASCOT_PICK.face : MASCOT_PICK.src;
+    img.alt = face ? '' : '鯨魚女僕 · ' + MASCOT_PICK.label;   // 頭像是裝飾用，不念給螢幕閱讀器
+  });
+}
+paintMascot();
+
 showHome();
 requestAnimationFrame(t => { last = t; requestAnimationFrame(tick); });
-window.__otaDebug = { setTheme, cycleTheme, THEMES, S, doCheck, C18P, c18Id, c18Pt, GM, GM_CH, initGmChart, paintGm, gmSvg, gmRows, startRun, loadLevel, genLevel, MODS, startTutorial, leaveTutorial, tutorialCheck, refresh, TUT, TUT_STEPS, TUT_LESSONS, TUT_READ, showTutHub, showHome, openLesson, LABS, LAB, openLab, labOhm, labPwr, labIvid, labCalc, labMirror, tutTab, ADV, ADV_KB, ADV_IP, ADV_LABS, ADL, adlOpen, advTab, showAdvHub, openAdv, lbEncode, lbDecode, lbRead, lbWrite, showLeaderboard, showLbCode };
+window.__otaDebug = { setTheme, cycleTheme, THEMES, S, doCheck, C18P, c18Id, c18Pt, GM, GM_CH, initGmChart, paintGm, gmSvg, gmRows, startRun, loadLevel, genLevel, MODS, startTutorial, leaveTutorial, tutorialCheck, refresh, TUT, TUT_STEPS, TUT_LESSONS, TUT_READ, showTutHub, showHome, openLesson, LABS, LAB, openLab, labOhm, labPwr, labIvid, labCalc, labMirror, tutTab, ADV, ADV_KB, ADV_IP, ADV_LABS, ADL, adlOpen, advTab, showAdvHub, openAdv, lbEncode, lbDecode, lbRead, lbWrite, lbAdd, lbKeyOf, lbSort, lbBoardName, lbEsc, LB_KEY, LB_BOARDS, showLeaderboard, showLbCode, MASCOT_ART, MASCOT_PICK, paintMascot };
 
 })();
 </script>
