@@ -3586,6 +3586,11 @@ function fBjt(cx, cy, label, diode) {
     + (diode ? `<path class="thin" d="M${b - 14} ${cy} V${cy - 24} H${cx}"/>` : '')
     + `<text class="lbl" x="${cx + 12}" y="${cy + 4}">${label}</text>`;
 }
+/* 電容（串在垂直線上）：上板 y0、下板 y0+9，端點 (cx, y0-14) 與 (cx, y0+23) */
+function fCap(cx, y0, label) {
+  return `<path class="w" d="M${cx} ${y0 - 14} V${y0} M${cx - 13} ${y0} H${cx + 13} M${cx - 13} ${y0 + 9} H${cx + 13} M${cx} ${y0 + 9} V${y0 + 23}"/>`
+    + (label ? `<text class="lbl" x="${cx + 18}" y="${y0 + 6}">${label}</text>` : '');
+}
 /* 電流源（圓 + 箭頭）：端點在上 (cx, cy-20) 與下 (cx, cy+20) */
 function fSrc(cx, cy, label, up) {
   const d = up ? -1 : 1;
@@ -3623,14 +3628,61 @@ const ADV_IP = [
   <path class="thin" d="M340 96 H226 V176"/>
   <circle class="dot" cx="100" cy="146" r="2.6"/><circle class="dot" cx="340" cy="96" r="2.6"/><circle class="dot" cx="208" cy="58" r="2.6"/>
   <text class="lbl" x="106" y="140">X</text><text class="lbl" x="330" y="90" text-anchor="end">Y</text>
-  <text class="lbl" x="186" y="168" text-anchor="end">V+</text><text class="lbl" x="230" y="168">V−</text>
+  <text class="lbl" x="186" y="168" text-anchor="end">V−</text><text class="lbl" x="230" y="168">V+</text>
   <text class="val" x="208" y="228" text-anchor="middle">Vref = VBE1 + (R2/R1)·VT·ln N</text>
 </svg>
-<figcaption>電壓模式（Kuijk / OPA-forced）核心：OPA 用虛短把 X、Y 壓成同電位，R1 上的壓差就是 ΔV<sub>BE</sub> = V<sub>T</sub>·ln N → 產生 PTAT 電流；再讓同一股電流流過 R2 疊在 V<sub>BE1</sub> 上。OPA 的輸出驅動 M3/M4 這對 PMOS 鏡像，鏡像的作用只有一個：<b>保證兩條支路電流相等</b>。</figcaption>
+<figcaption>電壓模式（Kuijk / OPA-forced）核心：OPA 用虛短把 X、Y 壓成同電位，R1 上的壓差就是 ΔV<sub>BE</sub> = V<sub>T</sub>·ln N → 產生 PTAT 電流；再讓同一股電流流過 R2 疊在 V<sub>BE1</sub> 上。M3/M4 這對 PMOS 共用閘極、由 OPA 輸出驅動（嚴格說不是鏡像，只是<b>匹配對</b>），作用只有一個：<b>保證兩條支路電流相等</b>。<br><b>極性別接反</b>：X−Y = V<sub>T</sub>lnN − I·R1，電流越大差值越小，而閘極越高電流越小 ⇒ <b>V+ 必須接有 R1 的那一支（Y）</b>、V− 接 Q1 那一支（X）才是負回授；接反就變成「電流越小 → 誤差越大 → 電流更小」的正回授，電路會停在零電流（要靠下一頁的 start-up 才踢得出來）。</figcaption>
 </figure>
 <div class="fx">Vref = VBE + K · ΔVBE ,  K = R2/R1
      = VBE + K · VT · ln(N)        VT = kT/q
 ↑ CTAT（−1.8 ~ −2.2 mV/°C）   ↑ PTAT（+0.085 mV/°C × ln N）</div>
+<div class="callout"><b>但這是「原理版」的畫法，實作要改成 grounded-collector 版</b>：標準 CMOS 只有寄生的 vertical PNP，它的 collector 被基板綁在 GND，所以真正的電路是把<b>電阻搬到射極側</b>——Q1/Q2 的 base 與 collector 一起接地、射極朝上接電阻，OPA 的兩個輸入直接接射極側的節點（講義裡叫 non-resistive loading）。節點方程式與上圖完全相同（V<sub>X</sub>=V<sub>EB1</sub>、V<sub>Y</sub>=V<sub>EB2</sub>+I·R1），好處是 OPA 輸入端不再被 R2 造成電阻性負載，代價是 base current 會偷走一部分射極電流（native PNP 的 β 很小）→ 需要 base-current 補償；而且 I=0 仍然是穩定解 → 一定要有 start-up。</div>
+<h2>實作版長什麼樣子</h2>
+<p>把上面 callout 講的三件事直接畫出來就是下面這張：Q1／Q2 的 base 與 collector 一起接地、射極朝上；R1 搬到 Q2 的射極側（介於 B 點與射極之間），R2 留在 MP1 的汲極側；OPA 的兩個輸入直接接在射極側的 A、B 兩點。這樣 R2 的壓降不會變成 OPA 的輸入誤差，節點方程式與原理版完全相同。</p>
+<figure class="fig">
+<!-- FIG:bgr_impl -->
+<svg data-sd role="img" aria-label="實作版帶隙參考電壓：PMOS 匹配對共用閘極、OPA 虛短、vertical PNP 的 base 與 collector 接地、R1 在 Q2 射極側" style="max-width:440px;margin:0 auto" style="color:var(--ink)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:lang="en" height="367.72pt" width="333.58700000000005pt" viewBox="1.2410000000000005 -32.32 333.58700000000005 367.72"><circle cx="106.2" cy="27" r="4.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="253.8" cy="27" r="4.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;" /><path d="M 36.0,-0.0 L 180,-0 L 324,-0" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 36.0,280.8 L 180,280.8 L 324,280.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 180.0,280.8 L 180,295.2 L 171,295.2 L 189,295.2 M 173.7,299.52 L 186.3,299.52 M 178.2,303.84 L 181.8,303.84" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 72.0,-0.0 L 72,15 L 96,15 L 96,39 L 72,39 L 72,54" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 101.99999999999999,14.999999999999998 L 102,39" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 110.39999999999999,27.0 L 121.2,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 288.0,54.0 L 288,39 L 264,39 L 264,15 L 288,15 L 288,-0" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 258.0,39.0 L 258,15" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 238.79999999999998,27.0 L 249.6,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 121.2,27.0 L 180,27 L 238.8,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 72.0,54.0 L 72,66.6 L 72,79.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 72.0,79.2 L 46.8,79.2 L 30.6,79.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 23.6 79.2 L 30.6 76.5 L 30.6 81.9 Z" style="stroke:currentColor;fill:currentColor;stroke-linecap:butt;stroke-linejoin:miter;" /><path d="M 72.0,79.2 L 72,104.4 L 81,107.4 L 63,113.4 L 81,119.4 L 63,125.4 L 81,131.4 L 63,137.4 L 72,140.4 L 72,165.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 288.0,54.0 L 288,66.6 L 288,79.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 288.0,79.2 L 288,104.4 L 297,107.4 L 279,113.4 L 297,119.4 L 279,125.4 L 297,131.4 L 279,137.4 L 288,140.4 L 288,165.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 45.0,190.79999999999998 L 58.2,190.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 58.2,177.60000000000002 L 58.2,204" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 58.2,184.2 L 72.06,172.32 L 72.06,165.72" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 58.2,197.4 L 72.06,209.28 L 72.06,215.88" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 72.05999999999999,172.32 L 65.033,178.343" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 59.719 182.898 L 62.69 175.61 L 67.376 181.076 Z" style="stroke:currentColor;fill:currentColor;stroke-linecap:butt;stroke-linejoin:miter;" /><path d="M 72.05999999999999,215.88 L 72.03,248.34 L 72,280.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 45.0,190.79999999999998 L 39.6,190.8 L 34.2,190.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 34.199999999999996,190.79999999999998 L 34.2,205.2 L 34.2,219.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 34.199999999999996,219.6 L 53.1,219.6 L 72,219.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 261.0,190.79999999999998 L 274.2,190.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 274.2,177.60000000000002 L 274.2,204" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 274.2,184.2 L 288.06,172.32 L 288.06,165.72" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 274.2,197.4 L 288.06,209.28 L 288.06,215.88" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 288.06,172.32 L 281.033,178.343" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 275.719 182.898 L 278.69 175.61 L 283.376 181.076 Z" style="stroke:currentColor;fill:currentColor;stroke-linecap:butt;stroke-linejoin:miter;" /><path d="M 288.06,215.88 L 288.03,248.34 L 288,280.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 261.0,190.79999999999998 L 255.6,190.8 L 250.2,190.8" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 250.20000000000002,190.79999999999998 L 250.2,205.2 L 250.2,219.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 250.20000000000002,219.6 L 269.1,219.6 L 288,219.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 180.0,223.20000000000002 L 135,223.2 L 180,145.258 L 225,223.2 L 180,223.2 M 180,145.258" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 72.0,165.6 L 98.1,165.6 L 124.2,165.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 124.2,165.6 L 124.2,201.6 L 124.2,237.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 124.2,237.6 L 140.85,237.6 L 157.5,237.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 157.5,237.6 L 157.5,230.4 L 157.5,223.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 288.0,79.2 L 262.8,79.2 L 237.6,79.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 237.6,79.2 L 237.6,158.4 L 237.6,237.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 237.6,237.6 L 220.05,237.6 L 202.5,237.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 202.5,237.6 L 202.5,230.4 L 202.5,223.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 180.0,145.25771365940054 L 180,86.129 L 180,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><text x="91.80000000000001" y="172.0" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="end"><tspan x="91.80000000000001" dy="8">Q1 1x</tspan></text><text x="307.79999999999995" y="172.0" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="end"><tspan x="307.79999999999995" dy="8">Q2 Nx</tspan></text><text x="52.199999999999996" y="0.9999999999999982" dominant-baseline="ideographic" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="52.199999999999996" dy="8">MP1</tspan></text><text x="300.59999999999997" y="0.9999999999999982" dominant-baseline="hanging" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="300.59999999999997" dy="8">MP2</tspan></text><text x="53.28" y="110.80000000000001" dominant-baseline="ideographic" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="53.28" dy="8">R2</tspan></text><text x="269.28000000000003" y="110.80000000000001" dominant-baseline="ideographic" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="269.28000000000003" dy="8">R1</tspan></text><text x="79.19999999999999" y="145.08" dominant-baseline="hanging" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="79.19999999999999" dy="9">A</tspan></text><text x="295.20000000000005" y="58.68000000000001" dominant-baseline="hanging" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="295.20000000000005" dy="9">B</tspan></text><text x="14.4" y="55.08" dominant-baseline="hanging" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="14.4" dy="9">Vref</tspan></text><text x="176.4" y="175.60000000000002" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="176.4" dy="8">OPA</tspan></text><text x="160.20000000000002" y="201.52" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="160.20000000000002" dy="8">V-</tspan></text><text x="192.60000000000002" y="201.52" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="192.60000000000002" dy="8">V+</tspan></text><text x="320.40000000000003" y="-27.72" dominant-baseline="ideographic" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="320.40000000000003" dy="9">VDD</tspan></text><text x="320.40000000000003" y="284.40000000000003" dominant-baseline="ideographic" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="320.40000000000003" dy="9">GND</tspan></text><text x="176.4" y="315.8" dominant-baseline="central" fill="black" font-size="10" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="176.4" dy="10">Vref = VEB1 + (R2/R1) * VT * ln(N)</tspan></text><circle cx="72" cy="219.6" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="288" cy="219.6" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="180" cy="27" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="72" cy="79.2" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="288" cy="79.2" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="72" cy="165.6" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="288" cy="165.6" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /></svg>
+<!-- /FIG:bgr_impl -->
+<figcaption>實作版（grounded-collector，講義稱 non-resistive loading）：<b>A</b> = V<sub>EB1</sub>、<b>B</b> = V<sub>EB2</sub> + I·R1，OPA 用虛短把兩點壓成等電位 ⇒ I = V<sub>T</sub>·ln N / R1（PTAT）。這股電流由 MP1 複製到第一條支路，流過 R2 疊在 V<sub>EB1</sub> 上，所以 <b>V<sub>ref</sub> = V<sub>EB1</sub> + (R2/R1)·V<sub>T</sub>·ln N</b>。三個實作陷阱都畫在圖上：(1) OPA 輸入接<b>射極側</b>、不接電阻上方，R2 才不會變成 OPA 的電阻性負載；(2) native PNP 的 β 很小，base current 會從射極電流偷一份 ⇒ 要 base-current 補償；(3) I = 0 仍然是穩定解 ⇒ 一定要 startup。</figcaption>
+</figure>
+<h2>三支路的實作版本（論文 Fig. 1 的畫法）</h2>
+<p>上一張只畫到原理。真正下線的版本會多一支由<b>同一組閘極電壓</b>驅動的 MP3：它把 PTAT 電流複製到第三條支路，再讓這股電流流過 R2、疊在 Q3 的 V<sub>BE</sub> 上。<b>OPA 只看 A、B 兩點</b>（那裡才是決定溫度係數的地方），輸出節點 V<sub>bg</sub> 另外拉出來。</p>
+<figure class="fig">
+<svg viewBox="0 0 470 318" role="img" aria-label="三支路電壓模式 BGR：MP1、MP2、MP3 共用閘極的 PMOS 鏡像，OPA 強制 A、B 等電位，第三支路用 R2 疊在 Q3 上得到 Vbg">
+  <path class="rail" d="M52 26 H438"/><path class="rail" d="M52 276 H438"/>
+  <text class="lbl" x="438" y="20" text-anchor="end">VDD</text><text class="lbl" x="438" y="292" text-anchor="end">GND</text>
+  ${fMos(112, 62, 'p', 'MP1', 1)}${fMos(252, 62, 'p', '', -1)}${fMos(398, 62, 'p', 'MP3', -1)}
+  <text class="lbl" x="222" y="84" text-anchor="end">MP2</text>
+  <path class="thin" d="M102 40 V26 M262 40 V26 M408 40 V26"/>
+  <path class="thin" d="M134 62 H230 M230 62 V104 H376 V62"/>
+  <circle class="dot" cx="230" cy="62" r="2.6"/>
+  <path class="thin" d="M102 84 V150 M262 84 V150 M408 84 V150"/>
+  <text class="lbl" x="108" y="144">A</text><text class="lbl" x="268" y="144">B</text>
+  <text class="lbl" x="414" y="142">Vbg</text>
+  <path class="thin" d="M408 150 H442"/><polygon class="arrow" points="450,150 442,146.5 442,153.5"/>
+  <circle class="dot" cx="102" cy="150" r="2.6"/><circle class="dot" cx="262" cy="150" r="2.6"/><circle class="dot" cx="408" cy="150" r="2.6"/>
+  ${fBjt(102, 200, 'Q1 1×', true)}<path class="thin" d="M102 150 V176 M102 224 V276"/>
+  ${fRes(262, 156, 34, 'R1')}<path class="thin" d="M262 150 V156 M262 190 V200"/>
+  ${fBjt(262, 224, 'Q2 N×', true)}<path class="thin" d="M262 248 V276"/>
+  ${fRes(408, 156, 34, 'R2')}<path class="thin" d="M408 150 V156 M408 190 V200"/>
+  ${fBjt(408, 224, 'Q3', true)}<path class="thin" d="M408 248 V276"/>
+  <polygon class="w" points="148,178 148,252 219,215"/>
+  <text class="lbl" x="154" y="200">V−</text><text class="lbl" x="154" y="240">V+</text>
+  <text class="lbl" x="172" y="228" text-anchor="middle">OPA</text>
+  <path class="thin" d="M102 150 H128 V196 H148"/>
+  <path class="thin" d="M262 150 H232 V262 H120 V236 H148"/>
+  <path class="thin" d="M219 215 V62"/>
+  <circle class="dot" cx="219" cy="62" r="2.6"/>
+  <text class="val" x="235" y="308" text-anchor="middle">Vbg = VBE3 + (R2/R1) · VT · ln N</text>
+</svg>
+<figcaption>三支路版本：MP1/MP2/MP3 是共用閘極的 PMOS 鏡像，MP1、MP2 的汲極就是節點 A、B（OPA 用虛短把兩點壓成等電位），MP3 把同一股 PTAT 電流複製到第三條支路，流過 R2 疊在 Q3 的 V<sub>BE</sub> 上就是 V<sub>bg</sub>。這樣畫的好處是「決定 TC 的節點」與「輸出節點」分開：R2 可以獨立選成想要的 V<sub>ref</sub>，輸出要掛 buffer、RC 濾波或 startup 偵測也不會擾動核心迴路。</figcaption>
+</figure>
+<div class="fx">A 點（Q1，1×）      VA = VBE1
+B 點（Q2 N× + R1）  VB = VBE2 + I·R1
+OPA 虛短 VA = VB  ⇒ I = (VBE1 − VBE2)/R1 = VT·lnN / R1   ← PTAT
+輸出（MP3 + R2 + Q3）Vbg = VBE3 + I·R2 = VBE3 + (R2/R1)·VT·lnN
+抵銷條件：∂VBE/∂T ≈ −1.8 mV/°C ，∂(VT·lnN)/∂T ≈ +0.085·lnN mV/°C
+         選 R2/R1 讓兩項等大反號 → ∂Vbg/∂T ≈ 0</div>
 <h2>四大實作家族</h2>
 <table>
 <thead><tr><th>家族</th><th>核心</th><th>優點</th><th>缺點</th></tr></thead>
@@ -3786,6 +3838,22 @@ const ADV_IP = [
 <p>BGR 的輸出會餵給 ADC、LDO、比較器，所以它的<b>乾淨程度</b>跟精度一樣重要。兩個指標：PSRR（電源抑制）與輸出雜訊。</p>
 <div class="fx">PSRR(dB) = 20 log10 ( |ΔVDD| / |ΔVref| )
 輸出雜訊積分：Vn,rms = √( ∫ Vn²(f) df )   ← 通常 0.1 Hz–10 Hz 或 10 Hz–100 kHz</div>
+<figure class="fig">
+<svg viewBox="0 0 460 232" role="img" aria-label="BGR 的 PSRR 對頻率：低頻靠迴路增益壓抑，中頻因鏡像與 λ 不匹配以每十倍頻 20 dB 下降，高頻被寄生電容前饋拉成陡降後見底">
+  <path class="w" d="M52 168 V20"/><polygon class="arrow" points="52,12 48,20 56,20"/>
+  <path class="w" d="M52 168 H436"/><polygon class="arrow" points="444,168 436,164 436,172"/>
+  <text class="lbl" x="60" y="22">PSRR（dB，越高越好）</text>
+  <text class="lbl" x="446" y="182" text-anchor="end">頻率 f（log）</text>
+  <path class="hot" d="M58 40 H130 L205 78 L265 118 L330 144 L420 148"/>
+  <text class="val" x="74" y="34">①</text>
+  <text class="val" x="214" y="96">②</text>
+  <text class="val" x="300" y="140">③</text>
+  <text class="lbl" x="58" y="198">① 低頻：迴路增益直接壓抑，PSRR ≈ 迴路增益（80–100 dB）</text>
+  <text class="lbl" x="58" y="214">② 中頻：鏡像 / pass 元件的 λ 不匹配 → −20 dB/dec</text>
+  <text class="lbl" x="58" y="230">③ 高頻：Cgs / Cdb 前饋 → 陡降後見底（20–30 dB），救不回來</text>
+</svg>
+<figcaption>PSRR 曲線的三段：低頻看<b>迴路增益</b>（加大 OPA 增益、cascode 疊鏡像都直接加分），中頻看<b>電晶體的 λ</b>（加長 L、cascode），高頻則是<b>寄生電容前饋</b>在主導——迴路來不及反應，VDD 的雜訊直接竄到 Vref，再多增益也救不回。所以 BGR 通常會自己拉一條 RC 濾過的乾淨電源，而不是期待 PSRR 曲線。</figcaption>
+</figure>
 <h2>PSRR 的三條路徑</h2>
 <ol>
 <li><b>迴路內</b>：電源變動 → 偏壓電流變 → 鏡像誤差 → Vref 變。低頻時迴路增益（OPA）把它壓住。</li>
@@ -3819,6 +3887,35 @@ const ADV_IP = [
         t: '佈局重點',
         body: `
 <p>BGR 是「靠匹配吃飯」的電路：電路圖畫對只完成一半，佈局決定你量到的是 20 ppm/°C 還是 200 ppm/°C。</p>
+<figure class="fig">
+<svg viewBox="0 0 460 208" role="img" aria-label="BGR 佈局：左圖 3×3 BJT 陣列中央放 dummy，右圖 A/B 交錯排列使重心重合，梯度互相抵消">
+  <text class="lbl" x="40" y="40">① 3×3 陣列（中心 dummy）</text>
+  <rect class="box" x="40" y="54" width="26" height="26"/><circle class="dot" cx="53" cy="67" r="2.6"/>
+  <rect class="box" x="70" y="54" width="26" height="26"/><circle class="dot" cx="83" cy="67" r="2.6"/>
+  <rect class="box" x="100" y="54" width="26" height="26"/><circle class="dot" cx="113" cy="67" r="2.6"/>
+  <rect class="box" x="40" y="84" width="26" height="26"/><circle class="dot" cx="53" cy="97" r="2.6"/>
+  <rect class="mark" x="70" y="84" width="26" height="26"/><text class="lbl" x="83" y="102" text-anchor="middle">D</text>
+  <rect class="box" x="100" y="84" width="26" height="26"/><circle class="dot" cx="113" cy="97" r="2.6"/>
+  <rect class="box" x="40" y="114" width="26" height="26"/><circle class="dot" cx="53" cy="127" r="2.6"/>
+  <rect class="box" x="70" y="114" width="26" height="26"/><circle class="dot" cx="83" cy="127" r="2.6"/>
+  <rect class="box" x="100" y="114" width="26" height="26"/><circle class="dot" cx="113" cy="127" r="2.6"/>
+  <text class="lbl" x="40" y="164">① 8 顆 unit 圍一圈，鄰居與應力一致</text>
+  <text class="lbl" x="232" y="40">② 交錯排列（common centroid）</text>
+  <rect class="box" x="232" y="54" width="36" height="26"/><text class="lbl" x="250" y="72" text-anchor="middle">A</text>
+  <rect class="box" x="272" y="54" width="36" height="26"/><text class="lbl" x="290" y="72" text-anchor="middle">B</text>
+  <rect class="box" x="312" y="54" width="36" height="26"/><text class="lbl" x="330" y="72" text-anchor="middle">B</text>
+  <rect class="box" x="352" y="54" width="36" height="26"/><text class="lbl" x="370" y="72" text-anchor="middle">A</text>
+  <rect class="box" x="232" y="84" width="36" height="26"/><text class="lbl" x="250" y="102" text-anchor="middle">B</text>
+  <rect class="box" x="272" y="84" width="36" height="26"/><text class="lbl" x="290" y="102" text-anchor="middle">A</text>
+  <rect class="box" x="312" y="84" width="36" height="26"/><text class="lbl" x="330" y="102" text-anchor="middle">A</text>
+  <rect class="box" x="352" y="84" width="36" height="26"/><text class="lbl" x="370" y="102" text-anchor="middle">B</text>
+  <path class="mark" d="M310 46 V152 M226 84 H394" stroke-dasharray="3 4"/>
+  <circle class="dot" cx="310" cy="84" r="3"/>
+  <text class="lbl" x="40" y="180">② A 與 B 重心重合 → 線性梯度相消</text>
+  <text class="val" x="40" y="198">同尺寸 unit 並聯、電阻同寬同向、兩端加 dummy</text>
+</svg>
+<figcaption>佈局決定你量到 20 ppm/°C 還是 200 ppm/°C。左邊的 3×3 陣列讓 8 顆 unit 的「鄰居」都一樣，中心那顆只是 dummy（不算在電路裡，但讓外圈每顆看到的環境對稱）；右邊的 A B B A / B A A B 是 common centroid：把 8× 與 1× 兩組拆成小塊交錯，讓兩組的重心落在同一點，晶片上的線性梯度（溫度、應力、氧化層厚度）在相減時就抵消了。電阻同理——<b>只比比值、不比絕對值</b>。</figcaption>
+</figure>
 <h2>1. BJT 陣列</h2>
 <ul>
 <li>N = 8 的寫法：<b>3×3 陣列、中心放 dummy</b>，8 顆圍一圈 → 每顆的鄰居與應力幾乎相同。</li>
@@ -3861,27 +3958,46 @@ const ADV_IP = [
         body: `
 <p>LDO（low-dropout regulator）是「線性」穩壓器：pass 元件當成一個可變電阻，靠回授把 V<sub>OUT</sub> 壓在設定值。它不切換、沒有漣波，代價是壓差全部變成熱。</p>
 <figure class="fig">
-<svg viewBox="0 0 420 200" role="img" aria-label="LDO 方塊圖：誤差放大器驅動 PMOS pass 元件，回授電阻分壓回輸入">
-  <path class="rail" d="M40 24 H380"/><path class="rail" d="M40 180 H380"/>
-  <text class="lbl" x="340" y="18">VIN</text><text class="lbl" x="340" y="196">GND</text>
-  <polygon class="w" points="196,70 196,120 240,95"/>
-  <text class="lbl dev" x="203" y="99">EA</text>
-  <path class="w thin" d="M240 95 H270 M270 95 V60 M270 60 H300"/>
-  <rect class="w" x="288" y="84" width="24" height="22"/>
-  <text class="lbl" x="286" y="76">MP</text>
-  <path class="w thin" d="M270 60 V24 M312 95 H360 M300 106 V150 M300 150 H360"/>
-  <text class="lbl" x="366" y="99">VOUT</text>
-  <rect class="w" x="352" y="120" width="14" height="26"/><rect class="w" x="352" y="154" width="14" height="26"/>
-  <text class="lbl" x="330" y="138">R1</text><text class="lbl" x="330" y="172">R2</text>
-  <path class="w thin" d="M359 146 V154 M359 130 V120 M359 120 H300 V95"/>
-  <text class="lbl" x="150" y="150">VREF</text>
-  <path class="thin" d="M188 95 H196 M170 95 H188"/>
+<svg viewBox="0 0 460 250" role="img" aria-label="LDO 方塊圖：誤差放大器比較 VREF 與回授分壓，驅動 PMOS pass 元件，R1/R2 把 VOUT 分壓回輸入">
+  <path class="rail" d="M40 28 H430"/>
+  <path class="rail" d="M40 232 H430"/>
+  <text class="lbl" x="400" y="22">VIN</text>
+  <text class="lbl" x="400" y="246">GND</text>
+  <polygon class="w" points="100,96 100,152 156,124"/>
+  <text class="lbl dev" x="112" y="130">EA</text>
+  <text class="lbl" x="104" y="107">−</text>
+  <text class="lbl" x="104" y="141">+</text>
+  <path class="w thin" d="M60 104 H100"/>
+  <text class="lbl" x="56" y="108" text-anchor="end">VREF</text>
+  <path class="w thin" d="M156 124 H240 V86 H310"/>
+  <rect class="w" x="310" y="64" width="40" height="44"/>
+  <text class="lbl" x="358" y="80">MP</text>
+  <text class="lbl" x="358" y="94">PMOS</text>
+  <path class="w thin" d="M330 28 V64 M330 108 V150"/>
+  <path class="w thin" d="M330 150 H430"/>
+  <text class="lbl" x="396" y="144">VOUT</text>
+  <rect class="w" x="379" y="150" width="14" height="26"/>
+  <rect class="w" x="379" y="196" width="14" height="26"/>
+  <text class="lbl" x="364" y="166" text-anchor="end">R1</text>
+  <text class="lbl" x="364" y="212" text-anchor="end">R2</text>
+  <path class="w thin" d="M386 176 V196 M386 222 V232"/>
+  <path class="w thin" d="M386 186 H120 V144 H100"/>
+  <circle class="dot" cx="386" cy="150" r="2.6"/>
+  <circle class="dot" cx="386" cy="186" r="2.6"/>
 </svg>
 <figcaption>標準 LDO：EA 比較 V<sub>REF</sub> 與回授分壓，驅動 PMOS pass 元件；PMOS 的源極接 VIN，所以 dropout 只需要一個 V<sub>ov</sub>。</figcaption>
 </figure>
 <div class="fx">VOUT = VREF · (1 + R1/R2)
 Dropout：VIN,min = VOUT + Vov,pass  （PMOS，只需一個 Vov）
 效率：η ≈ VOUT · ILOAD / (VIN · (ILOAD + IQ))</div>
+<h2>完整電路：把方塊拆成元件</h2>
+<figure class="fig">
+<!-- FIG:ldo_full -->
+<svg data-sd role="img" aria-label="LDO 完整電路：誤差放大器驅動 PMOS pass 元件、R1/R2 分壓回授、輸出電容與 ESR、負載電流源" style="max-width:560px;margin:0 auto" style="color:var(--ink)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:lang="en" height="334.42pt" width="470.4529999999999pt" viewBox="-70.237 -27.82 470.4529999999999 334.42"><circle cx="81" cy="27" r="4.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="345.6" cy="165.6" r="18" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;" /><path d="M 0.0,-0.0 L 183.6,-0 L 367.2,-0" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 0.0,252.0 L 183.6,252 L 367.2,252" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 201.6,252.0 L 201.6,266.4 L 192.6,266.4 L 210.6,266.4 M 195.3,270.72 L 207.9,270.72 M 199.8,275.04 L 203.4,275.04" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 115.2,54.0 L 115.2,39 L 91.2,39 L 91.2,15 L 115.2,15 L 115.2,-0" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 85.20000000000002,39.0 L 85.2,15" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 66.0,27.0 L 76.8,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 115.2,54.0 L 115.2,66.6 L 115.2,79.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 115.2,79.2 L 241.2,79.2 L 367.2,79.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 154.79999999999998,79.2 L 154.8,61.2 L 154.8,52.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 154.8 45.2 L 157.5 52.2 L 152.1 52.2 Z" style="stroke:currentColor;fill:currentColor;stroke-linecap:butt;stroke-linejoin:miter;" /><path d="M 223.20000000000002,79.2 L 223.2,93.6 L 232.2,96.6 L 214.2,102.6 L 232.2,108.6 L 214.2,114.6 L 232.2,120.6 L 214.2,126.6 L 223.2,129.6 L 223.2,144" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 223.20000000000002,144.0 L 223.2,180 L 232.2,183 L 214.2,189 L 232.2,195 L 214.2,201 L 232.2,207 L 214.2,213 L 223.2,216 L 223.2,252" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 284.40000000000003,79.2 L 284.4,102.96 M 293.4,102.96 L 275.4,102.96 M 293.4,109.44 L 275.4,109.44 M 284.4,109.44 L 284.4,133.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 284.40000000000003,133.20000000000002 L 284.4,136.8 L 293.4,139.8 L 275.4,145.8 L 293.4,151.8 L 275.4,157.8 L 293.4,163.8 L 275.4,169.8 L 284.4,172.8 L 284.4,176.4" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 284.40000000000003,176.4 L 284.4,214.2 L 284.4,252" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 345.59999999999997,79.2 L 345.6,147.6 L 345.6,147.6 M 345.6,183.6 L 345.6,183.6 L 345.6,252" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 345.59999999999997,156.6 L 345.6,165.6" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 345.6 172.6 L 342.9 165.6 L 348.3 165.6 Z" style="stroke:currentColor;fill:currentColor;stroke-linecap:butt;stroke-linejoin:miter;" /><path d="M 39.6,187.20000000000002 L -5.4,187.2 L 39.6,109.258 L 84.6,187.2 L 39.6,187.2 M 39.6,109.258" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 39.60000000000001,109.25771365940054 L 39.6,68.129 L 39.6,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 39.6,27.0 L 52.8,27 L 66,27" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 223.20000000000002,144.0 L 161.1,144 L 99,144" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 99.0,144.0 L 99,179.1 L 99,214.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 99.0,214.20000000000002 L 80.55,214.2 L 62.1,214.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 62.1,214.20000000000002 L 62.1,200.7 L 62.1,187.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M -36.0,214.20000000000002 L -9.45,214.2 L 17.1,214.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><path d="M 17.1,214.20000000000002 L 17.1,200.7 L 17.1,187.2" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-dasharray:-;stroke-linecap:round;stroke-linejoin:round;" /><text x="151.20000000000002" y="24.12000000000001" dominant-baseline="central" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="151.20000000000002" dy="9">VOUT</tspan></text><text x="246.6" y="107.2" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="246.6" dy="8">R1</tspan></text><text x="246.6" y="193.6" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="246.6" dy="8">R2</tspan></text><text x="246.6" y="139.6" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="246.6" dy="8">FB</tspan></text><text x="310.32" y="104.32000000000001" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="310.32" dy="8">C_OUT</tspan></text><text x="307.8" y="150.39999999999998" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="307.8" dy="8">ESR</tspan></text><text x="265.68" y="166.6" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="265.68" dy="8">z_esr</tspan></text><text x="383.4" y="161.2" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="383.4" dy="8">ILOAD</tspan></text><text x="-16.199999999999996" y="159.4" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="-16.199999999999996" dy="8">EA</tspan></text><text x="-2.6999999999999975" y="189.56000000000003" dominant-baseline="central" fill="black" font-size="7" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="-2.6999999999999975" dy="7">V-</tspan></text><text x="74.7" y="189.56000000000003" dominant-baseline="central" fill="black" font-size="7" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="74.7" dy="7">V+</tspan></text><text x="23.400000000000002" y="49.599999999999994" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="23.400000000000002" dy="8">p_gate</tspan></text><text x="-54.0" y="201.60000000000002" dominant-baseline="central" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="-54.0" dy="9">VREF</tspan></text><text x="199.8" y="56.8" dominant-baseline="central" fill="black" font-size="8" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="199.8" dy="8">p_out</tspan></text><text x="363.59999999999997" y="-27.72" dominant-baseline="central" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="363.59999999999997" dy="9">VIN</tspan></text><text x="363.59999999999997" y="255.60000000000002" dominant-baseline="central" fill="black" font-size="9" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="363.59999999999997" dy="9">GND</tspan></text><text x="180.0" y="287.0" dominant-baseline="central" fill="black" font-size="10" font-family="'IBM Plex Mono',ui-monospace,Consolas,monospace" text-anchor="middle"><tspan x="180.0" dy="10">VOUT = VREF * (1 + R1/R2)</tspan></text><circle cx="223.2" cy="144" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="223.2" cy="79.2" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="284.4" cy="79.2" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /><circle cx="345.6" cy="79.2" r="2.7" style="stroke:currentColor;fill:currentColor;stroke-width:1.5;stroke-dasharray:-;" /></svg>
+<!-- /FIG:ldo_full -->
+<figcaption>完整電路：EA 把 V<sub>REF</sub> 與 β·V<sub>OUT</sub>（β = R2/(R1+R2)）的差放大，驅動 PMOS pass 的閘極；C<sub>OUT</sub> 串一個 ESR、負載用電流源表示。三個極點/零點就是在這張圖上找：<b>p_gate</b> = EA 輸出阻抗看到的閘極電容、<b>p_out</b> = R<sub>out</sub>·C<sub>OUT</sub>、<b>z_esr</b> = ESR·C<sub>OUT</sub>。</figcaption>
+</figure>
+<p>三個常被忽略的細節：(1) 極性要讓迴路是<b>負回授</b>——V<sub>OUT</sub>↑ → FB↑ → EA 輸出↑ → PMOS 的 |V<sub>gs</sub>|↓ → 電流↓ → V<sub>OUT</sub>↓，所以 FB 接 EA 的<b>正</b>輸入、V<sub>REF</sub> 接負輸入；(2) pass 的閘極是 EA 輸出看到的高阻抗節點，低頻主極點最常出現在這裡（p_gate）；(3) ESR 在迴路裡提供一個零點，這就是「換了更好的電容反而振盪」的原因。</p>
 <h2>PMOS 還是 NMOS pass？</h2>
 <table>
 <thead><tr><th></th><th>PMOS（PMOS pass）</th><th>NMOS（需 charge pump）</th></tr></thead>
@@ -3907,6 +4023,37 @@ Dropout：VIN,min = VOUT + Vov,pass  （PMOS，只需一個 Vov）
 Gate 極點  p_gate ≈ 1 / (2π · R_ea · C_g,pass)
 ESR 零點   z_esr = 1 / (2π · ESR · C_OUT)
 迴路增益   T(s) = A_ea · gm_pass · R_out · β ,  β = R2/(R1+R2)</div>
+<figure class="fig">
+<svg viewBox="0 0 460 308" role="img" aria-label="LDO 迴路增益與相位的波德圖：p_out 為主極點，p_gate 讓增益以每十倍頻 40 dB 下降，ESR 零點把相位拉回來，交越頻率處的相位餘裕約 57 度">
+  <path class="w" d="M52 252 V20"/><polygon class="arrow" points="52,12 48,20 56,20"/>
+  <path class="w" d="M52 252 H436"/><polygon class="arrow" points="444,252 436,248 436,256"/>
+  <text class="lbl" x="60" y="22">增益 |T|（dB）</text>
+  <text class="lbl" x="60" y="168">相位 ∠T</text>
+  <text class="lbl" x="446" y="268" text-anchor="end">頻率 f（log）</text>
+  <path class="mark" d="M52 112 H430"/>
+  <text class="lbl" x="46" y="116" text-anchor="end">0 dB</text>
+  <path class="mark" d="M52 246 H430" stroke-dasharray="3 5"/>
+  <text class="lbl" x="46" y="250" text-anchor="end">−180°</text>
+  <text class="lbl" x="46" y="212" text-anchor="end">−90°</text>
+  <text class="lbl" x="46" y="174" text-anchor="end">0°</text>
+  <path class="grid" d="M150 22 V252 M220 52 V252 M270 95 V252"/>
+  <text class="lbl" x="150" y="266" text-anchor="middle">p_out</text>
+  <text class="lbl" x="220" y="266" text-anchor="middle">p_gate</text>
+  <text class="lbl" x="270" y="266" text-anchor="middle">z_esr</text>
+  <text class="lbl" x="58" y="284">斜率：p_out 之後 −20 dB/dec → p_gate 之後 −40 dB/dec</text>
+  <text class="lbl" x="58" y="300">z_esr 進場後斜率回到 −20 dB/dec，相位也回勾 → 交越時留住 PM</text>
+  <path class="hot" d="M58 22 H150 L220 52 L270 95 L360 152"/>
+  <circle class="dot" cx="297" cy="112" r="2.8"/>
+  <path class="w" d="M58 208 H116 L190 242 H240 L270 234 L297 222 L340 210 L420 203"/>
+  <path class="mark" d="M297 112 V222"/>
+  <path class="thin" d="M297 222 V246"/>
+  <polygon class="arrow" points="297,222 293.5,230 300.5,230"/>
+  <polygon class="arrow" points="297,246 293.5,238 300.5,238"/>
+  <text class="val" x="304" y="242">PM ≈ 57°</text>
+  <text class="lbl" x="302" y="104">← UGF（0 dB 交越）</text>
+</svg>
+<figcaption>LDO 的波德圖：低頻增益高（迴路把誤差壓掉），<b>p<sub>out</sub> = 1/(2πR<sub>out</sub>C<sub>OUT</sub>)</b> 之後以 −20 dB/dec 下降，<b>p<sub>gate</sub></b> 再插進來變成 −40 dB/dec。危急的是相位正往 −180° 掉的時候增益才交越 0 dB，所以要用 <b>ESR 零點</b>把相位拉回來（圖中相位的回勾）——這就是「ESR 窗口」的由來：太小則零點太遠救不到，太大則輸出突波變大。</figcaption>
+</figure>
 <h2>典型補償策略</h2>
 <ol>
 <li><b>External cap（C<sub>OUT</sub> 大）</b>：把 p_out 壓低當主極點，gate 極點當非主極點 → pole splitting 自動完成。ESR 零點用來補相位。</li>
@@ -3992,6 +4139,24 @@ ESR 零點   z_esr = 1 / (2π · ESR · C_OUT)
 <li>PSRR：低頻看迴路增益，高頻看 C<sub>OUT</sub>，必要時加 RC 濾波或前饋。</li>
 <li>Protection：OCP、OVP、thermal、reverse current、soft start。</li>
 </ol>
+<figure class="fig">
+<svg viewBox="0 0 460 216" role="img" aria-label="LDO 的輸入輸出轉移曲線：VIN 低於 VOUT 加 dropout 時輸出跟著輸入掉，過了膝點才穩壓">
+  <path class="w" d="M56 160 V32"/><polygon class="arrow" points="56,24 52,32 60,32"/>
+  <path class="w" d="M56 160 H436"/><polygon class="arrow" points="444,160 436,156 436,164"/>
+  <text class="lbl" x="62" y="28">VOUT</text>
+  <text class="lbl" x="446" y="174" text-anchor="end">VIN</text>
+  <path class="hot" d="M56 158 L302 66 H430"/>
+  <path class="mark" d="M302 66 V160"/>
+  <circle class="dot" cx="302" cy="66" r="3"/>
+  <text class="lbl" x="430" y="46" text-anchor="end">① 穩壓區（VOUT 與 VIN 無關）</text>
+  <text class="val" x="430" y="60" text-anchor="end">Vdo ≈ 100–300 mV</text>
+  <text class="val" x="104" y="124">②</text>
+  <text class="lbl" x="302" y="176" text-anchor="middle">VIN,min = VOUT + Vdo</text>
+  <text class="lbl" x="56" y="194">① 膝點右邊：pass 在飽和區 → VOUT 穩、迴路增益大、PSRR 好</text>
+  <text class="lbl" x="56" y="210">② 膝點左邊：pass 進 triode → VOUT 跟著 VIN 掉，迴路增益與 PSRR 一起崩</text>
+</svg>
+<figcaption>LDO 的「膝點」就是 dropout：V<sub>IN</sub> 還夠高時 pass 元件在飽和區，迴路增益很大、V<sub>OUT</sub> 穩穩不動；一旦 V<sub>IN</sub> 掉到 V<sub>OUT</sub> + V<sub>do</sub> 以下，pass 進入 triode，g<sub>m</sub> 與 r<sub>o</sub> 一起崩掉 → 輸出跟著輸入掉，連 PSRR、暫態、雜訊全部變差。<b>所以「pass 元件太小」是第五頁清單裡的致命錯誤：規格書上的 dropout 是「還剩多少調節能力」，不是「可以這樣用」。</b></figcaption>
+</figure>
 <h2>五個最常見的錯誤</h2>
 <ol>
 <li><b>只用 nominal 負載驗穩定性</b>：輕載時 p_out 跑到低頻，PM 可能掉 20°。</li>
@@ -4046,6 +4211,41 @@ ESR 零點   z_esr = 1 / (2π · ESR · C_OUT)
 Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
 漣波 ΔV ≈ Iout / (f · C)          ← 想壓小就加大 C 或提高 f
 效率 η ≈ Vout / ((N + 1) · Vin)   ← 級數越多、寄生電容越吃效率</div>
+<h2>一級到底怎麼運作（電壓加倍器）</h2>
+<p>先不要看 N 級，單一級就是「兩顆開關 + 一顆飛馳電容」。φ1 把 C<sub>fly</sub> 充到 V<sub>in</sub>；φ2 把 C<sub>fly</sub> 的<b>底板</b>抬到 V<sub>in</sub>——電容上的電壓不能瞬間改變，所以頂端（P 點）被推到 2V<sub>in</sub>，再透過第二顆開關把電荷推給 C<sub>OUT</sub>。Dickson 只是把這個動作串成 N 級、用二極體（或 diode-connected MOS）當開關。</p>
+<figure class="fig">
+<svg viewBox="0 0 470 190" role="img" aria-label="單級電荷泵的兩個相位：φ1 時飛馳電容由 Vin 充電，φ2 時底板被抬到 Vin 使 P 點變成 2Vin 並把電荷推給輸出電容">
+  <path class="thin" d="M24 70 H60"/><text class="lbl" x="24" y="88">Vin</text>
+  <path class="thin" d="M60 70 H96"/><circle class="dot" cx="62" cy="70" r="2.4"/><circle class="dot" cx="94" cy="70" r="2.4"/>
+  <text class="lbl" x="78" y="58" text-anchor="middle">S1 導通</text>
+  <path class="thin" d="M112 70 V84"/>${fCap(112, 98, 'C_fly')}<path class="thin" d="M112 121 V138"/>
+  <path class="thin" d="M86 138 H112"/><text class="lbl" x="82" y="142" text-anchor="end">φ1 = 0</text>
+  <path class="thin" d="M112 70 H132"/><circle class="dot" cx="134" cy="70" r="2.4"/><circle class="dot" cx="162" cy="70" r="2.4"/>
+  <path class="thin" d="M134 70 L158 58"/><text class="lbl" x="148" y="50" text-anchor="middle">S2 斷開</text>
+  <path class="thin" d="M162 70 H196"/><circle class="dot" cx="178" cy="70" r="2.4"/>
+  <text class="lbl" x="118" y="62">P</text>
+  <path class="thin" d="M178 70 V86"/>${fCap(178, 100, 'C_OUT')}<path class="thin" d="M178 123 V148"/>
+  <path class="rail" d="M140 148 H200"/><text class="lbl" x="200" y="162" text-anchor="end">GND</text>
+  <path class="thin" d="M256 70 H288"/><text class="lbl" x="256" y="88">Vin</text>
+  <path class="thin" d="M290 70 L314 58"/><circle class="dot" cx="290" cy="70" r="2.4"/><circle class="dot" cx="318" cy="70" r="2.4"/>
+  <text class="lbl" x="304" y="50" text-anchor="middle">S1 斷開</text>
+  <path class="thin" d="M334 70 V84"/>${fCap(334, 98, 'C_fly')}<path class="thin" d="M334 121 V138"/>
+  <path class="thin" d="M308 138 H334"/><text class="lbl" x="304" y="142" text-anchor="end">φ2 = Vin</text>
+  <path class="thin" d="M334 70 H364"/><circle class="dot" cx="366" cy="70" r="2.4"/><circle class="dot" cx="394" cy="70" r="2.4"/>
+  <text class="lbl" x="380" y="58" text-anchor="middle">S2 導通</text>
+  <path class="thin" d="M394 70 H430"/><circle class="dot" cx="410" cy="70" r="2.4"/>
+  <text class="lbl" x="326" y="62" text-anchor="end">P</text>
+  <path class="thin" d="M410 70 V86"/>${fCap(410, 100, 'C_OUT')}<path class="thin" d="M410 123 V148"/>
+  <path class="rail" d="M370 148 H432"/><text class="lbl" x="432" y="162" text-anchor="end">GND</text>
+  <text class="val" x="112" y="180" text-anchor="middle">φ1：C_fly 充到 Vin</text>
+  <text class="val" x="342" y="180" text-anchor="middle">φ2：底板抬到 Vin ⇒ P = 2Vin</text>
+</svg>
+<figcaption>兩個相位各做一半的事：φ1 只負責<b>把電容充飽</b>（S1 導通、S2 斷開、φ 拉低），φ2 只負責<b>把整顆電容墊高</b>（φ 抬到 V<sub>in</sub>，P 點瞬間變成 2V<sub>in</sub>，S2 導通把電荷倒給 C<sub>OUT</sub>）。所以「兩相不能重疊」不是保守估計——重疊就等於兩邊同時接到 P 點，電荷直接倒流。</figcaption>
+</figure>
+<div class="fx">φ1：S1 on / S2 off / φ = 0    ⇒ V_Cfly = Vin ，P = Vin
+φ2：S1 off / S2 on / φ = Vin  ⇒ V_P = Vin + V_Cfly = 2Vin
+一級（doubler）= 2Vin；Dickson 串 N 級、共用兩相時脈 ⇒ 理想 N·Vin
+代價：每個 P 點的寄生電容 Cp 都要一起被抬（η ∝ C_fly/(C_fly+Cp)）</div>
 <h2>三個設計重點</h2>
 <ul>
 <li><b>時脈不能重疊</b>：兩相若同時導通，電荷會倒流，輸出直接塌掉。所以要用 non-overlapping clock generator。</li>
@@ -4070,6 +4270,33 @@ Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
 <div class="callout warn"><b>同名不同物</b>：PLL 裡也有一個「charge pump」，它把 PFD 的 up/down 脈衝轉成電流脈衝灌進迴路濾波器，<b>不是</b>用來升壓的。兩者都叫 charge pump，但功能、規格、設計重點完全不同。</div>
 <h2>用在哪裡</h2>
 <p>Flash / EEPROM 需要 12–20 V 的寫入電壓；LCD 驅動、MEMS、電容式觸控、White LED 驅動也需要高於 VDD 的電壓。共同點是<b>電流很小</b>——這正是電荷泵最適合的地方。</p>
+<h2>閉迴路穩壓的電荷泵</h2>
+<p>前面那張是<b>開迴路</b>：輕載時輸出會被一路推到 N·V<sub>in</sub>（可能超過元件耐壓），重載又掉下來。所以實務上一定把它關進回授迴路：分壓器跟 V<sub>REF</sub> 比較，決定「還要不要繼續泵」，泵到設定值就停。</p>
+<figure class="fig">
+<svg viewBox="0 0 470 200" role="img" aria-label="閉迴路電荷泵方塊圖：分壓器與 VREF 比較，經誤差比較器控制振盪器與兩相驅動器，再驅動 N 級 Dickson 泵級">
+  <text class="lbl" x="57" y="38" text-anchor="middle">VREF</text>
+  <path class="thin" d="M57 44 V58"/>
+  <rect class="box" x="20" y="58" width="74" height="34" rx="4"/>
+  <text class="lbl" x="57" y="79" text-anchor="middle">誤差比較器</text>
+  <path class="thin" d="M94 75 H128"/><polygon class="arrow" points="128,75 121,71.5 121,78.5"/>
+  <rect class="box" x="130" y="54" width="140" height="42" rx="4"/>
+  <text class="lbl" x="200" y="72" text-anchor="middle">OSC（環振 / RC）</text>
+  <text class="lbl" x="200" y="88" text-anchor="middle">兩相 non-overlap driver</text>
+  <path class="thin" d="M270 75 H300"/><polygon class="arrow" points="300,75 293,71.5 293,78.5"/>
+  <rect class="box" x="302" y="54" width="120" height="42" rx="4"/>
+  <text class="lbl" x="362" y="72" text-anchor="middle">泵級（N 級 Dickson）</text>
+  <text class="lbl" x="362" y="88" text-anchor="middle">飛馳電容 + 輸出電容</text>
+  <path class="thin" d="M422 75 H444"/><polygon class="arrow" points="452,75 444,71.5 444,78.5"/>
+  <circle class="dot" cx="430" cy="75" r="2.6"/><text class="lbl" x="436" y="64">VOUT</text>
+  <path class="thin" d="M430 75 V96"/>${fRes(430, 96, 24, 'R1')}
+  <path class="thin" d="M430 120 V130"/><circle class="dot" cx="430" cy="126" r="2.6"/>${fRes(430, 130, 24, 'R2')}
+  <path class="thin" d="M430 154 V176"/>
+  <path class="thin" d="M430 126 H57 V92"/>
+  <text class="lbl" x="240" y="112" text-anchor="middle">回授把 VOUT 鎖在 VREF · (R1+R2)/R2</text>
+  <path class="rail" d="M30 176 H440"/><text class="lbl" x="440" y="190" text-anchor="end">GND</text>
+</svg>
+<figcaption>閉迴路版本：泵級只在「輸出電壓低於設定值」時才被驅動。比較器與分壓器決定 pumping 的 duty，OSC 提供兩相不重疊的時脈。這種架構的代價是輸出漣波（一直在「泵一下、停一下」），所以輸出電容與比較器的遲滯（hysteresis）都要選得剛剛好。</figcaption>
+</figure>
 <h2>常見錯誤</h2>
 <ol>
 <li><b>兩相重疊</b>：電荷倒流，輸出電壓與效率同時崩。</li>
@@ -4091,7 +4318,7 @@ Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
     ]
   },
   {
-    id: 'adc', tag: '資料轉換', min: '40 分鐘 · 4 架構', st: 'ready',
+    id: 'adc', tag: '資料轉換', min: '55 分鐘 · 3 頁 + 4 架構', st: 'ready',
     t: 'ADC 類比數位轉換',
     s: '把連續的類比電壓變成離散的位元：取樣、量化、編碼。四種主流架構各有各的速度／精度／功耗甜蜜點。',
     pages: [
@@ -4103,6 +4330,25 @@ Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
 量化誤差 ≤ ±½ LSB
 SNR(ideal) = 6.02 N + 1.76 dB
 取樣定理：fs ≥ 2 · fmax（實務上要留 5–10 倍給抗混疊濾波器）</div>
+<figure class="fig">
+<svg viewBox="0 0 500 175" role="img" aria-label="取樣與量化示意：類比輸入曲線每格取樣一次，量化後變成階梯輸出，格線間距就是一個 LSB">
+  <rect class="grid" x="44.0" y="22.0" width="380.0" height="110.0"/>
+  <path class="grid" d="M44.0 132.0 H424.0 M44.0 118.2 H424.0 M44.0 104.5 H424.0 M44.0 90.8 H424.0 M44.0 77.0 H424.0 M44.0 63.2 H424.0 M44.0 49.5 H424.0 M44.0 35.8 H424.0 M44.0 22.0 H424.0 M55.9 22.0 V132.0 M79.6 22.0 V132.0 M103.4 22.0 V132.0 M127.1 22.0 V132.0 M150.9 22.0 V132.0 M174.6 22.0 V132.0 M198.4 22.0 V132.0 M222.1 22.0 V132.0 M245.9 22.0 V132.0 M269.6 22.0 V132.0 M293.4 22.0 V132.0 M317.1 22.0 V132.0 M340.9 22.0 V132.0 M364.6 22.0 V132.0 M388.4 22.0 V132.0 M412.1 22.0 V132.0"/>
+  <polyline class="hot" points="44.0 111.6 47.2 109.4 50.3 107.0 53.5 104.4 56.7 101.8 59.8 99.1 63.0 96.4 66.2 93.5 69.3 90.6 72.5 87.6 75.7 84.7 78.8 81.6 82.0 78.6 85.2 75.5 88.3 72.5 91.5 69.5 94.7 66.5 97.8 63.5 101.0 60.6 104.2 57.8 107.3 55.0 110.5 52.3 113.7 49.7 116.8 47.2 120.0 44.7 123.2 42.5 126.3 40.3 129.5 38.3 132.7 36.4 135.8 34.6 139.0 33.0 142.2 31.6 145.3 30.4 148.5 29.3 151.7 28.3 154.8 27.6 158.0 27.0 161.2 26.6 164.3 26.4 167.5 26.4 170.7 26.6 173.8 26.9 177.0 27.5 180.2 28.2 183.3 29.0 186.5 30.1 189.7 31.3 192.8 32.7 196.0 34.3 199.2 36.0 202.3 37.8 205.5 39.8 208.7 42.0 211.8 44.2 215.0 46.6 218.2 49.1 221.3 51.7 224.5 54.4 227.7 57.1 230.8 60.0 234.0 62.9 237.2 65.8 240.3 68.8 243.5 71.8 246.7 74.9 249.8 77.9 253.0 81.0 256.2 84.0 259.3 87.0 262.5 90.0 265.7 92.9 268.8 95.8 272.0 98.5 275.2 101.3 278.3 103.9 281.5 106.4 284.7 108.8 287.8 111.2 291.0 113.3 294.2 115.4 297.3 117.3 300.5 119.1 303.7 120.7 306.8 122.1 310.0 123.4 313.2 124.6 316.3 125.5 319.5 126.3 322.7 126.9 325.8 127.3 329.0 127.5 332.2 127.6 335.3 127.5 338.5 127.1 341.7 126.7 344.8 126.0 348.0 125.1 351.2 124.1 354.3 122.9 357.5 121.5 360.7 120.0 363.8 118.3 367.0 116.5 370.2 114.5 373.3 112.4 376.5 110.2 379.7 107.8 382.8 105.3 386.0 102.8 389.2 100.1 392.3 97.3 395.5 94.5 398.7 91.6 401.8 88.7 405.0 85.7 408.2 82.7 411.3 79.6 414.5 76.6 417.7 73.6 420.8 70.5 424.0 67.5"/>
+  <path class="w" d="M55.9 104.5 H79.6 V77.0 H103.4 V63.2 H127.1 V35.8 H150.9 V35.8 H174.6 V35.8 H198.4 V35.8 H222.1 V49.5 H245.9 V77.0 H269.6 V90.8 H293.4 V118.2 H317.1 V132.0 H340.9 V132.0 H364.6 V118.2 H388.4 V104.5 H412.1 V77.0 H424.0"/>
+  <circle class="dot" cx="55.9" cy="102.5" r="2.2"/><circle class="dot" cx="79.6" cy="80.9" r="2.2"/><circle class="dot" cx="103.4" cy="58.5" r="2.2"/><circle class="dot" cx="127.1" cy="39.8" r="2.2"/><circle class="dot" cx="150.9" cy="28.6" r="2.2"/><circle class="dot" cx="174.6" cy="27.0" r="2.2"/><circle class="dot" cx="198.4" cy="35.5" r="2.2"/><circle class="dot" cx="222.1" cy="52.4" r="2.2"/><circle class="dot" cx="245.9" cy="74.1" r="2.2"/><circle class="dot" cx="269.6" cy="96.5" r="2.2"/><circle class="dot" cx="293.4" cy="114.9" r="2.2"/><circle class="dot" cx="317.1" cy="125.7" r="2.2"/><circle class="dot" cx="340.9" cy="126.8" r="2.2"/><circle class="dot" cx="364.6" cy="117.9" r="2.2"/><circle class="dot" cx="388.4" cy="100.8" r="2.2"/><circle class="dot" cx="412.1" cy="78.9" r="2.2"/>
+  <text class="lbl" x="40.0" y="16" text-anchor="end">VREF</text>
+  <text class="lbl" x="40.0" y="136.0" text-anchor="end">0</text>
+  <text class="lbl" x="428.0" y="136.0">t</text>
+  <path class="thin" d="M432.0 118.2 H444.0 M432.0 132.0 H444.0 M438.0 118.2 V132.0"/>
+  <text class="val" x="448.0" y="129.1">LSB</text>
+  <text class="lbl" x="448.0" y="143.1">VREF/8</text>
+  <circle class="dot" cx="50.0" cy="158.0" r="2.2"/><text class="lbl" x="58.0" y="162.0">取樣點</text>
+  <path class="hot" d="M106.0 154 H134.0"/><text class="lbl" x="140.0" y="158.0">類比輸入</text>
+  <path class="w" d="M200.0 154 H228.0"/><text class="lbl" x="234.0" y="158.0">量化後（階梯 = 實際輸出碼）</text>
+</svg>
+<figcaption>把連續波形切成階梯就是 ADC 的全部工作。每個取樣瞬間（虛線）抓一個值，再把它<b>四捨五入到最近的格線</b>——格線間距就是一個 LSB = V<sub>REF</sub>/2<sup>N</sup>。抓的瞬間決定時間軸的精度（jitter、孔徑），格的粗細決定振幅的精度（量化雜訊 = LSB/√12，對應 SNR = 6.02N + 1.76 dB）。</figcaption>
+</figure>
 <h2>Nyquist 與 oversampling</h2>
 <ul>
 <li><b>Nyquist ADC</b>（SAR / Pipeline / Flash）：每個取樣點都輸出一個完整碼，速度靠硬體、精度靠匹配。</li>
@@ -4117,13 +4363,99 @@ SNR(ideal) = 6.02 N + 1.76 dB
 <tr><td>Pipeline</td><td class="num">10–500 MS/s</td><td class="num">10–14 bit</td><td>中高</td><td>影像、通訊、示波器</td></tr>
 <tr><td>Flash</td><td class="num">&gt; 1 GS/s</td><td class="num">4–8 bit</td><td>很高</td><td>高速鏈路第一級、光通訊</td></tr>
 </tbody></table>
-<p class="lab-hint">↓ 點下面任一張卡進入該架構的完整教學（不計分）。</p>
-<div class="lessons" id="advSubList">
-  <button class="lesson" type="button" data-sub="sar"><span class="ln">ADC · 架構 01</span><span class="lt">SAR 逐次逼近</span><span class="ls">電容陣列 + 比較器，一個 clock 決定一個 bit；中速中精度、功耗低。</span><span class="lm"><span>9–14 bit · 1–100 MS/s</span><span class="go2">閱讀 ▸</span></span></button>
-  <button class="lesson" type="button" data-sub="ds"><span class="ln">ADC · 架構 02</span><span class="lt">Delta-Sigma</span><span class="ls">oversampling + noise shaping，把量化雜訊推到高頻再濾掉。</span><span class="lm"><span>16–24 bit · 低速</span><span class="go2">閱讀 ▸</span></span></button>
-  <button class="lesson" type="button" data-sub="pipe"><span class="ln">ADC · 架構 03</span><span class="lt">Pipeline 流水線</span><span class="ls">多級「減法 + 放大」串起來，每級只處理幾個 bit。</span><span class="lm"><span>10–14 bit · 高速</span><span class="go2">閱讀 ▸</span></span></button>
-  <button class="lesson" type="button" data-sub="flash"><span class="ln">ADC · 架構 04</span><span class="lt">Flash 全並列</span><span class="ls">2^N−1 個比較器同時比，最快但面積與功耗爆炸。</span><span class="lm"><span>4–8 bit · GS/s</span><span class="go2">閱讀 ▸</span></span></button>
-</div>`
+<p class="lab-hint">下一頁把這三個積木攤成<b>系統模型</b>（還是不畫電晶體）；四種架構的完整教學卡片，放在本章最後一頁。</p>`
+      },
+      {
+        t: 'TOP → Down：三個積木的系統模型',
+        body: `
+<p>把所有架構的包裝拆掉，ADC 其實只有<b>三個積木</b>：<b>取樣保持</b>（什麼時候抓）、<b>量化器</b>（抓成哪一格）、<b>編碼</b>（變成位元）。這一頁一樣<b>不畫電晶體</b>，只問每個積木「把什麼轉成什麼、帶進多少誤差」——因為<b>誤差只能從左邊管</b>：後面全是數位，前面弄壞的救不回來。</p>
+<figure class="fig">
+<svg viewBox="0 0 470 195" role="img" aria-label="ADC 的三個系統積木：取樣保持把時間離散化，量化器把電壓對到最近的格，編碼器把判決變成位元；誤差來源標在積木下方">
+  <text class="lbl" x="4" y="70">vin</text>
+  <path class="w" d="M26 66 H34"/><polygon class="arrow" points="40,66 34,63 34,69"/>
+  <rect class="w" x="40" y="48" width="76" height="36" rx="4"/>
+  <text class="lbl dev" x="78" y="62" text-anchor="middle">S/H</text>
+  <text class="lbl" x="78" y="78" text-anchor="middle">取樣保持</text>
+  <path class="w" d="M116 66 H140"/><polygon class="arrow" points="146,66 140,63 140,69"/>
+  <rect class="w" x="146" y="44" width="100" height="44" rx="4"/>
+  <text class="lbl dev" x="196" y="62" text-anchor="middle">量化器</text>
+  <text class="lbl" x="196" y="78" text-anchor="middle">N bit · LSB</text>
+  <path class="w" d="M246 66 H270"/><polygon class="arrow" points="276,66 270,63 270,69"/>
+  <rect class="w" x="276" y="48" width="74" height="36" rx="4"/>
+  <text class="lbl dev" x="313" y="62" text-anchor="middle">編碼</text>
+  <text class="lbl" x="313" y="78" text-anchor="middle">encoder</text>
+  <path class="w" d="M350 66 H392"/><polygon class="arrow" points="400,66 392,62.5 392,69.5"/>
+  <text class="lbl" x="406" y="70">Dout</text>
+  <path class="thin" d="M196 44 V22"/><text class="lbl" x="196" y="17" text-anchor="middle">VREF</text>
+  <path class="thin" d="M52 124 H300 M78 124 V84 M196 124 V88"/>
+  <text class="lbl" x="44" y="128" text-anchor="end">CLK</text>
+  <text class="lbl" x="78" y="156" text-anchor="middle">孔徑 σt、kT/C</text>
+  <text class="lbl" x="196" y="156" text-anchor="middle">比較器雜訊</text>
+  <text class="lbl" x="313" y="156" text-anchor="middle">純數位</text>
+  <text class="lbl" x="60" y="182">誤差全部從左邊進來：S/H 與量化器的雜訊會被右邊原封不動記下來</text>
+</svg>
+<figcaption>三個積木、三段轉換：<b>S/H</b> 把<b>時間</b>離散化（誤差 = 孔徑 jitter σ<sub>t</sub> 與 kT/C 熱雜訊）、<b>量化器</b>把<b>振幅</b>離散化（誤差 = 量化雜訊 LSB/√12、比較器雜訊與 offset）、<b>編碼</b>把判決翻成位元（純數位，只貢獻延遲與速度）。所以「ADC 好不好」幾乎在第 2 個積木就決定了：<b>解析度是雜訊問題，不是位元數問題</b>。</figcaption>
+</figure>
+<div class="fx">理想（只有量化雜訊）：SINAD = 6.02N + 1.76 dB
+把每一項誤差換成 RMS（µV）才比得起來：
+  量化        LSB/√12
+  熱雜訊      √(kT/C)             → C 加倍 = −3 dB
+  孔徑 jitter  2π·fin·σt·A/√2      → 見下面的 jitter 預算
+  比較器      σ_cmp（冗餘只能容忍，不能消除）
+合計：SINAD = −10log( Σ 10^(−SINADi/10) )
+（每一項都要 ≤ ½ LSB 的某一部分，見下圖）</div>
+<p>最後那行是重點：各項誤差是<b>功率相加（RSS）</b>，不是相加。所以通常會留一個「一分為二」的預算：量化雜訊佔 ½、其他實體雜訊合起來再佔 ½，這樣實際的 SINAD 只比理想值差 3 dB（也就是只掉半個 bit）。</p>
+<h2>把預算畫出來：12 bit、1 V 參考的例子</h2>
+<figure class="fig">
+<svg viewBox="0 0 470 200" role="img" aria-label="ADC 誤差預算長條圖：比較器雜訊 100 µV、量化 70 µV、kT/C 64 µV、孔徑 jitter 22 µV，標出 ½ LSB 上限">
+  <text class="lbl" x="104" y="43" text-anchor="end">比較器雜訊</text>
+  <rect class="box" x="110" y="30" width="181.3" height="18" style="stroke:var(--amber);fill:rgba(255,200,87,.14)"/>
+  <text class="val" x="297" y="43">100 µV</text>
+  <text class="lbl" x="104" y="71" text-anchor="end">量化 LSB/√12</text>
+  <rect class="box" x="110" y="58" width="126.9" height="18"/>
+  <text class="val" x="243" y="71">70 µV</text>
+  <text class="lbl" x="104" y="99" text-anchor="end">kT/C（1 pF）</text>
+  <rect class="box" x="110" y="86" width="116.0" height="18"/>
+  <text class="val" x="232" y="99">64 µV</text>
+  <text class="lbl" x="104" y="127" text-anchor="end">jitter（1 ps）</text>
+  <rect class="box" x="110" y="114" width="39.9" height="18"/>
+  <text class="val" x="156" y="127">22 µV</text>
+  <path class="mark" d="M331 22 V140"/>
+  <text class="lbl" x="331" y="17" text-anchor="middle">½ LSB = 122 µV</text>
+  <path class="thin" d="M110 140 H400"/>
+  <text class="lbl" x="110" y="152" text-anchor="middle">0</text>
+  <text class="lbl" x="400" y="152" text-anchor="middle">160 µV</text>
+  <text class="lbl" x="60" y="172">RSS 合計 140 µV &gt; ½ LSB ⇒ 68 dB ≈ 11 bit（理想 74 dB）</text>
+  <text class="lbl" x="60" y="188">對策：C 加倍、比較器加冗餘／校正、clock 要乾淨</text>
+</svg>
+<figcaption>同一組參數（N = 12、V<sub>REF</sub> = 1 V ⇒ LSB = 244 µV、C = 1 pF、f<sub>in</sub> = 10 MHz、σ<sub>t</sub> = 1 ps）攤成四根棒子。綠虛線是 ½ LSB：<b>任何一項單獨超過它，這個位元就等於白買</b>。這裡比較器雜訊 100 µV 已經頂到上限，RSS 合計 140 µV → SINAD 只有 68 dB（≈ 11 bit），比理想的 74 dB 少 6 dB。注意 jitter 那根很短，不是因為 jitter 不重要，而是因為它<b>跟輸入頻率成正比</b>——f<sub>in</sub> 拉到 100 MHz 就會變 220 µV，直接爆表。</figcaption>
+</figure>
+<h2>三個積木各自的參數（系統層的規格書）</h2>
+<table>
+<thead><tr><th>積木</th><th>把什麼 → 什麼</th><th>系統參數</th><th>典型數量級</th><th>它決定什麼</th></tr></thead>
+<tbody>
+<tr><td><b>S/H</b></td><td>連續時間 → 離散時間</td><td>f<sub>s</sub>、孔徑 σ<sub>t</sub>、C<sub>s</sub></td><td class="num">f<sub>s</sub> 1–100 MS/s<br>σ<sub>t</sub> 0.2–2 ps<br>C<sub>s</sub> 0.2–2 pF</td><td>輸入頻寬、jitter 誤差、kT/C 雜訊</td></tr>
+<tr><td><b>量化器</b></td><td>電壓 → 最近的格＋判決</td><td>N、LSB、σ<sub>cmp</sub></td><td class="num">N 8–16<br>σ<sub>cmp</sub> ≈ 0.1–1 LSB</td><td>SNR 上限（6.02N+1.76）、DNL</td></tr>
+<tr><td><b>編碼</b></td><td>判決 → 位元</td><td>延遲、管線深度</td><td class="num">1–10 ns</td><td>速度（幾乎不影響精度）</td></tr>
+</tbody></table>
+<div class="fx">由規格反推三個積木：
+① N   ← 訊號頻寬與精度需求（ENOB ≈ (SINAD − 1.76)/6.02）
+② Cs  ← kT/C 預算：√(kT/Cs) ≤ ½ LSB 的一部分  ⇒ Cs ≥ kT /(0.5·LSB·k)²
+③ σt  ← jitter 預算：σt ≤ 10^(−SINAD/20) / (2π·fin)
+例：SINAD 74 dB、fin 10 MHz ⇒ σt ≲ 3 ps；fin 1 GHz ⇒ σt ≲ 32 fs（幾乎不可能 → 只能靠架構）</div>
+<h2>四種架構 = 同一組積木的四種接法</h2>
+<p>看懂上面三個積木之後，「選架構」就不再是背名詞，而是問一句：<b>我要用多少硬體重複/迭代這個量化器？</b></p>
+<table>
+<thead><tr><th>架構</th><th>量化器怎麼用</th><th>額外要付的積木</th><th>代價</th></tr></thead>
+<tbody>
+<tr><td><b>Flash</b></td><td>一次擺 2<sup>N</sup>−1 顆比較器，同時比完</td><td>只有電阻梯與編碼器</td><td>面積、功耗 ∝ 2<sup>N</sup> → 只做 4–8 bit</td></tr>
+<tr><td><b>SAR</b></td><td>1 顆比較器 + CDAC，用 N 個 clock 迭代</td><td>CDAC、SAR 邏輯</td><td>f<sub>s</sub> ≤ 1/(N·t<sub>cmp</sub>)，精度押在電容匹配</td></tr>
+<tr><td><b>Pipeline</b></td><td>多級小量化器串成管線，每級算 1–4 bit</td><td>級間放大器、數位校正</td><td>增益要準、有 latency、功耗中高</td></tr>
+<tr><td><b>ΣΔ</b></td><td>1-bit 量化器放進回授迴路</td><td>積分器、回授 DAC、數位濾波</td><td>只能低速，靠 OSR 換 bit</td></tr>
+</tbody></table>
+<p>所以 Flash 是「<b>攤開</b>」、SAR 是「<b>時間上重複用</b>」、Pipeline 是「<b>空間上串起來</b>」、ΣΔ 是「<b>用回授把量化誤差推走</b>」。四張卡片（下一層）就是這四句話的展開。</p>
+<h2>系統層先停手，之後才往下走</h2>
+<div class="callout"><b>往下走之前的四件事</b>：① N 與 f<sub>s</sub>（= 訊號頻寬 × 2 × 抗混疊餘裕）→ ② C<sub>s</sub>（由 kT/C 預算定）→ ③ σ<sub>t</sub>（clock jitter 預算，隨 f<sub>in</sub> 惡化）→ ④ 比較器雜訊 σ<sub>cmp</sub>（要不要冗餘／校正）。這四件事定完，每個積木的規格就被決定了：開關的 on-resistance、比較器的 gain/頻寬、CDAC 的 unit cap、clock buffer 的 jitter。順序反過來（先挑架構再想預算）最常見的下場是：電容為了 matching 做大，結果驅動撐不住、速度掉一半。</div>`,
       },
       {
         t: '規格、FoM 與驗證',
@@ -4138,6 +4470,27 @@ SNR(ideal) = 6.02 N + 1.76 dB
 <tr><td>Offset / Gain error</td><td>零點與斜率的誤差</td><td>兩點校正即可修掉</td></tr>
 <tr><td>Missing code</td><td>DNL = −1 LSB（某個碼永遠不出現）</td><td>大批量掃描統計</td></tr>
 </tbody></table>
+<figure class="fig">
+<svg viewBox="0 0 500 230" role="img" aria-label="ADC 轉換曲線：理想直線與實際階梯的差就是 INL，每個碼的寬度差就是 DNL，圖中示範一個 missing code">
+  <path class="w" d="M52.0 132.0 V14.0 M52.0 132.0 H418.0"/>
+  <polygon class="arrow" points="424,132 416,128 416,136"/>
+  <polygon class="arrow" points="52,8 48,16 56,16"/>
+  <text class="lbl" x="58" y="12">輸出碼</text>
+  <text class="lbl" x="230" y="150" text-anchor="middle">輸入（0 → VREF）</text>
+  <path class="thin" d="M414.0 91.5 H428.0 M414.0 105.0 V91.5 M428.0 105.0 V91.5"/>
+  <text class="lbl" x="432.0" y="102.2">1 LSB</text>
+  <path class="mark" d="M52.0 132.0 L408.0 24.0"/>
+  <path class="w" d="M52.0 132.0 H83.2 V118.5 H121.0 V105.0 H183.3 V91.5 H225.5 V78.0 H267.8 V64.5 H310.1 V51.0 H310.1 V37.5 H408.0 V24.0"/>
+  <path class="hot" d="M310.1 37.5 V64.5"/>
+  <path class="mark" d="M52 172 H82"/>
+  <text class="lbl" x="90" y="176">理想轉換線（端點連線，INL 的基準）</text>
+  <path class="w" d="M52 192 H82"/>
+  <text class="lbl" x="90" y="196">實際轉換曲線：每個碼的寬度都不一樣</text>
+  <path class="hot" d="M56 208 V220"/>
+  <text class="lbl" x="66" y="218">missing code：這個碼的寬度是 0 → DNL = −1 LSB</text>
+</svg>
+<figcaption><b>INL 是「點」離直線多遠，DNL 是「格」多寬。</b>把每個碼的實際邊界連起來就是階梯；階梯中點跟理想直線（綠虛線）的垂直差就是 INL，每格寬度減 1 LSB 就是 DNL。圖中某個碼被鄰居吃掉、寬度變 0 → 它永遠不會出現（missing code，DNL = −1 LSB），而吃掉它的那一格就變成 2.2 LSB 寬。在 CDAC 裡這幾乎都是電容比值做錯，是 layout 問題。</figcaption>
+</figure>
 <h2>FoM：怎麼比較兩顆 ADC</h2>
 <div class="fx">Walden FoM  = P / (2^ENOB · fs)     [fJ/conv-step]   ← 速度取向
 Schreier FoM = SINAD + 10 log10(BW / P)  [dB]        ← 精度取向</div>
@@ -4150,7 +4503,15 @@ Schreier FoM = SINAD + 10 log10(BW / P)  [dB]        ← 精度取向</div>
 <li>PVT + Monte Carlo：INL 是最容易在 corner 掛掉的規格。</li>
 <li>參考電壓的雜訊與驅動能力（VREF 不穩，什麼都免談）。</li>
 </ol>
-<div class="callout"><b>一句話總結</b>：ADC 的精度最後都回到「匹配」與「參考電壓」，速度回到「比較器與 sampling switch」，功耗回到「電容大小」。選架構其實就是選你要在哪裡付錢。</div>`
+<div class="callout"><b>一句話總結</b>：ADC 的精度最後都回到「匹配」與「參考電壓」，速度回到「比較器與 sampling switch」，功耗回到「電容大小」。選架構其實就是選你要在哪裡付錢。</div>
+<h2>四種架構的完整教學</h2>
+<p class="lab-hint">↓ 點下面任一張卡進入該架構的完整教學（不計分）。</p>
+<div class="lessons" id="advSubList">
+  <button class="lesson" type="button" data-sub="sar"><span class="ln">ADC · 架構 01</span><span class="lt">SAR 逐次逼近</span><span class="ls">電容陣列 + 比較器，一個 clock 決定一個 bit；中速中精度、功耗低。</span><span class="lm"><span>9–14 bit · 1–100 MS/s</span><span class="go2">閱讀 ▸</span></span></button>
+  <button class="lesson" type="button" data-sub="ds"><span class="ln">ADC · 架構 02</span><span class="lt">Delta-Sigma</span><span class="ls">oversampling + noise shaping，把量化雜訊推到高頻再濾掉。</span><span class="lm"><span>16–24 bit · 低速</span><span class="go2">閱讀 ▸</span></span></button>
+  <button class="lesson" type="button" data-sub="pipe"><span class="ln">ADC · 架構 03</span><span class="lt">Pipeline 流水線</span><span class="ls">多級「減法 + 放大」串起來，每級只處理幾個 bit。</span><span class="lm"><span>10–14 bit · 高速</span><span class="go2">閱讀 ▸</span></span></button>
+  <button class="lesson" type="button" data-sub="flash"><span class="ln">ADC · 架構 04</span><span class="lt">Flash 全並列</span><span class="ls">2^N−1 個比較器同時比，最快但面積與功耗爆炸。</span><span class="lm"><span>4–8 bit · GS/s</span><span class="go2">閱讀 ▸</span></span></button>
+</div>`
       }
     ],
     subs: [
@@ -4292,9 +4653,9 @@ N = 6 → 63 顆；N = 8 → 255 顆
     ]
   },
   {
-    id: 'pll', tag: '時脈', min: '45 分鐘 · 4 頁 + 3 架構', st: 'ready',
+    id: 'pll', tag: '時脈', min: '55 分鐘 · 5 頁 + 3 架構', st: 'ready',
     t: 'PLL 鎖相迴路',
-    s: '用相位比較把輸出時脈鎖在參考頻率上，順便做倍頻、除頻與去抖動。四個積木、兩個參數（ωn、ζ）就決定一切。',
+    s: '用相位比較把輸出時脈鎖在參考頻率上，順便做倍頻、除頻與去抖動。先從 TOP 往下拆成四個積木（系統模型），最後才進到電路層。',
     pages: [
       {
         t: '四個積木與迴路參數',
@@ -4336,6 +4697,86 @@ PM ≈ atan(2ζ)        ← 目標 50–70°
 </ol>`
       },
       {
+        t: 'TOP → Down：四個積木的系統模型',
+        body: `
+<p>上一頁是方塊圖；這一頁是<b>系統模型</b>——先不看電晶體，只問每個積木「把什麼轉成什麼」。整條迴路其實只有一句話：<b>相位差 → 電流 → 電壓 → 頻率（積分後才是相位）</b>。四段各一個參數，湊起來就是後面算 ω<sub>n</sub>、ζ、PM 與 jitter 的全部材料。</p>
+<figure class="fig">
+<svg viewBox="0 0 470 212" role="img" aria-label="PLL 系統模型：相位誤差經 KPD 與迴路濾波器 Z(s) 變成控制電壓，再經 VCO 的 KVCO/s 變成輸出相位，最後由 1/N 回授">
+  <text class="lbl" x="4" y="62">φin</text>
+  <circle class="w" cx="30" cy="80" r="10"/>
+  <text class="lbl" x="22" y="70">+</text><text class="lbl" x="18" y="100">−</text>
+  <path class="w" d="M40 80 H56"/>
+  <rect class="w" x="56" y="62" width="66" height="36" rx="4"/>
+  <text class="lbl" x="89" y="80" text-anchor="middle">KPD</text>
+  <text class="lbl" x="89" y="93" text-anchor="middle">ICP / 2π</text>
+  <path class="w" d="M122 80 H160"/>
+  <text class="lbl" x="141" y="74" text-anchor="middle">Icp</text>
+  <rect class="w" x="160" y="62" width="102" height="36" rx="4"/>
+  <text class="lbl" x="211" y="80" text-anchor="middle">Z(s)</text>
+  <text class="lbl" x="211" y="93" text-anchor="middle">迴路濾波器</text>
+  <path class="w" d="M262 80 H300"/>
+  <text class="lbl" x="281" y="74" text-anchor="middle">Vctrl</text>
+  <rect class="w" x="300" y="62" width="84" height="36" rx="4"/>
+  <text class="lbl" x="342" y="80" text-anchor="middle">KVCO / s</text>
+  <text class="lbl" x="342" y="93" text-anchor="middle">VCO → 相位</text>
+  <path class="w" d="M384 80 H420"/><polygon class="arrow" points="428,80 420,76.5 420,83.5"/>
+  <text class="lbl" x="432" y="76">φout</text>
+  <circle class="dot" cx="404" cy="80" r="2.6"/>
+  <path class="thin" d="M404 80 V152 H244"/>
+  <rect class="w" x="190" y="134" width="54" height="36" rx="4"/>
+  <text class="lbl" x="217" y="157" text-anchor="middle">÷ N</text>
+  <path class="thin" d="M190 152 H30 V90"/>
+  <polygon class="arrow" points="30,89 26.5,96 33.5,96"/>
+  <text class="lbl" x="330" y="144" text-anchor="middle">除頻後的相位回到 PFD</text>
+  <text class="lbl dev" x="235" y="34" text-anchor="middle">四個方塊、四個參數：ICP · Z(s) · KVCO · N</text>
+</svg>
+<figcaption>系統模型把每個積木壓成<b>一個數字或一個轉移函數</b>：PFD+CP 是 K<sub>PD</sub> = I<sub>CP</sub>/2π（A/rad，相位差 → 平均電流）、濾波器是阻抗 Z(s)（電流 → 控制電壓）、VCO 是 K<sub>VCO</sub>/s（電壓 → <b>頻率</b>，而相位是頻率的積分，所以那個 1/s 是 VCO 內建的）、除頻器是 1/N。注意左半邊做「相位 → 電壓」、右半邊做「電壓 → 相位」，這正是 PLL 可以拿來當濾波器的原因。</figcaption>
+</figure>
+
+<figure class="fig">
+<svg viewBox="0 0 470 240" role="img" aria-label="PFD 與 charge pump 時序：FREF 與 FB 的相位差決定 UP 脈衝寬度，UP 期間 CP 把電荷打進濾波器讓 Vctrl 上升，VCO 變快後 FB 追上">
+  <text class="lbl" x="62" y="44" text-anchor="end">FREF</text>
+  <path class="w" d="M70 44 H90 V26 H180 V44 H270 V26 H360 V44 H430"/>
+  <text class="lbl" x="62" y="74" text-anchor="end">FB</text>
+  <path class="w" d="M70 74 H150 V56 H213 V74 H276 V56 H339 V74 H402 V56 H430"/>
+  <text class="lbl" x="62" y="104" text-anchor="end">UP</text>
+  <path class="w" d="M70 104 H90 V86 H150 V104 H270 V86 H276 V104 H430"/>
+  <text class="lbl" x="62" y="134" text-anchor="end">DN</text>
+  <path class="thin" d="M70 134 H430" stroke-dasharray="4 4"/>
+  <text class="lbl" x="62" y="190" text-anchor="end">Vctrl</text>
+  <path class="hot" d="M70 190 H90 L150 172 L270 176 L276 170 H430"/>
+  <path class="thin" d="M150 86 V190 M276 86 V190" stroke-dasharray="3 4"/>
+  <text class="lbl" x="146" y="152" text-anchor="end">Δt1</text>
+  <text class="lbl" x="282" y="152">Δt2</text>
+  <text class="lbl" x="66" y="120">① FB 落後多 → UP 寬 → Vctrl 抬一大階</text>
+  <text class="lbl" x="66" y="214">② 誤差縮小 → UP 變窄 → Vctrl 只微調（追鎖就是這樣收斂的）</text>
+  <text class="lbl" x="66" y="230">DN 這一刻沒動作：VCO 太慢，只需要「加速」</text>
+</svg>
+<figcaption>把系統模型換成時間軸：F<sub>REF</sub> 的邊緣先到、FB 的邊緣後到 ⇒ 相位差 φ<sub>e</sub> ⇒ UP 脈衝寬度 Δt = φ<sub>e</sub>/ω<sub>REF</sub> ⇒ 這段時間 charge pump 灌進 I<sub>CP</sub>·Δt 的電荷 ⇒ V<sub>ctrl</sub> 抬升 ⇒ VCO 變快 ⇒ 下一週期 FB 追上來、脈衝自動變窄。<b>這就是負回授的全部</b>；鎖定後 UP 與 DN 的脈衝寬度相等（只留下 reset 延遲造成的一點漣波，也就是參考突波的來源）。</figcaption>
+</figure>
+<div class="fx">每個脈衝搬的電荷：ΔQ = ICP · Δt  ⇒  ΔVctrl = ICP·Δt / C1   （C1 是濾波器的主電容）
+所以「相位差 → 電壓」這一步的增益其實是 ICP/(2π·C1·s)：ICP 大 → 反應猛，C1 大 → 反應慢
+鎖定條件：平均電流為零（UP 與 DN 的電荷相等）⇒ φout/N 與 φin 同相</div>
+
+<h2>四段各自的參數表（系統層的規格書）</h2>
+<table>
+<thead><tr><th>方塊</th><th>把什麼 → 什麼</th><th>系統參數（單位）</th><th>典型數量級</th><th>它決定什麼</th></tr></thead>
+<tbody>
+<tr><td><b>PFD + CP</b></td><td>相位差 φ<sub>e</sub> → 平均電流</td><td>K<sub>PD</sub> = I<sub>CP</sub>/2π（A/rad）</td><td class="num">I<sub>CP</sub> = 50–500 µA</td><td>迴路增益、參考突波</td></tr>
+<tr><td><b>Loop filter</b></td><td>電流 → 控制電壓</td><td>Z(s)，由 R1、C1、C2 組成</td><td class="num">f<sub>c</sub> ≈ F<sub>REF</sub>/10</td><td>ω<sub>n</sub>、ζ（＝PM）</td></tr>
+<tr><td><b>VCO</b></td><td>電壓 → <b>頻率</b>（相位是頻率的積分）</td><td>K<sub>VCO</sub>（Hz/V）</td><td class="num">0.5–5 GHz/V</td><td>調範圍、相位雜訊</td></tr>
+<tr><td><b>÷ N</b></td><td>頻率 → 頻率</td><td>N（整數或 N+α）</td><td class="num">8–4000</td><td>解析度、in-band 雜訊 ≈ 20logN</td></tr>
+</tbody></table>
+<div class="fx">開迴路（相位）：G(s) = (ICP/2π) · Z(s) · KVCO/s · (1/N)
+二階 type-II：ωn = √( ICP·KVCO / (2π·N·C1) ) ，ζ = (R1·C1/2)·ωn ，PM ≈ atan(2ζ)
+閉迴路：對 φin（參考）是低通、對 VCO 相位雜訊是高通 ← 下一頁的 L(f) 就是這一句話的圖</div>
+<p>把表反著讀，就是<b>規格往下分配</b>：先定 N（＝F<sub>OUT</sub>/F<sub>REF</sub>）→ 定 f<sub>c</sub>（＝ω<sub>n</sub>，通常 F<sub>REF</sub>/10）與 PM（＝ζ，60° 左右）→ 由 ω<sub>n</sub> 反推 I<sub>CP</sub>·K<sub>VCO</sub>/C<sub>1</sub> 的乘積 → 決定哪一個放大、哪一個縮小（I<sub>CP</sub> 大則雜訊敏感、K<sub>VCO</sub> 大則 PM 隨 PVT 漂、C<sub>1</sub> 大則面積大）。</p>
+
+<h2>系統層先停手，之後才往下走</h2>
+<p>這一頁刻意<b>不畫電晶體</b>。系統層的任務只有三件事：決定 F<sub>REF</sub> 與 N、決定 f<sub>c</sub>（＝ω<sub>n</sub>）與 PM（＝ζ）、決定 I<sub>CP</sub> 與 K<sub>VCO</sub> 的數量級。這三件事定完，<b>每個積木的規格就被決定了</b>：CP 要匹配到幾 %、VCO 要多大的調範圍、除頻器要跑多快——這些才是接下來 PFD/CP/LF 與 VCO/除頻器那兩頁（電路層，可以先略過）要回答的問題。</p>
+<div class="callout"><b>往下走的順序</b>：① 系統模型（本頁）→ ② 閉迴路 ω<sub>n</sub>、ζ、PM、L(f) → ③ 電路層 PFD/CP/LF → ④ 電路層 VCO/除頻器/ΣΔ。反過來做（先畫電路再想系統）最常見的下場是：CP 電流與 K<sub>VCO</sub> 選錯數量級，迴路頻寬怎麼調都不對。</div>`
+      },
+      {
         t: '設計流程、Spur 與 Jitter',
         body: `
 <h2>設計流程</h2>
@@ -4358,6 +4799,25 @@ PM ≈ atan(2ζ)        ← 目標 50–70°
 <div class="fx">RMS jitter（秒） = (1/(2π·FOUT)) · √(2 · ∫ L(f) df)
 in-band 相位雜訊 ≈ 20 log10(N) + 參考/PFD 雜訊
 VCO 貢獻：f &lt; fc 被壓抑，f &gt; fc 直接輸出</div>
+<figure class="fig">
+<svg viewBox="0 0 460 228" role="img" aria-label="PLL 閉迴路相位雜訊頻譜：fc 以下由參考與 PFD 雜訊主導呈平坦，fc 以上由 VCO 主導以每十倍頻 20 dB 下降">
+  <path class="w" d="M60 140 V22"/><polygon class="arrow" points="60,14 56,22 64,22"/>
+  <path class="w" d="M60 140 H436"/><polygon class="arrow" points="444,140 436,136 436,144"/>
+  <text class="lbl" x="66" y="20">L(f)　dBc/Hz</text>
+  <text class="lbl" x="446" y="156" text-anchor="end">偏移頻率 f（log）</text>
+  <path class="mark" d="M190 52 V140"/>
+  <text class="lbl" x="196" y="156">fc（迴路頻寬）</text>
+  <path class="thin" d="M70 27 L190 52" stroke-dasharray="4 4"/>
+  <path class="hot" d="M60 52 H190 L424 122"/>
+  <text class="val" x="100" y="70">①</text>
+  <text class="val" x="250" y="114">②</text>
+  <text class="lbl" x="204" y="44">VCO 自由振盪（被迴路壓掉）</text>
+  <text class="lbl" x="66" y="176">① fc 以下：參考 / PFD / CP 主導，平坦 ≈ 20log N + 參考雜訊</text>
+  <text class="lbl" x="66" y="194">② fc 以上：VCO 雜訊直接輸出，−20 dB/dec</text>
+  <text class="lbl" x="66" y="212">曲線下面積 ∝ RMS jitter（積分範圍習慣取 10 kHz – 10 MHz）</text>
+</svg>
+<figcaption>閉迴路相位雜訊就是「兩條雜訊的二選一」：<b>f &lt; f<sub>c</sub></b> 時迴路把 VCO 的雜訊壓掉，輸出看的是參考、PFD、CP 那一側（平坦，大小 ≈ 20log(N) + 參考雜訊）；<b>f &gt; f<sub>c</sub></b> 時迴路來不及反應，VCO 的 −20 dB/dec 原封不動傳出去。f<sub>c</sub> 往下移 → in-band 面積變大；往上移 → VCO 那一塊面積變大，而積分面積 ∝ RMS jitter。<b>沒有「越小越好」的 f<sub>c</sub>，只有取捨。</b>圖中左側虛線是 VCO 自由振盪的雜訊，正是被迴路壓掉的那一塊。</figcaption>
+</figure>
 <h2>量測</h2>
 <ol>
 <li><b>頻譜</b>：看相位雜訊 L(f)、參考突波、雜散。</li>
@@ -4367,7 +4827,7 @@ VCO 貢獻：f &lt; fc 被壓抑，f &gt; fc 直接輸出</div>
 <div class="callout"><b>和練習區的連結</b>：進階練習區的「PLL 除頻鎖定」就是這兩個參數的遊戲版：你調 N、I<sub>CP</sub>、C1、R1，看 F<sub>OUT</sub>、PM 與鎖定時間怎麼一起變。</div>`
       },
       {
-        t: 'SUB-BLOCK 拆解（一）PFD · CP · LF',
+        t: '電路層（一）：PFD · CP · LF',
         body: `
 <p>迴路圖上的四個方塊，每一個內部都還有自己的小電路。這一頁把它們拆到「可以拿去畫 schematic」的層級：<b>PFD 是兩顆 D 正反器 + 一個 reset</b>、<b>charge pump 是兩組開關 + 兩顆電流源</b>、<b>loop filter 是一組 RC</b>。三個方塊一起決定雜訊、突波與鎖定時間。</p>
 <table>
@@ -4429,7 +4889,7 @@ VCO 貢獻：f &lt; fc 被壓抑，f &gt; fc 直接輸出</div>
 <div class="callout"><b>對回練習區</b>：「PLL 除頻鎖定」裡的 I<sub>CP</sub>、C1、R1 三根滑桿就是在動這三個方塊：I<sub>CP</sub> 改 ω<sub>n</sub>、C1 改 ω<sub>n</sub> 與鎖定時間、R1 改 ζ（PM）。實務上這三個數值是被 loop filter 的電阻與電容<b>同時</b>決定的，不能分開調。</div>`
       },
       {
-        t: 'SUB-BLOCK 拆解（二）VCO · 除頻器 · ΣΔ',
+        t: '電路層（二）：VCO · 除頻器 · ΣΔ',
         body: `
 <p>剩下兩個方塊決定「能不能跑」與「頻率能不能細調」：<b>VCO</b> 把電壓變成頻率（也貢獻大部分相位雜訊），<b>除頻器</b> 把輸出頻率拉回 PFD 的工作範圍；小數除頻則在除頻器前面再插一顆 <b>ΣΔ 調變器</b>，把量化誤差整形到高頻讓迴路濾掉。</p>
 <figure class="fig">
@@ -4504,6 +4964,22 @@ LC VCO：Q 高 → 好 10–20 dB，代價是面積大、調範圍窄（要 band
 參考突波位於 FOUT ± k·FREF
 迴路頻寬 fc ≲ FREF / 10      ← 否則突波壓不住
 In-band 雜訊 ≈ 20log10(N) + PFD/參考雜訊</div>
+<figure class="fig">
+<svg viewBox="0 0 460 132" role="img" aria-label="Integer-N 的頻率柵欄：合法輸出只有 FREF 的整數倍，想去的頻道若落在兩格之間就只能取最近的格">
+  <path class="w" d="M40 96 H430"/><polygon class="arrow" points="438,96 430,92 430,100"/>
+  <text class="lbl" x="36" y="100" text-anchor="end">FOUT</text>
+  <path class="thin" d="M70 96 V82 M140 96 V82 M210 96 V82 M280 96 V82 M350 96 V82 M420 96 V82"/>
+  <text class="lbl" x="70" y="116" text-anchor="middle">1×</text><text class="lbl" x="140" y="116" text-anchor="middle">2×</text>
+  <text class="lbl" x="210" y="116" text-anchor="middle">3×</text><text class="lbl" x="280" y="116" text-anchor="middle">4×</text>
+  <text class="lbl" x="350" y="116" text-anchor="middle">5×</text><text class="lbl" x="420" y="116" text-anchor="middle">6×</text>
+  <text class="lbl" x="40" y="128">FREF 的整數倍</text>
+  <circle class="dot" cx="140" cy="82" r="2.6"/><circle class="dot" cx="210" cy="82" r="2.6"/>
+  <path class="hot" d="M175 40 V74"/><polygon class="arrow" points="175,82 171.5,74 178.5,74"/>
+  <text class="val" x="175" y="32" text-anchor="middle">想要的 2.4×</text>
+  <text class="lbl" x="182" y="64">不在柵欄上 → 只能選 2× 或 3×</text>
+</svg>
+<figcaption>Integer-N 的硬限制：合法輸出頻率是 F<sub>REF</sub> 的一排等距「柵欄」，想要 2.4 倍就只能挑 2 倍或 3 倍。想讓柵欄變密（解析度變細）只能降低 F<sub>REF</sub>，可是 f<sub>c</sub> ≲ F<sub>REF</sub>/10 又被拖著變窄 → 鎖定變慢、VCO 低頻雜訊壓不掉。這就是 fractional-N 存在的理由。</figcaption>
+</figure>
 <h2>核心取捨</h2>
 <ul>
 <li><b>解析度 ↔ 迴路頻寬</b>：要 1 kHz 解析度就得用 1 kHz 的 F<sub>REF</sub>，迴路頻寬只能 ~100 Hz → 鎖定慢、VCO 低頻雜訊壓不掉。</li>
@@ -4527,6 +5003,24 @@ In-band 雜訊 ≈ 20log10(N) + PFD/參考雜訊</div>
 雙模除頻器（dual-modulus）+ ΣΔ modulator 控制
 量化雜訊被 DSM 整形到高頻 → 由迴路低通濾掉
 階數 L → 雜訊斜率約 20L dB/dec</div>
+<figure class="fig">
+<svg viewBox="0 0 460 138" role="img" aria-label="Fractional-N 的除頻比序列：ΣΔ 調變器每個參考週期在 N 與 N+1 之間選一個，八個週期平均後就是 N 加 0.375">
+  <text class="lbl" x="42" y="26">ΣΔ 調變器每拍吐一個 0 / 1 → 決定這一拍除 N 還是 N+1</text>
+  <rect class="w" x="42" y="38" width="40" height="30" rx="3"/><text class="lbl" x="62" y="58" text-anchor="middle">N</text>
+  <rect class="w" x="90" y="38" width="40" height="30" rx="3"/><text class="lbl" x="110" y="58" text-anchor="middle">N+1</text>
+  <rect class="w" x="138" y="38" width="40" height="30" rx="3"/><text class="lbl" x="158" y="58" text-anchor="middle">N</text>
+  <rect class="w" x="186" y="38" width="40" height="30" rx="3"/><text class="lbl" x="206" y="58" text-anchor="middle">N</text>
+  <rect class="w" x="234" y="38" width="40" height="30" rx="3"/><text class="lbl" x="254" y="58" text-anchor="middle">N+1</text>
+  <rect class="w" x="282" y="38" width="40" height="30" rx="3"/><text class="lbl" x="302" y="58" text-anchor="middle">N</text>
+  <rect class="w" x="330" y="38" width="40" height="30" rx="3"/><text class="lbl" x="350" y="58" text-anchor="middle">N+1</text>
+  <rect class="w" x="378" y="38" width="40" height="30" rx="3"/><text class="lbl" x="398" y="58" text-anchor="middle">N</text>
+  <path class="thin" d="M42 80 H418"/><path class="thin" d="M42 76 V84 M418 76 V84"/>
+  <text class="lbl" x="230" y="96" text-anchor="middle">8 個參考週期（每個週期長度不同 → 暫態頻率一直在跳）</text>
+  <path class="hot" d="M230 104 V112"/><polygon class="arrow" points="230,120 226.5,112 233.5,112"/>
+  <text class="val" x="230" y="134" text-anchor="middle">平均 = (5·N + 3·(N+1)) / 8 = N + 0.375</text>
+</svg>
+<figcaption>小數除頻的機制：不是「除 2.4」，而是<b>八拍裡有三拍除 N+1、五拍除 N</b>，平均起來就是 N + 0.375。ΣΔ 調變器負責決定這個 0/1 序列，並把「選錯」造成的量化誤差整形到高頻，讓迴路濾波器濾掉。代價是暫態頻率一直在動 → 每個參考週期都有一點相位誤差，這就是 fractional spur 與量化雜訊的來源。</figcaption>
+</figure>
 <h2>三個難題</h2>
 <ol>
 <li><b>量化雜訊</b>：DSM 的雜訊會灌進 VCO 控制端 → 需要高階 DSM，但迴路頻寬又不能太寬，兩者互相牵制。</li>
@@ -4552,6 +5046,29 @@ In-band 雜訊 ≈ 20log10(N) + PFD/參考雜訊</div>
 相位偵測器比較 CLK 與 delayed CLK
 控制電壓／數位碼調整延遲單元
 無頻率倍乘 → 輸出頻率 = 輸入頻率</div>
+<figure class="fig">
+<svg viewBox="0 0 460 150" role="img" aria-label="DLL 方塊圖：輸入時脈經過可調延遲線，相位偵測器比較輸入與延遲後時脈，把控制電壓送回延遲線，使總延遲等於一個參考週期">
+  <path class="thin" d="M22 52 H60"/><polygon class="arrow" points="68,52 60,48 60,56"/>
+  <text class="lbl" x="22" y="44">CLKIN</text>
+  <rect class="w" x="68" y="36" width="52" height="32" rx="3"/><text class="lbl" x="94" y="57" text-anchor="middle">delay 1</text>
+  <rect class="w" x="136" y="36" width="52" height="32" rx="3"/><text class="lbl" x="162" y="57" text-anchor="middle">delay 2</text>
+  <rect class="w" x="204" y="36" width="52" height="32" rx="3"/><text class="lbl" x="230" y="57" text-anchor="middle">delay 3</text>
+  <rect class="w" x="272" y="36" width="52" height="32" rx="3"/><text class="lbl" x="298" y="57" text-anchor="middle">delay N</text>
+  <path class="thin" d="M120 52 H136 M188 52 H204 M256 52 H272"/>
+  <path class="thin" d="M324 52 H352"/><polygon class="arrow" points="362,52 354,48 354,56"/>
+  <text class="lbl" x="368" y="44">CLKOUT</text>
+  <text class="lbl" x="230" y="24" text-anchor="middle">可調延遲線（VCDL）：每級延遲由 Vctrl 控制</text>
+  <circle class="dot" cx="34" cy="52" r="2.6"/><circle class="dot" cx="344" cy="52" r="2.6"/>
+  <rect class="w" x="186" y="96" width="96" height="30" rx="3"/><text class="lbl" x="234" y="116" text-anchor="middle">PD（相位偵測）</text>
+  <path class="thin" d="M34 52 V80 H186"/><polygon class="arrow" points="186,80 178,76.5 178,83.5"/>
+  <path class="thin" d="M344 52 V80 H270 V88"/><polygon class="arrow" points="270,96 266.5,88 273.5,88"/>
+  <path class="thin" d="M234 126 V136 H24 V58"/>
+  <polygon class="arrow" points="24,52 20.5,60 27.5,60"/>
+  <text class="lbl" x="66" y="146">Vctrl（控制延遲量）</text>
+  <text class="val" x="410" y="110" text-anchor="end">總延遲 = TREF</text>
+</svg>
+<figcaption>DLL 的工作就是「把延遲調到剛好一個週期」：PD 比較進入延遲線的 CLK<sub>IN</sub> 與走完延遲線的 CLK<sub>OUT</sub>，若 CLK<sub>OUT</sub> 太早到就把延遲加大、太早就減少。鎖定後總延遲 = T<sub>REF</sub>，中間每一級的節點都天然是等相位差的時脈（多相位輸出）。<b>沒有振盪器</b>，所以不會累積 jitter，也因為誤差不會被積分而天生是一階穩定系統。</figcaption>
+</figure>
 <h2>與 PLL 的差異</h2>
 <table>
 <thead><tr><th></th><th>PLL</th><th>DLL</th></tr></thead>
