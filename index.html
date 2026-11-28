@@ -1,5 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>OTA Tuner</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>try{var _th=localStorage.getItem('ota-tuner:theme');if(_th==='shark')document.documentElement.setAttribute('data-theme','shark');}catch(e){}</script>
+<title>OTA Tuner V4</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -648,22 +648,202 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
   .lesson-doc h2 { font-size: 19px; }
   .lesson-nav .cta { flex: 1 1 120px; }
 }
+/* ---- 進階專區：分區分頁 / 難度切換 / 翻頁 ---- */
+.dseg { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 14px; }
+.dseg .hub-tab { flex: 0 1 auto; min-width: 72px; padding: 8px 14px; font-size: 12px; letter-spacing: .06em; }
+.dseg .hub-tab.on { border-color: var(--amber); color: var(--amber); background: rgba(255, 200, 87, .1); }
+.pager { display: flex; align-items: center; gap: 10px; margin: 26px 0 4px; flex-wrap: wrap; }
+.pager .sp { flex: 1 1 auto; }
+.pager .dots { display: flex; gap: 6px; align-items: center; }
+.pager .dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .18); }
+.pager .dots i.on { background: var(--amber); }
+.pager .pgn { font-size: 11px; letter-spacing: .1em; color: var(--ink-dim); }
+.lab2 { display: grid; grid-template-columns: 1.05fr .95fr; gap: 16px; align-items: start; margin-top: 14px; }
+@media (max-width: 820px) { .lab2 { grid-template-columns: 1fr; } }
+.bits { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.bits button { width: 44px; height: 44px; border: 1px solid var(--edge); background: transparent; color: var(--ink-dim);
+  font: 600 15px/1 ui-monospace, Consolas, monospace; border-radius: 6px; cursor: pointer; }
+.bits button.on { border-color: var(--amber); color: var(--amber); background: rgba(255, 200, 87, .12); }
+.bits button.trial { border-style: dashed; border-color: var(--cyan); }
+.scope { width: 100%; height: 190px; display: block; margin-top: 6px; }
+.scope .grid { stroke: rgba(255, 255, 255, .09); fill: none; }
+.scope .tr { fill: none; stroke: var(--cyan); stroke-width: 2; }
+.scope .lim { stroke: rgba(255, 107, 115, .85); stroke-dasharray: 4 4; fill: none; }
+.scope text { fill: var(--ink-dim); font: 10px ui-monospace, Consolas, monospace; }
+.dlbl { font-size: 11px; letter-spacing: .1em; color: var(--ink-dim); margin: 0 0 6px; }
+.dlbl b { color: var(--amber); }
+.ctl.locked { border-color: rgba(255, 200, 87, .35); background: rgba(255, 200, 87, .05); }
+.ctl.locked .ctl-name { color: var(--amber); }
+.ctl.locked .ctl-row { opacity: .55; }
+.ctl.locked input[type="range"] { cursor: not-allowed; }
+
+/* ================= UI 風格（Theme） ================= */
+/* 預設風格＝原本的工程藍圖（直角）；shark 風格再覆寫成深海圓角。 */
+:root { --r-s: 0px; --r-m: 0px; --accent-fill: rgba(255, 200, 87, .12); }
+
+.shark-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.theme-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 12px; }
+.theme-bar .tb-l { font-size: 10px; letter-spacing: .18em; color: var(--ink-dim); text-transform: uppercase; }
+.theme-seg { display: flex; gap: 8px; flex-wrap: wrap; }
+.theme-swp {
+  display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 7px; min-height: 44px;
+  border: 1px solid var(--edge); background: transparent; color: var(--ink-dim); font: inherit;
+  font-size: 12px; letter-spacing: .06em; cursor: pointer; touch-action: manipulation;
+  border-radius: var(--r-s); transition: border-color .15s, color .15s, background .15s;
+}
+.theme-swp .sw { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .3); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .22); }
+.theme-swp[data-theme-opt="default"] .sw { background: linear-gradient(135deg, #0a2a4d 40%, #6fd8ff 100%); }
+.theme-swp[data-theme-opt="shark"] .sw { background: linear-gradient(135deg, #8fdaf0 0 55%, #ff9ec7 55% 100%); }
+.theme-swp:hover { border-color: var(--cyan); color: var(--ink); }
+.theme-swp.on { border-color: var(--amber); color: var(--ink); background: var(--accent-fill); }
+.theme-swp.on .sw { box-shadow: 0 0 0 2px var(--amber), inset 0 0 0 2px rgba(0, 0, 0, .22); }
+.hub-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+@media (max-width: 560px) { .hub-actions { gap: 6px; } .hub-actions .ghost { padding: 0 8px; } }
+
+/* 鯊魚女僕角色（僅 shark 風格顯示） */
+.shark-hero, .shark-mini { display: none; }
+html[data-theme="shark"] .shark-mini { display: block; width: 52px; height: auto; flex: 0 0 auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35)); }
+html[data-theme="shark"] .shark-hero {
+  display: flex; align-items: center; gap: 14px; margin: 0 0 14px; padding: 12px 16px 12px 12px;
+  border: 1px solid var(--edge); border-radius: var(--r-m); overflow: hidden;
+  background: linear-gradient(120deg, rgba(92, 231, 220, .12), rgba(255, 179, 209, .12));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .32);
+}
+html[data-theme="shark"] .shark-hero .shark-art {
+  width: 96px; height: auto; flex: 0 0 auto; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .35));
+  animation: sharkBob 4s ease-in-out infinite;
+}
+.shark-bubble { min-width: 0; }
+.shark-bubble b { display: block; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: .06em; color: var(--ink); }
+.shark-bubble span { display: block; margin-top: 3px; font-size: 12px; line-height: 1.65; color: var(--ink-dim); }
+@keyframes sharkBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
+@media (prefers-reduced-motion: reduce) { html[data-theme="shark"] .shark-hero .shark-art { animation: none; } }
+@media (max-width: 420px) {
+  html[data-theme="shark"] .shark-hero { gap: 10px; padding: 10px 12px 10px 8px; }
+  html[data-theme="shark"] .shark-hero .shark-art { width: 72px; }
+  .shark-bubble b { font-size: 15px; }
+  .shark-bubble span { font-size: 11.5px; }
+}
+
+/* ---------- 鯊魚女僕：深海配色 + 圓角 ---------- */
+html[data-theme="shark"] {
+  --paper: #062431;
+  --paper-2: #0a3142;
+  --plate: rgba(8, 45, 59, .78);
+  --rule: rgba(126, 235, 226, .18);
+  --edge: rgba(126, 235, 226, .36);
+  --ink: #ecfdff;
+  --ink-dim: #9ccbd6;
+  --cyan: #5ce7dc;
+  --amber: #ffb3d1;
+  --green: #6ff0bf;
+  --red: #ff8fa6;
+  --r-s: 10px;
+  --r-m: 18px;
+  --accent-fill: rgba(255, 179, 209, .16);
+  color-scheme: dark;
+}
+html[data-theme="shark"] body {
+  background-color: #062431;
+  background-image:
+    radial-gradient(1100px 620px at 50% -12%, rgba(92, 231, 220, .2), transparent 62%),
+    radial-gradient(820px 520px at 106% 100%, rgba(255, 179, 209, .13), transparent 60%),
+    radial-gradient(rgba(236, 253, 255, .075) 1.3px, transparent 1.4px);
+  background-size: auto, auto, 26px 26px;
+  background-attachment: fixed, fixed, scroll;
+}
+html[data-theme="shark"] .hud,
+html[data-theme="shark"] .plate,
+html[data-theme="shark"] .cat,
+html[data-theme="shark"] .lesson,
+html[data-theme="shark"] .panel,
+html[data-theme="shark"] .plot,
+html[data-theme="shark"] .seg-b,
+html[data-theme="shark"] .tog,
+html[data-theme="shark"] .tile,
+html[data-theme="shark"] .hub-tab,
+html[data-theme="shark"] .card,
+html[data-theme="shark"] .toast,
+html[data-theme="shark"] .actionbar .inner,
+html[data-theme="shark"] .cta,
+html[data-theme="shark"] .ghost,
+html[data-theme="shark"] .notice,
+html[data-theme="shark"] .lab-msg,
+html[data-theme="shark"] .qbtn,
+html[data-theme="shark"] .meter { border-radius: var(--r-m); }
+html[data-theme="shark"] .plate,
+html[data-theme="shark"] .cat,
+html[data-theme="shark"] .lesson { box-shadow: 0 12px 26px rgba(0, 0, 0, .3); }
+html[data-theme="shark"] .brand-name { text-shadow: 0 0 22px rgba(92, 231, 220, .35); }
+html[data-theme="shark"] .notice { background: rgba(255, 179, 209, .1); border-radius: 0 var(--r-s) var(--r-s) 0; }
+html[data-theme="shark"] .seg-b.on,
+html[data-theme="shark"] .bits button.on { background: rgba(255, 179, 209, .16); }
+html[data-theme="shark"] .ctl.locked { border-color: rgba(255, 179, 209, .4); background: rgba(255, 179, 209, .06); }
+html[data-theme="shark"] .adv-note { background: rgba(255, 179, 209, .08); }
+html[data-theme="shark"] .plot .tri { fill: rgba(255, 179, 209, .18); }
+html[data-theme="shark"] .plot .op { stroke: #052331; }
+html[data-theme="shark"] .bigscore { text-shadow: 0 0 20px rgba(255, 179, 209, .45); }
+html[data-theme="shark"] .stars-live i.on { text-shadow: 0 0 8px rgba(255, 179, 209, .8); }
+html[data-theme="shark"] .hub-tab.on { background: rgba(92, 231, 220, .12); }
+html[data-theme="shark"] .chipi.on { fill: rgba(92, 231, 220, .2); filter: drop-shadow(0 0 6px rgba(92, 231, 220, .6)); }
+html[data-theme="shark"] .pip { box-shadow: 0 0 8px rgba(92, 231, 220, .5); }
 </style>
 <div class="wrap">
+  <svg class="shark-defs" aria-hidden="true" focusable="false"><defs><g id="sharkMaid">
+    <path d="M78 106c10 9 22 9 30 2-1 9-8 13-15 13 7 5 13 5 18 3-6 11-21 13-33 4z" fill="#79cfe8" stroke="#3d8aa8" stroke-width="1.2" stroke-linejoin="round"/>
+    <ellipse cx="39" cy="100" rx="6.5" ry="8.5" fill="#8fdaf0"/>
+    <ellipse cx="81" cy="100" rx="6.5" ry="8.5" fill="#8fdaf0"/>
+    <path d="M45 86h30c3 8 7 14 7 22 0 6-44 6-44 0 0-8 4-14 7-22z" fill="#31536f"/>
+    <path d="M52 99h16l2 13c-6 3-14 3-20 0z" fill="#fdf8ee"/>
+    <path d="M60 96l-6-3v6z" fill="#ff9ec7"/><path d="M60 96l6-3v6z" fill="#ff9ec7"/>
+    <circle cx="60" cy="96" r="2" fill="#ffc4dc"/>
+    <ellipse cx="60" cy="58" rx="34" ry="32" fill="#8fdaf0"/>
+    <path d="M45 68q15 12 30 0q-15 9-30 0z" fill="#1d4a63"/>
+    <path d="M46.5 69l3.4 5.4 3.4-5.4 3.4 5.4 3.4-5.4 3.4 5.4 3.4-5.4 3.4 5.4 3.4-5.4 3.4 5.4 3.4-5.4z" fill="#fff"/>
+    <path d="M83 49q4 4 0 9M86 48q4 5 0 10" fill="none" stroke="#5fb4cf" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="47" cy="55" rx="7" ry="8.6" fill="#12324a"/>
+    <ellipse cx="73" cy="55" rx="7" ry="8.6" fill="#12324a"/>
+    <circle cx="49.5" cy="51.5" r="2.6" fill="#fff"/><circle cx="75.5" cy="51.5" r="2.6" fill="#fff"/>
+    <circle cx="44.8" cy="58.5" r="1.3" fill="#fff" opacity=".8"/><circle cx="70.8" cy="58.5" r="1.3" fill="#fff" opacity=".8"/>
+    <ellipse cx="34" cy="66" rx="5.5" ry="3" fill="#ff9ec7" opacity=".6"/>
+    <ellipse cx="86" cy="66" rx="5.5" ry="3" fill="#ff9ec7" opacity=".6"/>
+    <path d="M29 42Q60 16 91 42l0 5Q60 22 29 47z" fill="#fff"/>
+    <circle cx="31" cy="42" r="4.4" fill="#fff"/><circle cx="41" cy="32" r="4.6" fill="#fff"/>
+    <circle cx="52" cy="26" r="4.8" fill="#fff"/><circle cx="63" cy="25" r="4.8" fill="#fff"/>
+    <circle cx="74" cy="28" r="4.6" fill="#fff"/><circle cx="85" cy="35" r="4.4" fill="#fff"/>
+    <path d="M60 15c-2.6-3.4-7.6-2.6-7.6 1.3 0 3 3.8 5.5 7.6 8 3.8-2.5 7.6-5 7.6-8 0-3.9-5-4.7-7.6-1.3z" fill="#ff9ec7"/>
+  </g></defs></svg>
   <header class="hud" id="hud" hidden>
     <div class="brand"><span class="brand-name">OTA Tuner</span><span class="brand-sub" id="sheetLabel"></span></div>
     <div class="hud-stats">
       <div class="stat"><span class="k">TIME</span><span class="v num" id="time">00:30</span></div>
       <div class="stat" id="statLives"><span class="k">LIVES</span><span class="pips" id="lives" aria-label="血量"></span></div>
       <div class="stat" id="statScore"><span class="k">SCORE</span><span class="v num score" id="score">0</span></div>
+      <button class="ghost js-theme" id="btnTheme" type="button" title="切換 UI 風格">🎨 風格</button>
       <button class="ghost" id="btnHome" type="button">首頁</button>
     </div>
     <div class="timebar"><i id="timebar"></i></div>
   </header>
 
   <section id="home">
-    <div class="home-title"><span class="brand-name">OTA Tuner</span><span class="brand-sub">類比 IC 設計謎題 · 調整電晶體尺寸與偏壓，湊齊五項規格</span></div>
-    
+    <div class="home-title"><span class="brand-name">OTA Tuner</span><span class="brand-sub">類比 IC 設計謎題 · 調整電晶體尺寸與偏壓，湊齊五項規格 · <b style="color:var(--amber)">V4</b></span></div>
+
+    <div class="theme-bar">
+      <span class="tb-l">UI 風格</span>
+      <div class="theme-seg" id="themeSeg" role="group" aria-label="介面風格">
+        <button class="theme-swp on" type="button" data-theme-opt="default" aria-pressed="true"><i class="sw"></i>預設 · 工程藍圖</button>
+        <button class="theme-swp" type="button" data-theme-opt="shark" aria-pressed="false"><i class="sw"></i>鯊魚女僕 · 深海</button>
+      </div>
+    </div>
+
+    <div class="shark-hero">
+      <svg class="shark-art" viewBox="0 0 120 136" aria-hidden="true"><use href="#sharkMaid"/></svg>
+      <div class="shark-bubble">
+        <b>要一起把 gm/ID 調到 5–20 嗎？</b>
+        <span>我是這片海域的值班女僕。Vov 拉小一點、gm/ID 就會浮上來；想看她長什麼樣，進「新手專區 → 教學區 → CIC018 元件關係圖」。風格隨時可以切回原本的工程藍圖。</span>
+      </div>
+    </div>
+
     <!-- 新增：功能按鈕區 -->
      <div class="hrow">
       <button class="cta alt" id="btnStats" style="font-size:14px;" onclick="showStats()">📊 總成績</button>
@@ -671,7 +851,7 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
       <button class="cta alt" id="btnLb" style="font-size:16px;" onclick="showLeaderboard()">📜 排行榜</button>
     </div>
     <div class="hrow">
-      <button class="cta alt" id="btnAdvHub" type="button">🔬 進階專區<span>BGR · ADC · PLL · Charge Pump</span></button>
+      <button class="cta alt" id="btnAdvHub" type="button">🔬 進階專區<span>AIC 知識 · BGR / LDO / CP / ADC / PLL · 5 道練習題</span></button>
     </div>
 
     <div class="plate">
@@ -693,21 +873,26 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
         <h1 class="hub-title">新手專區</h1>
         <p class="hub-sub">「教學區」讀觀念、「練習區」動手試。這裡全部<b>不計分、不扣血、不寫入紀錄</b>，隨時可以按「首頁」回去。</p>
       </div>
-      <button class="ghost hub-back" id="hubHome" type="button">首頁</button>
+      <div class="hub-actions">
+        <svg class="shark-mini" viewBox="0 0 120 136" aria-hidden="true"><use href="#sharkMaid"/></svg>
+        <button class="ghost hub-back js-theme" id="hubTheme" type="button">🎨 風格</button>
+        <button class="ghost hub-back" id="hubHome" type="button">首頁</button>
+      </div>
     </div>
     <div class="hub-tabs" role="tablist" aria-label="新手專區分頁">
-      <button class="hub-tab on" id="tabLesson" type="button" role="tab" aria-selected="true" aria-controls="lessonList">📖 教學區<span id="lessonCount">6 課</span></button>
+      <button class="hub-tab on" id="tabLesson" type="button" role="tab" aria-selected="true" aria-controls="lessonList">📖 教學區<span id="lessonCount">7 課</span></button>
       <button class="hub-tab" id="tabPractice" type="button" role="tab" aria-selected="false" aria-controls="practiceList">🧰 練習區<span id="practiceCount">6 項</span></button>
     </div>
     <div class="lessons" id="lessonList" role="tabpanel" aria-labelledby="tabLesson"></div>
     <div class="lessons" id="practiceList" role="tabpanel" aria-labelledby="tabPractice" hidden></div>
-    <p class="hub-foot" id="hubFoot">建議順序：<b>1 → 2 → 3 → 4 → 5 → 6 → 動手練習</b>。練習卡住的時候，隨時回來看重點，滑桿數值都可以慢慢試。</p>
+    <p class="hub-foot" id="hubFoot">建議順序：<b>1 → 2 → 3 → 4 → 5 → 6 → 7 → 動手練習</b>。練習卡住的時候，隨時回來看重點，滑桿數值都可以慢慢試。</p>
   </section>
 
   <section id="lessonView" hidden aria-label="教學課程">
     <div class="lesson-bar">
       <button class="ghost" id="lessonBack" type="button">◂ 教學選單</button>
       <span class="crumb" id="lessonCrumb"></span>
+      <button class="ghost js-theme" id="lessonTheme" type="button">🎨 風格</button>
       <button class="ghost" id="lessonHome" type="button">首頁</button>
     </div>
     <article class="lesson-doc" id="lessonDoc"></article>
@@ -723,6 +908,7 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
     <div class="lesson-bar">
       <button class="ghost" id="labBack" type="button">◂ 練習區</button>
       <span class="crumb" id="labCrumb"></span>
+      <button class="ghost js-theme" id="labTheme" type="button">🎨 風格</button>
       <button class="ghost" id="labHome" type="button">首頁</button>
     </div>
     <div class="lesson-doc" id="labDoc"></div>
@@ -733,18 +919,27 @@ input[type=range]:focus-visible, .step:focus-visible, button:focus-visible { out
       <div>
         <div class="hub-eyebrow">Advanced Zone · 進階專區</div>
         <h1 class="hub-title">進階專區</h1>
-        <p class="hub-sub">四個進階電路主題。<b>BGR 與 Charge Pump 已經可以讀</b>，ADC / PLL 先留位置，之後補上完整內容與互動練習。</p>
+        <p class="hub-sub">三個分區：<b>AIC 知識區</b>（工程師天天在用的元件與設計知識）、<b>熱門類比 IP</b>（BGR / LDO / Charge Pump / PLL / ADC 完整教學）、<b>題目練習區</b>（四種難度的互動實驗）。全部<b>不計分、不扣血、不寫入紀錄</b>。</p>
       </div>
-      <button class="ghost hub-back" id="advHome" type="button">首頁</button>
+      <div class="hub-actions">
+        <button class="ghost hub-back js-theme" id="advTheme" type="button">🎨 風格</button>
+        <button class="ghost hub-back" id="advHome" type="button">首頁</button>
+      </div>
+    </div>
+    <div class="hub-tabs" role="tablist" aria-label="進階專區分區">
+      <button class="hub-tab on" id="tabKb" type="button" role="tab" aria-selected="true" aria-controls="advList">📐 AIC 知識區<span id="kbCount">10 篇</span></button>
+      <button class="hub-tab" id="tabIp" type="button" role="tab" aria-selected="false" aria-controls="advList">🔌 熱門類比 IP<span id="ipCount">5 項</span></button>
+      <button class="hub-tab" id="tabAdvLab" type="button" role="tab" aria-selected="false" aria-controls="advList">🧪 題目練習區<span id="advLabCount">5 題</span></button>
     </div>
     <div class="lessons" id="advList"></div>
-    <p class="adv-note"><b>開發中</b>　這一區沿用新手專區的閱讀版面，不影響成績。ADC / PLL 已經可以先進去一層看子主題（SAR、Delta-Sigma、Pipeline、Flash / Integer-N、Fractional-N、DLL），完整內容會在之後的版本補齊。</p>
+    <p class="adv-note" id="advNote"></p>
   </section>
 
   <section id="advView" hidden aria-label="進階課程">
     <div class="lesson-bar">
       <button class="ghost" id="advBack" type="button">◂ 進階專區</button>
       <span class="crumb" id="advCrumb"></span>
+      <button class="ghost js-theme" id="advThemeView" type="button">🎨 風格</button>
       <button class="ghost" id="advHome2" type="button">首頁</button>
     </div>
     <article class="lesson-doc" id="advDoc"></article>
@@ -828,6 +1023,9 @@ function unity(A0, P, Z, R) {
   return { fu, pm: clamp(180 + loopAt(A0, P, Z, R, fu).ph, -90, 120) };
 }
 const AREA_TAIL = 0.69; // W/L of a bias device per uA at Vov = 0.12 V
+const LBIAS = 0.5;      // 純電流源（M5、偏壓）固定通道長度 µm：不跟增益級 L 一起動
+const I7_WL = 1.5e-6;   // A per unit W/L：M7（第二級電流源負載）的鏡像比 → I2
+const L7_K = 2, L7_MAX = 4; // M7 的通道長度 = 2 × 增益級 L（上限 4 µm），撐大 ro7
 
 const SLOTW = { pwr: 40, area: 25, gain: 12, bw: 12, pm: 6, time: 5 };
 const SLOTS = ['gain', 'bw', 'pm', 'pwr', 'area'];
@@ -842,8 +1040,8 @@ MODS.opa = {
   sliders: [
     { k: 'w1', name: '輸入對 M1/M2', unit: 'W/L', lim: [1, 400] },
     { k: 'w3', name: '負載鏡 M3/M4', unit: 'W/L', lim: [0.5, 100] },
-    { k: 'it', name: '尾電流 M5', unit: 'µA', lim: [1, 150] },
-    { k: 'L', name: '通道長度 L (套用全體)', unit: 'µm', lim: [0.18, 2] }
+    { k: 'it', name: '尾電流 M5（電流源）', unit: 'µA', lim: [1, 150], note: 'M5 是電流源：只決定電流，尺寸固定、不隨 L 滑桿變動' },
+    { k: 'L', name: '通道長度 L', unit: 'µm', lim: [0.18, 2], note: '只套用增益級 M1–M4（M5 不跟動）' }
   ],
   toggles: [],
   specs: [
@@ -878,13 +1076,14 @@ MODS.opa = {
     const fm = gm3 / (TP * cm), fp1 = 1 / (TP * ro * CL);
     const P = [fp1, fm], Z = [], R = [];
     const u = unity(A0, P, Z, R);
-    const area = (2 * p.w1 + 2 * p.w3 + AREA_TAIL * p.it) * L * L;
+    // M5 是純電流源：尺寸用固定的 LBIAS，不跟增益級 L 一起變大
+    const area = (2 * p.w1 + 2 * p.w3) * L * L + AREA_TAIL * p.it * LBIAS * LBIAS;
     let hint;
     if (!okTail) hint = { c: 'bad', m: `<b>M5 離開飽和</b>：尾端節點只有 ${vtail.toFixed(2)} V，需要 ≥ 0.12 V。輸入對 Vov = ${(vov1 * 1000).toFixed(0)} mV。加大輸入對 W/L，或降低尾電流。` };
     else if (!okIn) hint = { c: 'bad', m: `<b>M1/M2 離開飽和</b>：負載 Vov = ${(vov3 * 1000).toFixed(0)} mV 太大，鏡像把輸入對汲極拉太低。加大負載 W/L。` };
     else if (!okLoad) hint = { c: 'bad', m: `<b>M4 離開飽和</b>：負載 Vov = ${(vov3 * 1000).toFixed(0)} mV，但 M4 只剩 ${(VDD - ctx.vout).toFixed(2)} V 跨壓。加大負載 W/L。` };
     else if (vov1 < 0.04) hint = { c: 'tip', m: `<b>弱反轉</b>：輸入對 Vov 只有 ${(vov1 * 1000).toFixed(0)} mV，再加 W/L 對 gm 幾乎沒有幫助，改調電流。` };
-    else hint = { c: 'ok', m: `<b>五顆電晶體都在飽和區</b>。增益 = gm × ro：Vov 越小增益越高；加長 L 讓 ro 變大，但面積與鏡像極點會變差。` };
+    else hint = { c: 'ok', m: `<b>五顆電晶體都在飽和區</b>。增益 = gm × ro：Vov 越小增益越高；加長 L 讓 M1–M4 的 ro 變大，但面積與鏡像極點會變差（M5 是電流源，尺寸不跟 L 動）。` };
     return {
       v: { gain: 20 * Math.log10(A0), gbw: gm1 / (TP * CL) / 1e6, pm: u.pm, pwr: VDD * p.it, area },
       bad, hint, tf: { A0, P, Z, R, fu: u.fu, pm: u.pm },
@@ -900,11 +1099,11 @@ MODS.two = {
   blurb: '第二級與 Cc：處理極點分裂、右半平面零點與電流匹配。',
   sliders: [
     { k: 'w1', name: '輸入對 M1/M2', unit: 'W/L', lim: [1, 400] },
-    { k: 'it', name: '尾電流 M5', unit: 'µA', lim: [1, 100] },
-    { k: 'w6', name: '第二級 M6', unit: 'W/L', lim: [1, 400] },
-    { k: 'i2', name: '第二級電流 M7', unit: 'µA', lim: [2, 300] },
+    { k: 'it', name: '尾電流 M5（電流源）', unit: 'µA', lim: [1, 100], note: 'M5 是電流源：只決定電流，尺寸固定、不隨 L 滑桿變動' },
+    { k: 'w6', name: '第二級驅動 M6', unit: 'W/L', lim: [1, 400] },
+    { k: 'w7', name: '第二級負載 M7', unit: 'W/L', lim: [2, 200], note: 'W/L 決定 I2（鏡像比）；M7 的 L 固定 2×L，ro7 也算進第二級增益' },
     { k: 'cc', name: '補償電容 Cc', unit: 'pF', lim: [0.1, 10] },
-    { k: 'L', name: '通道長度 L', unit: 'µm', lim: [0.18, 2] }
+    { k: 'L', name: '增益級 L', unit: 'µm', lim: [0.18, 2], note: '套用 M1–M4、M6（M7 自動 ×2，上限 4 µm）' }
   ],
   toggles: [{ k: 'rz', name: 'Rz 調零電阻', on: '開：零點移到左半平面（+10 µm²）', off: '關：右半平面零點會拉低 PM' }],
   specs: [
@@ -918,15 +1117,19 @@ MODS.two = {
   plot: { kind: 'bode', lf0: 3, lf1: 9, dbMax: 100, dbMin: -20, fSlot: 'bw', fScale: 1e6 },
   genCtx(d, rng) { return { cl: +(lerp(2, 12, d) * (0.85 + 0.3 * rng())).toFixed(1), vout: 0.9 }; },
   ctxLabel(c) { return 'CL ' + c.cl + ' pF'; },
-  sample(rng) { return { pos: { w1: rng() * 1000, it: rng() * 1000, w6: rng() * 1000, i2: rng() * 1000, cc: rng() * 1000, L: rng() * 1000 }, tog: { rz: rng() < 0.5 ? 1 : 0 } }; },
+  sample(rng) { return { pos: { w1: rng() * 1000, it: rng() * 1000, w6: rng() * 1000, w7: rng() * 1000, cc: rng() * 1000, L: rng() * 1000 }, tog: { rz: rng() < 0.5 ? 1 : 0 } }; },
   accept(r) { return r.v.gain > 55 && r.v.gain < 82 && r.v.gbw > 1 && r.v.pm > 40 && r.v.pwr < 450; },
   solve(p, ctx) {
-    const it = p.it * 1e-6, id1 = it / 2, i2 = p.i2 * 1e-6, L = p.L, CL = ctx.cl * 1e-12, Cc = p.cc * 1e-12;
+    const it = p.it * 1e-6, id1 = it / 2, L = p.L, CL = ctx.cl * 1e-12, Cc = p.cc * 1e-12;
+    // M7 = 電流源負載：W/L 決定鏡像電流 I2；通道長度固定比增益級長（2×L）→ ro7 才算得出來
+    const L7 = Math.min(L7_MAX, L7_K * L), i2 = I7_WL * p.w7;
     const lt = (LAMN + LAMP) / L, w3 = 30;
     const vov1 = vovOf(id1, KN, p.w1), gm1 = gmOf(id1, vov1);
     const vov3 = vovOf(id1, KP, w3);
     const vov6 = vovOf(i2, KP, p.w6), gm6 = gmOf(i2, vov6);
-    const ro1 = 1 / (lt * id1), ro2 = 1 / (lt * i2);
+    const ro1 = 1 / (lt * id1);
+    const ro6 = 1 / ((LAMP / L) * i2), ro7 = 1 / ((LAMN / L7) * i2);
+    const ro2 = (ro6 * ro7) / (ro6 + ro7);
     const vtail = 0.9 - VTH - vov1;
     const ratio = i2 / (id1 * p.w6 / w3);
     const okTail = vtail >= 0.12, okIn = (VDD - VTH - vov3) - vtail >= vov1;
@@ -940,20 +1143,21 @@ MODS.two = {
     const fp1 = 1 / (TP * gm6 * ro1 * ro2 * Cc), p2 = gm6 / (TP * CL), z = gm6 / (TP * Cc);
     const P = [fp1, p2], Z = p.rz ? [z] : [], R = p.rz ? [] : [z];
     const u = unity(A0, P, Z, R);
-    const area = (2 * p.w1 + 2 * w3 + AREA_TAIL * p.it + p.w6 + AREA_TAIL * p.i2) * L * L + (p.cc * 1e-12 / CAPD) + (p.rz ? 10 : 0);
+    // 面積：增益級吃 L²；M7 用自己更長的 L7；M5 是電流源，固定 LBIAS 不跟 L 動
+    const area = (2 * p.w1 + 2 * w3 + p.w6) * L * L + p.w7 * L7 * L7 + AREA_TAIL * p.it * LBIAS * LBIAS + (p.cc * 1e-12 / CAPD) + (p.rz ? 10 : 0);
     let hint;
     if (!okTail) hint = { c: 'bad', m: `<b>M5 離開飽和</b>：尾端只剩 ${vtail.toFixed(2)} V。加大輸入對 W/L，或降低尾電流。` };
     else if (!okIn) hint = { c: 'bad', m: `<b>M1/M2 離開飽和</b>：第一級鏡像把汲極拉太低。加大輸入對 W/L 或降低尾電流。` };
     else if (!okM6) hint = ratio < 0.5
-      ? { c: 'bad', m: `<b>M6 離開飽和</b>：比值 ${ratio.toFixed(2)} &lt; 0.5，表示 M6 對第二級電流 ${p.i2} µA 太寬——它能拉的電流比 i2 還多，只好靠 |Vds| 變小（滑進三極區）來限流，輸出被推到 VDD 附近。把 M6 W/L <b>調小</b>，或<b>加大</b> i2。` }
-      : { c: 'bad', m: `<b>M6 離開飽和</b>：M6 的 Vov 已達 ${vov6.toFixed(2)} V（需 ≤ 0.9 V），輸出只剩 ${(VDD - vov6).toFixed(2)} V，M7 沒有 Vds 餘裕。加大 M6 W/L，或降低 i2。` };
-    else if (!okM7) hint = { c: 'bad', m: `<b>M7 離開飽和</b>：第二級電流太大（比值 ${ratio.toFixed(2)}，需 0.5～2）。降低 i2，或加大 M6 W/L。` };
-    else hint = { c: 'ok', m: `<b>兩級都在飽和區</b>。GBW = gm1/(2πCc)，次極點 = gm6/(2πCL)，右半平面零點 = gm6/(2πCc)。PM 不夠時加大 gm6，或開啟 Rz。` };
+      ? { c: 'bad', m: `<b>M6 離開飽和</b>：比值 ${ratio.toFixed(2)} &lt; 0.5，表示 M6 對第二級電流 ${sigf(i2 * 1e6)} µA 太寬——它能拉的電流比 I2 還多，只好靠 |Vds| 變小（滑進三極區）來限流，輸出被推到 VDD 附近。把 M6 W/L <b>調小</b>，或把 <b>M7 W/L 加大</b>（I2 跟著變大）。` }
+      : { c: 'bad', m: `<b>M6 離開飽和</b>：M6 的 Vov 已達 ${vov6.toFixed(2)} V（需 ≤ 0.9 V），輸出只剩 ${(VDD - vov6).toFixed(2)} V，M7 沒有 Vds 餘裕。加大 M6 W/L，或降低 M7 W/L。` };
+    else if (!okM7) hint = { c: 'bad', m: `<b>M7 離開飽和</b>：第二級電流太大（比值 ${ratio.toFixed(2)}，需 0.5～2，目前 I2 = ${sigf(i2 * 1e6)} µA）。降低 M7 W/L，或加大 M6 W/L。` };
+    else hint = { c: 'ok', m: `<b>兩級都在飽和區</b>。GBW = gm1/(2πCc)，次極點 = gm6/(2πCL)，右半平面零點 = gm6/(2πCc)；第二級增益 = gm6·(ro6∥ro7)，ro7 由 M7 自己的 L（2× 增益級 L）決定。PM 不夠時加大 gm6，或開啟 Rz。` };
     return {
-      v: { gain: 20 * Math.log10(A0), gbw: gm1 / (TP * Cc) / 1e6, pm: u.pm, pwr: VDD * (p.it + p.i2), area },
+      v: { gain: 20 * Math.log10(A0), gbw: gm1 / (TP * Cc) / 1e6, pm: u.pm, pwr: VDD * (p.it + i2 * 1e6), area },
       bad, hint, tf: { A0, P, Z, R, fu: u.fu, pm: u.pm },
-      aux: { id: id1 * 1e6, it: p.it, i2: p.i2, rz: p.rz },
-      info: [`gm1 ${(gm1 * 1e6).toFixed(0)} µS`, `gm6 ${(gm6 * 1e6).toFixed(0)} µS`, `次極點 ${fmtHz(p2)}`, `零點 ${fmtHz(z)}`]
+      aux: { id: id1 * 1e6, it: p.it, i2: i2 * 1e6, rz: p.rz, w7: p.w7, L7, ro6: ro6 / 1e3, ro7: ro7 / 1e3 },
+      info: [`gm1 ${(gm1 * 1e6).toFixed(0)} µS`, `gm6 ${(gm6 * 1e6).toFixed(0)} µS`, `ro6 ${(ro6 / 1e3).toFixed(0)} kΩ｜ro7 ${(ro7 / 1e3).toFixed(0)} kΩ`, `次極點 ${fmtHz(p2)}`, `零點 ${fmtHz(z)}`]
     };
   }
 };
@@ -1057,7 +1261,7 @@ MODS.ldo = {
     const pea = 1 / (TP * roe * Cg), pout = 1 / (TP * Rout * cout), zesr = 1 / (TP * ctx.esr * cout);
     const P = [pea, pout], Z = [zesr], R = [];
     const u = unity(T0, P, Z, R);
-    const area = (p.wp + 2 * p.wea + 40 + AREA_TAIL * p.iea) * L * L + 20;
+    const area = (p.wp + 2 * p.wea + 40) * L * L + AREA_TAIL * p.iea * LBIAS * LBIAS + 20;
     let hint;
     if (!okP) hint = { c: 'bad', m: `<b>通路管 MP 離開飽和</b>：Vov = ${(vovp * 1000).toFixed(0)} mV，超過可用壓差 ${ctx.vdrop} V。加大 MP 的 W/L。` };
     else if (!okE) hint = { c: 'bad', m: `<b>誤差放大器尾端離開飽和</b>：輸入對 Vov 太大。加大輸入對 W/L 或降低電流。` };
@@ -1145,12 +1349,32 @@ function genLevel(modId, d, seed) {
 
     // 如果開局達標 3 項或以上，就重新生成 (你可以把 3 改成 2，難度會更高)
     if (defaultPassCount < 3) {
-      return { modId, d, ctx, specs, ref, refV: res.v };
+      return decorateLevel(modId, d, ctx, specs, ref, res.v, seed);
     }
   }
   
   // 如果真的找不到，就退回原本的寫法，避免遊戲崩潰
-  return { modId, d, ctx, specs, ref, refV: res.v };
+  return decorateLevel(modId, d, ctx, specs, ref, res.v, seed);
+}
+
+/* 每一關生成後再做兩件事，讓「一套解法打天下」失效：
+   1) 隨機挑一項規格收緊（仍然保證參考解會過）
+   2) 中高難度把某一根滑桿鎖在參考解的值（不能調） */
+function decorateLevel(modId, d, ctx, specs, ref, refV, seed) {
+  const mod = MODS[modId];
+  const pick = Math.floor(mulberry32(seed + 0x5f3759)() * specs.length);
+  specs = specs.map((sp, i) => {
+    if (i !== pick) return sp;
+    const band = sp.band * 0.55, rv = refV[sp.k];
+    const target = sp.type === 'min' ? rv - band : rv + band;
+    return Object.assign({}, sp, { target: roundTarget(target, sp), band });
+  });
+  let lock = null;
+  if (d >= 0.2 && mulberry32(seed + 0x9e3779)() < 0.3 + 0.45 * d) {
+    const s = mod.sliders[Math.floor(mulberry32(seed + 0x85ebca)() * mod.sliders.length)];
+    lock = { k: s.k, name: s.name, unit: s.unit, pos: Math.round(ref.pos[s.k]), val: posToVal(ref.pos[s.k], s.lim) };
+  }
+  return { modId, d, ctx, specs, ref, refV, lock };
 }
 
 /* ================= scoring ================= */
@@ -1253,7 +1477,8 @@ const SCH = {};
   const tl = [[210, 268]].concat(mosPts(200, 302, -1), [[210, 352]]);
   const ota = (w2) => `<path class="w thin" d="M120 30 V58 M300 30 V58 M120 126 V182 M300 126 V182 M152 92 H268 M210 92 V140 H120 M120 250 V268 H300 M88 216 H46 M332 216 H352 M178 302 H150"/>
     <circle class="dot" cx="210" cy="92" r="2.6"/><circle class="dot" cx="120" cy="140" r="2.6"/><circle class="dot" cx="210" cy="268" r="2.6"/><circle class="dot" cx="300" cy="154" r="2.6"/>`;
-  const otaDev = mosSVG('M3', 130, 92, 'p', 1, 'M3') + mosSVG('M4', 290, 92, 'p', -1, 'M4') + mosSVG('M1', 110, 216, 'n', -1, 'M1') + mosSVG('M2', 310, 216, 'n', 1, 'M2') + mosSVG('M5', 200, 302, 'n', -1, 'M5');
+  const otaDev = mosSVG('M3', 130, 92, 'p', 1, 'M3') + mosSVG('M4', 290, 92, 'p', -1, 'M4') + mosSVG('M1', 110, 216, 'n', -1, 'M1') + mosSVG('M2', 310, 216, 'n', 1, 'M2') + mosSVG('M5', 200, 302, 'n', -1, 'M5')
+    + '<text class="t" x="222" y="320">電流源 It</text>';
 
   /* OPA */
   const dO = [{ id: 'L', pts: lf }, { id: 'R', pts: rt }, { id: 'T', pts: tl }, { id: 'O', pts: [[300, 154], [398, 154], [398, 296]], ac: true }];
@@ -1294,13 +1519,15 @@ const SCH = {};
       <text class="lbl dev" x="540" y="148" text-anchor="end">OUT</text><text class="lbl" x="146" y="306" text-anchor="end">Vb</text>
       <text class="lbl val num" id="t1" x="104" y="170" text-anchor="end"></text><text class="lbl val num" id="t2" x="470" y="262"></text>
       <text class="lbl val num" id="t3" x="224" y="344"></text><text class="lbl num" id="t4" x="528" y="322" text-anchor="end"></text>
-      <text class="lbl val" id="t5" x="406" y="140" text-anchor="middle"></text>`,
+      <text class="lbl val" id="t5" x="406" y="140" text-anchor="middle"></text>
+      <text class="lbl val num" id="t6" x="450" y="240"></text>`,
     update(res, p, ctx) {
       const iu = res.aux.id, w = wid(iu), i2 = res.aux.i2;
       setFlow('L', w, 16 + iu * 1.3); setFlow('R', w, 16 + iu * 1.3); setFlow('T', 1.8 + Math.min(5.4, iu * 0.13), 16 + iu * 2.2);
       setFlow('S', 1.6 + Math.min(5, i2 * 0.04), 16 + i2 * 0.7); setFlow('O', 2, 14 + Math.min(80, res.v.gbw * 3));
       $('t1').textContent = sigf(iu) + ' µA'; $('t2').textContent = 'I2 ' + sigf(i2) + ' µA'; $('t3').textContent = 'Itail ' + sigf(res.aux.it) + ' µA';
       $('t4').textContent = 'CL ' + ctx.cl + ' pF'; $('t5').textContent = 'Cc ' + sigf(p.cc) + ' pF';
+      $('t6').textContent = 'M7 L ' + res.aux.L7.toFixed(2) + ' µm';
       $('rzbox').style.display = res.aux.rz ? '' : 'none';
     }
   };
@@ -1317,7 +1544,7 @@ const SCH = {};
     html: `<defs><filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>
       <path class="rail" d="M96 30 H160"/><path class="rail" d="M100 340 H400"/>
       <path class="w thin" d="M120 30 V84 M120 116 V150 M380 100 H300 M380 100 V160 M380 186 V340"/>
-      <circle class="w" cx="120" cy="100" r="16"/><path class="w" d="M120 108 V92 M115 97 L120 91 L125 97"/>
+      <circle class="w" cx="120" cy="100" r="16"/><path class="w" d="M120 92 V108 M115 103 L120 109 L125 103"/>
       <path class="w" d="M370 164 H390 M375 172 H385"/>
       <g class="mb"><path class="w thin" d="M120 150 V256 M300 100 V256 M120 236 H196 V290 H152 M196 290 H268"/><circle class="dot" cx="120" cy="236" r="2.6"/><circle class="dot" cx="196" cy="290" r="2.6"/></g>
       <g class="mc"><path class="w thin" d="M120 150 V156 M120 224 V256 M300 100 V156 M300 224 V256 M120 140 H186 V190 H152 M186 190 H268 M120 240 H196 V290 H152 M196 290 H268"/>
@@ -1350,8 +1577,8 @@ const SCH = {};
       <circle class="dot" cx="300" cy="150" r="2.6"/><circle class="dot" cx="240" cy="202" r="2.6"/>
       <rect class="w" x="233" y="168" width="14" height="30"/><rect class="w" x="233" y="206" width="14" height="30"/>
       <polygon class="w" points="90,100 90,180 170,140"/><text class="lbl dev" x="98" y="124">−</text><text class="lbl dev" x="98" y="168">+</text>
-      <circle class="w" cx="130" cy="70" r="12"/><path class="w" d="M130 76 V64 M126 68 L130 63 L134 68"/>
-      <circle class="w" cx="380" cy="206" r="16"/><path class="w" d="M380 214 V198 M375 203 L380 197 L385 203"/>
+      <circle class="w" cx="130" cy="70" r="12"/><path class="w" d="M130 64 V76 M126 72 L130 78 L134 72"/>
+      <circle class="w" cx="380" cy="206" r="16"/><path class="w" d="M380 198 V214 M375 209 L380 215 L385 209"/>
       <path class="w" d="M330 238 H350 M330 246 H350"/>
       ${glowLayer(dL)}${mosSVG('MP', 290, 100, 'p', -1, 'MP')}
       <g class="mos" id="MEA"><rect class="halo" x="86" y="96" width="90" height="88" rx="8"/><text class="lbl dev" x="112" y="146">EA</text></g>
@@ -1454,15 +1681,18 @@ function buildGame() {
   $('specs').innerHTML = lv.specs.map(sp => `<div class="spec" id="sp-${sp.k}"><span class="nm">${sp.label}</span><span class="rd num" id="rd-${sp.k}"></span><div class="bar"><i id="bar-${sp.k}"></i><u></u></div></div>`).join('') +
     `<div class="satrow"><span class="nm">SATURATION</span>${m.devs.map(d => `<span class="sat" id="st-${d}">${d}</span>`).join('')}</div>`;
   $('specNote').textContent = m.name;
-  let h = m.sliders.map(s => `<div class="ctl"><div class="ctl-head"><span class="ctl-name">${s.name}</span><span class="ctl-val num" id="cv-${s.k}"></span></div>
-    <div class="ctl-row"><button class="step" type="button" data-k="${s.k}" data-d="-1" aria-label="降低 ${s.name}">−</button>
-    <input type="range" id="in-${s.k}" min="0" max="1000" step="1" value="${S.pos[s.k]}" aria-label="${s.name}">
-    <button class="step" type="button" data-k="${s.k}" data-d="1" aria-label="提高 ${s.name}">+</button></div></div>`).join('');
+  let h = m.sliders.map(s => {
+    const lk = lv.lock && lv.lock.k === s.k;
+    return `<div class="ctl${lk ? ' locked' : ''}"><div class="ctl-head"><span class="ctl-name">${s.name}${lk ? ' 🔒' : ''}</span><span class="ctl-val num" id="cv-${s.k}"></span></div>
+    <div class="ctl-row"><button class="step" type="button" data-k="${s.k}" data-d="-1" aria-label="降低 ${s.name}"${lk ? ' disabled' : ''}>−</button>
+    <input type="range" id="in-${s.k}" min="0" max="1000" step="1" value="${S.pos[s.k]}" aria-label="${s.name}"${lk ? ' disabled' : ''}>
+    <button class="step" type="button" data-k="${s.k}" data-d="1" aria-label="提高 ${s.name}"${lk ? ' disabled' : ''}>+</button></div>${lk ? `<div class="ctl-sub">本關固定：${sigf(lv.lock.val)} ${s.unit}</div>` : (s.note ? `<div class="ctl-sub">${s.note}</div>` : '')}</div>`;
+  }).join('');
   h += m.toggles.map(t => `<div class="ctl"><button class="tog" type="button" id="tg-${t.k}" aria-pressed="false"><span class="tg-name">${t.name}</span><span class="tg-state" id="tgs-${t.k}"></span><span class="tg-sw"><i></i></span></button><div class="ctl-sub" id="tgd-${t.k}"></div></div>`).join('');
   h += '<div class="info num" id="info"></div>';
   $('ctls').innerHTML = h;
   m.sliders.forEach(s => $('in-' + s.k).addEventListener('input', e => { S.pos[s.k] = +e.target.value; refresh(); }));
-  document.querySelectorAll('.step').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; S.pos[k] = clamp(S.pos[k] + (+b.dataset.d) * STEP, 0, 1000); refresh(); }));
+  document.querySelectorAll('.step').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; if (S.lv.lock && S.lv.lock.k === k) return; S.pos[k] = clamp(S.pos[k] + (+b.dataset.d) * STEP, 0, 1000); refresh(); }));
   m.toggles.forEach(t => $('tg-' + t.k).addEventListener('click', () => { S.tog[t.k] = S.tog[t.k] ? 0 : 1; refresh(); }));
 }
 function refresh() {
@@ -1726,7 +1956,7 @@ const TUT_STEPS = [
   { k: 'gbw', t: 'GBW 達標', tip: 'GBW = gm1 / (2πCL)。加大輸入對 W/L 或尾電流，可以把 GBW 推高，代價是功耗。' },
   { k: 'pm', t: 'PHASE MARGIN 達標', tip: 'PM 看極點位置。尾電流或輸入對太大時，鏡像極點會逼近 GBW，PM 就掉下來。' },
   { k: 'pwr', t: 'POWER 達標', tip: 'POWER = VDD × 尾電流。要 ≤ 目標只能降低尾電流；gm 也會跟著變小，記得回頭補 GAIN / GBW。' },
-  { k: 'area', t: 'AREA 達標', tip: '面積 ≈ (2W1 + 2W3 + 0.69It) × L²。縮小 W/L 或縮短 L 最省面積，但要犧牲增益與 Vov 餘裕。' },
+  { k: 'area', t: 'AREA 達標', tip: '面積 ≈ (2W1 + 2W3) × L² + M5（電流源）的固定尺寸。縮小 W/L 或縮短 L 最省面積，但要犧牲增益與 Vov 餘裕。' },
   { k: 'all', t: '五項同時達標', tip: '五項互相拉扯，這就是類比設計的取捨。全部亮綠燈後按「檢查」完成教學。' }
 ];
 const TUT = { lv: null, startPos: null, moved: false, passed: {}, all: false };
@@ -1899,6 +2129,22 @@ AREA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32 µm²&nbsp;/ ≤ 80
 <div class="fx">V = I × R　　I = V / R　　R = V / I
 <small>單位：V 伏特、A 安培、Ω 歐姆</small></div>
 <p>想像水管：推力（電壓）越大流量（電流）越大；管子越窄（電阻越大），流量越小。三個數字只要知道兩個，第三個就一定是固定的。</p>
+<figure class="fig">
+<svg viewBox="0 0 420 150" role="img" aria-label="四種基本元件符號：電阻、電容、電流源、電壓源">
+  <path class="w" d="M20 40 V60"/><rect class="w" x="12" y="60" width="16" height="40"/><path class="w" d="M20 100 V120"/>
+  <text class="lbl" x="34" y="86">R</text><text class="val" x="4" y="140">電阻</text>
+  <path class="w" d="M124 40 V70 M124 82 V120"/><path class="w" d="M106 70 H142 M106 82 H142"/>
+  <text class="lbl" x="150" y="82">C</text><text class="val" x="106" y="140">電容</text>
+  <path class="w" d="M236 40 V60 M236 100 V120"/><circle class="w" cx="236" cy="80" r="20"/>
+  <path class="w" d="M236 68 V92 M231 84 L236 90 L241 84"/>
+  <text class="lbl" x="262" y="76">I</text><text class="val" x="216" y="140">電流源</text>
+  <path class="w" d="M348 40 V62 M348 98 V120"/><circle class="w" cx="348" cy="80" r="18"/>
+  <path class="w" d="M341 74 H355 M348 67 V81"/>
+  <text class="lbl" x="370" y="76">V</text><text class="val" x="330" y="140">電壓源</text>
+</svg>
+<figcaption>四個基本符號：電阻（矩形）、電容（兩片極板）、電流源（圓 + 箭頭）、電壓源（圓 + 正負號）。</figcaption>
+</figure>
+<p><b>電流箭頭怎麼讀</b>：箭頭就是「電流往哪裡流」。掛在 VDD 與電晶體之間的電流源（例如遊戲的 Iref），電流是從 VDD 往下流進電晶體，所以箭頭朝下；接到地的負載電流一樣朝下。</p>
 <h2>先把單位換算練熟</h2>
 <table>
 <thead><tr><th>寫法</th><th>等於</th><th>常見場景</th></tr></thead>
@@ -1994,13 +2240,14 @@ ro = 1 / (λ·Id)，λ ∝ 1/L　（L 越長，ro 越大）
 單級增益 Av ≈ gm × ro　（5T OTA 的輸出阻抗其實是 ro2 ∥ ro4，gm 用輸入對的 gm1）</div>
 <p>這條式子解釋了整個遊戲：<b>gm 是「推得多用力」，ro 是「輸出撐得多穩」</b>，兩個一起決定增益。而 gm 又決定頻寬（GBW ≈ gm / 2πCL），所以「快」和「省電」天生衝突。</p>
 <div class="callout warn"><b>沒有白吃的午餐</b>：加長 L 讓 ro 變大、增益變高，但面積以 L² 成長，而且閘極電容變大、鏡像極點下降，PM 會變差。</div>
+<div class="callout">這些公式對真實 CIC018 只是近似。<b>第 4 課</b>有一張可以直接點的 gm/ID、gm·ro、fT、ID/W 圖表（0.18 µm 1P6M 1.8 V），可以看到弱／中／強反轉的完整曲線。</div>
 <h2>三個旋鈕各自在幹嘛</h2>
 <table>
 <thead><tr><th>你調的</th><th>對電晶體做了什麼</th></tr></thead>
 <tbody>
 <tr><td class="num">輸入對 W/L</td><td>W/L 越大 → 同樣電流下 Vov 越小 → <b>gm 越大</b>（增益、GBW 都變好，但 PM 下降、面積變大）。</td></tr>
 <tr><td class="num">負載鏡 W/L</td><td>讓電流鏡的 Vov 變小、gm3 變大，主要影響<b>鏡像極點與飽和餘裕</b>；W 越大閘極電容也越大，PM 反而變差。</td></tr>
-<tr><td class="num">通道長 L</td><td>λ 變小 → <b>ro 大幅上升</b>，增益變高；但面積 ∝ L²、極點下降，是最貴的旋鈕。</td></tr>
+<tr><td class="num">通道長 L</td><td>λ 變小 → <b>ro 大幅上升</b>，增益變高；但面積 ∝ L²、極點下降，是最貴的旋鈕。（只作用在增益級 M1–M4；M5 是電流源，尺寸不跟 L 動）</td></tr>
 </tbody></table>
 <div class="quiz">
   <div class="qk">小試身手 1 / 2</div>
@@ -2021,6 +2268,88 @@ ro = 1 / (λ·Id)，λ ∝ 1/L　（L 越長，ro 越大）
     <button class="qbtn" type="button" data-ok="0">加大負載電容 CL</button>
   </div>
   <div class="ans" hidden><b>解析</b>：Av ≈ gm × ro。加大 It 會讓 ro 下降（增益變差）；加大 CL 只影響頻寬。加長 L 才能拉高 ro——代價是面積與 PM。</div>
+</div>`
+  },
+
+  {
+    id: 'gmid', tag: '設計圖表', min: '8 分鐘',
+    t: 'CIC018 元件關係圖：gm/ID、gm·ro、fT',
+    s: '0.18 µm 1P6M 1.8 V 的曲線怎麼看？拉一條 Vov 就能查出 gm/ID、gm/W、gm·ro、fT、ID/W、FOM 與 Vdsat。',
+    body: `
+<p>前幾課講的是公式，真正下線前工程師看的是<b>曲線</b>。把 CIC018（TSMC 0.18 µm 1P6M 1.8 V）的 NMOS / PMOS 掃一遍，把 <b>gm/ID、gm/W、gm·ro、fT、ID/W、FOM、Vdsat</b> 畫在同一組座標上，設計就變成「在圖上挑一個點」——這就是 <b>gm/ID 設計法</b>（Jespers / Murmann 那一套）。</p>
+<div class="fx">這張圖表用的 CIC018 典型參數
+Vth0：NMOS +0.45 V、PMOS −0.45 V（1.8 V 元件）
+µCox：NMOS 320 µA/V²、PMOS 80 µA/V²
+Cox ≈ 8.6 fF/µm²（t_ox ≈ 4 nm）、重疊電容 ≈ 0.12 fF/µm
+L 選項：0.18 / 0.36 / 0.72 / 1.44 µm，W 以 10 µm 換算 ID/W
+模型：EKV 連續式（弱 → 中 → 強反轉）＋ 速度飽和 ＋ CLM</div>
+<div class="panel" id="gmPanel" style="margin-top:14px">
+  <div class="panel-h">CIC018 元件圖表 · 可互動</div>
+  <div class="dseg" id="gmCharts" style="margin-bottom:6px">
+    <button class="hub-tab on" type="button" data-c="gmid">gm/ID–Vov</button>
+    <button class="hub-tab" type="button" data-c="gmw">gm/W–Vov</button>
+    <button class="hub-tab" type="button" data-c="gmro">gm·ro–Vov</button>
+    <button class="hub-tab" type="button" data-c="gmrogid">gm·ro–gm/ID</button>
+    <button class="hub-tab" type="button" data-c="ft">fT–gm/ID</button>
+    <button class="hub-tab" type="button" data-c="idw">ID/W–gm/ID</button>
+    <button class="hub-tab" type="button" data-c="fom">FOM–gm/ID</button>
+    <button class="hub-tab" type="button" data-c="vdsat">Vdsat–gm/ID</button>
+  </div>
+  <div class="dseg" style="margin-bottom:6px">
+    <button class="hub-tab on" type="button" data-t="n">NMOS</button>
+    <button class="hub-tab" type="button" data-t="p">PMOS</button>
+  </div>
+  <div class="dseg" style="margin-bottom:6px">
+    <button class="hub-tab on" type="button" data-l="0.18">L 0.18 µm</button>
+    <button class="hub-tab" type="button" data-l="0.36">L 0.36 µm</button>
+    <button class="hub-tab" type="button" data-l="0.72">L 0.72 µm</button>
+    <button class="hub-tab" type="button" data-l="1.44">L 1.44 µm</button>
+  </div>
+  <div class="field"><span class="fl">Vov 工作點</span><input type="range" id="gmVov" min="-0.15" max="1.2" step="0.01" value="0.2"><span class="fv" id="gmVovV">200 mV</span></div>
+  <div class="plot" id="gmPlot" style="margin-top:10px"></div>
+  <div class="readout" id="gmOut" style="margin-top:10px"></div>
+</div>
+<p style="margin-top:10px"><b>琥珀色</b>曲線＝你選的 L，<b>紅色虛線</b>＝本遊戲使用的平方律模型（gm/ID = 2 / (Vov + 0.073)），兩條差多少就是短通道效應的代價。綠色區塊是 <b>gm/ID = 5–20</b> 的常用設計窗口。</p>
+<h2>八張圖各在回答什麼</h2>
+<table>
+<thead><tr><th>圖</th><th>回答的問題</th><th>怎麼用</th></tr></thead>
+<tbody>
+<tr><td class="num">gm/ID–Vov</td><td>這個偏壓「電流效率」多高？</td><td>物理上限 1/(n·V<sub>T</sub>) ≈ 25–38（弱反轉）；這張圖只掃到 Vov = −0.17 V，所以最高約 20。挑偏壓先看這張。</td></tr>
+<tr><td class="num">gm/W–Vov</td><td>每 µm 寬度能做多少 gm？</td><td>gm/W 隨 Vov 次線性上升、隨 L 下降。給定 gm 就能直接反推 W——這是最實用的一張。</td></tr>
+<tr><td class="num">gm·ro–Vov / –gm/ID</td><td>單級增益能多大？</td><td>Vov↓、L↑ → gm·ro↑。要 60 dB 的單級增益就得吃大 L 與大面積。</td></tr>
+<tr><td class="num">fT–gm/ID</td><td>這顆管子能跑多快？</td><td>gm/ID↓（強反轉）→ fT↑；L 每加倍 fT 幾乎掉 3 倍（fT ∝ 1/L²）。速度靠 Vov 與短 L。</td></tr>
+<tr><td class="num">ID/W–gm/ID</td><td>要多大面積才吃得起這個電流？</td><td>ID/W 越大越省面積。省面積＝往右下（低 gm/ID、短 L）走。</td></tr>
+<tr><td class="num">FOM = fT·gm/ID</td><td>速度與能效的綜合分數</td><td>甜蜜點落在 <b>gm/ID ≈ 8–12</b>，不是最低也不是最高——這就是「中反轉最好用」的由來。</td></tr>
+<tr><td class="num">Vdsat–gm/ID</td><td>要留多少 headroom？</td><td>gm/ID 越大，Vdsat 越小（越好堆疊）；但 Vdsat ≠ Vov，短通道時差更多。</td></tr>
+</tbody></table>
+<h2>三個一定要記住的結論</h2>
+<ul>
+<li><b>L 是「增益 ↔ 速度/面積」的交換旋鈕</b>：L↑ → gm·ro↑↑（ro 幾乎正比 L），但 fT ∝ 1/L²、面積 ∝ L²。</li>
+<li><b>Vov 是「增益 ↔ 速度/headroom」的交換旋鈕</b>：Vov↓ → gm/ID↑（省電流、增益好），但 fT↓、Vdsat 需求雖然變小、管子卻變寬（面積↑），而且失配（ΔVth/Vov）變嚴重。</li>
+<li><b>gm/ID 的用法</b>：強反轉（gm/ID &lt; 10）＝快、省面積；中反轉（10–20）＝增益與速度的甜蜜點；弱反轉（20–38）＝省電流但慢、面積大、失配嚴重。</li>
+</ul>
+<div class="callout"><b>延伸閱讀</b>：<b>進階專區 → AIC 知識區 → 「gm/ID 設計法與反轉程度」</b> 有完整的設計流程（指定 gm → 選 gm/ID → 算 Id → 查 W/L），這一課的圖表就是那篇文章的「數據版」。</div>
+<div class="callout"><b>跟遊戲對照</b>：遊戲用平方律，gm = 2·Id / (Vov + 0.073)、ro = 1/(λ·Id)，所以「輸入對 W/L↑ → Vov↓ → gm/ID↑」；你在遊戲裡把 W/L 往上推，其實就是在這張圖上往<b>左上</b>移動。</div>
+<div class="callout warn"><b>資料性質</b>：曲線是用上表參數建立的<b>教學用連續模型</b>（EKV + 速度飽和 + CLM），趨勢與 CIC018 的實際掃描一致，但絕對值有落差。參考值：L = 0.18 µm、Vov = 0.2 V 時，本模型給 gm/ID ≈ 8.3、gm·ro ≈ 21（26 dB）、fT ≈ 21 GHz、ID/W ≈ 23 µA/µm；CIC018 實測 fT 約 30–45 GHz、ID/W 約 20–30 µA/µm，所以 <b>fT 這一項請只看趨勢</b>。真正下線請用 HSPICE / Spectre 掃 <code>.dc</code> 或 <code>.sw0</code>，把 gm、Id、gmbs、gds 抓出來自己畫一份。</div>
+<div class="quiz">
+  <div class="qk">小試身手 1 / 2</div>
+  <p class="q">同一個 L、同一條 Id，把 Vov 從 0.4 V 降到 0.1 V，gm/ID 與 fT 分別怎麼變？</p>
+  <div class="qbtns">
+    <button class="qbtn" type="button" data-ok="0">gm/ID 上升、fT 也上升</button>
+    <button class="qbtn" type="button" data-ok="1">gm/ID 上升、fT 下降</button>
+    <button class="qbtn" type="button" data-ok="0">gm/ID 下降、fT 上升</button>
+  </div>
+  <div class="ans" hidden><b>解析</b>：Vov 變小 → 進入中／弱反轉，gm/ID 往 25–30 走（省電、增益好）；但電流小、gm 小，Cgg 幾乎沒變，所以 fT 掉下來。這就是「省電 ↔ 速度」的核心交換。</div>
+</div>
+<div class="quiz">
+  <div class="qk">小試身手 2 / 2</div>
+  <p class="q">要把單級增益 gm·ro 拉高，最有效的兩個做法是？</p>
+  <div class="qbtns">
+    <button class="qbtn" type="button" data-ok="1">加長 L、把 Vov 壓低（gm/ID 拉高）</button>
+    <button class="qbtn" type="button" data-ok="0">加大 It、加大 W</button>
+    <button class="qbtn" type="button" data-ok="0">把 L 縮到最小、Vov 拉高</button>
+  </div>
+  <div class="ans" hidden><b>解析</b>：gm·ro = (gm/ID) × (ro·ID)，而 ro·ID ≈ 1/λ 幾乎只隨 L 成長。所以「長 L + 低 Vov」是唯一兩邊都加的做法，代價是 fT 與面積。加大 It 只會讓 ro 變小。</div>
 </div>`
   },
 
@@ -2063,7 +2392,7 @@ ro = 1 / (λ·Id)，λ ∝ 1/L　（L 越長，ro 越大）
 <div class="fx">增益 Av ≈ gm1 × ro　→　DC GAIN = 20·log₁₀(Av)
 GBW ≈ gm1 / (2π·CL)
 POWER = 1.8 V × It
-AREA ≈ (2·W1 + 2·W3 + 0.69·It) × L²
+AREA ≈ (2·W1 + 2·W3) × L² + 0.69·It × L_bias²　（L_bias = 0.5 µm 固定：M5 是電流源，不跟 L 動）
 <small>W/L 無單位、It 用 µA、L 用 µm，AREA 就是 µm²</small></div>
 <h2>四根滑桿怎麼牽動五項規格</h2>
 <table>
@@ -2153,7 +2482,7 @@ GBW ≈ gm1 / (2π · Cc)      ← 只跟 Cc 有關，跟 CL 無關
 <ol>
 <li><b>先定 Cc</b>。Cc 通常比 CL 小，但有下限：太小則 fp2 不夠高、PM 不夠（常用起點 Cc ≥ 0.22·CL）；太大則浪費面積、GBW 也跟著掉。</li>
 <li><b>用相位裕度定第二級 gm6</b>。φm = 90° − tan⁻¹(ft / fp2)。若要求 φm ≈ 63°，代表 fp2 ≈ 2·ft；再由 fp2 = gm6/(2πCL)、ft = gm1/(2πCc) 反推 gm6。</li>
-<li><b>用 Slew Rate 定電流</b>。SR 受兩個限制：第一級只能對 Cc 充放電（I11/Cc），第二級還要推 CL（I12/(Cc+CL)）。<b>兩個條件都要滿足</b>，取小的那個。</li>
+<li><b>用 Slew Rate 定電流</b>。SR 受兩個限制：第一級只能對 Cc 充放電（<b>It / Cc</b>，It 是尾電流），第二級還要推 CL（<b>I6 / (Cc + CL)</b>，I6 是第二級電流）。<b>兩個條件都要滿足</b>，取小的那個。</li>
 <li><b>用 DC 增益定 Vov</b>。A0 ≈ gm8·(ro8∥ro10) × gm13·(ro12∥ro13)，其中 gm = 2ID/Veff；第二級電流 I12 = I13 固定之後，A0 就只剩 Veff13 一個未知數 → 反推出第二級該有的 Vov。</li>
 <li><b>最後才 sizing</b>。M9/M10 決定 Vgs13，用來把 Veff13 調到剛好的值；Rc 通常用一顆工作在三極區的 MOS（MC）當電阻，Rc = 1/(Kn′·(W/L)·(Vgs−Vt))。</li>
 </ol>
@@ -2163,20 +2492,21 @@ GBW ≈ gm1 / (2π · Cc)      ← 只跟 Cc 有關，跟 CL 無關
 <thead><tr><th>遊戲滑桿</th><th>對應設計</th><th>主要影響</th></tr></thead>
 <tbody>
 <tr><td>輸入對 M1/M2</td><td>gm1</td><td>GBW = gm1/(2πCc)、增益</td></tr>
-<tr><td>尾電流 It</td><td>第一級電流</td><td>gm1、功耗</td></tr>
-<tr><td>第二級 M6</td><td>gm6</td><td>次極點 fp2、增益</td></tr>
-<tr><td>第二級電流 M7</td><td>I12</td><td>gm6、SR、功耗</td></tr>
+<tr><td>尾電流 M5（電流源）</td><td>第一級電流 It</td><td>gm1、功耗（尺寸固定，不跟 L 動）</td></tr>
+<tr><td>第二級驅動 M6</td><td>gm6</td><td>次極點 fp2、增益</td></tr>
+<tr><td>第二級負載 M7（W/L）</td><td>I2 與 ro7</td><td>gm6、SR、功耗；ro7 拉高第二級增益</td></tr>
+<tr><td>增益級 L</td><td>M1–M4、M6 的 ro（M7 自動 2×L）</td><td>增益（↑↑）、面積（↑）、極點（↓）</td></tr>
 <tr><td>補償電容 Cc</td><td>Cc</td><td>GBW（↓）、PM（↑）</td></tr>
 <tr><td>Rz 開關</td><td>零點位置</td><td>PM（↑）、面積（+10 µm²）</td></tr>
 </tbody></table>
 <p><b>名稱對照</b>：PPT 的五步流程用的是 M12（第二級電流源）/ M13（第二級驅動）與 M8–M10（第一級、偏壓），遊戲則簡化成 M6 / M7——同一個位置的元件，只是編號不同。</p>
-<p>注意遊戲裡 <b>GBW 只看 Cc</b>、<b>PM 看 fp2 與零點</b>：所以「Cc 拉大」會犧牲頻寬換穩定，「M6/M7 拉大」是把次極點推高、同時也把增益做高。</p>
+<p>注意遊戲裡 <b>GBW 只看 Cc</b>、<b>PM 看 fp2 與零點</b>：所以「Cc 拉大」會犧牲頻寬換穩定；「M6 W/L 拉大」把 gm6 與次極點推高；「M7 W/L 拉大」等於把第二級電流做大（gm6↑、fp2↑，但 ro7↓、功耗↑），而 ro7 本身由 M7 的通道長度決定（遊戲固定給它 2× 增益級 L 的長通道）。</p>
 <div class="quiz">
   <div class="qk">小試身手 1 / 2</div>
   <p class="q">相位裕度只剩 35°，想把次極點 fp2 推高，最直接的做法是？</p>
   <div class="qbtns">
-    <button class="qbtn" type="button" data-ok="1">加大第二級的 gm6（M6 W/L 或第二級電流）</button>
-    <button class="qbtn" type="button" data-ok="0">把通道長度 L 拉到最大</button>
+    <button class="qbtn" type="button" data-ok="1">加大第二級的 gm6（M6 W/L 或 M7 W/L）</button>
+    <button class="qbtn" type="button" data-ok="0">把增益級 L 拉到最大</button>
     <button class="qbtn" type="button" data-ok="0">把負載電容 CL 加大</button>
   </div>
   <div class="ans" hidden><b>解析</b>：fp2 = gm6/(2πCL)，分子變大極點才往上跑。加大 L 會讓 ro 變大但閘極電容也變大（極點更低）；加大 CL 則是直接把 fp2 往下壓。</div>
@@ -2515,7 +2845,7 @@ function labCalc(doc) {
     <div class="vfield"><span class="fl">負載電容 CL（pF）</span><input type="number" id="cCl" min="0.5" max="20" step="0.5" value="${st.cl}"></div>
   </div>
   <div class="lab-actions"><button class="ghost" id="cStart" type="button">教學起始（全部最大）</button><button class="ghost" id="cTut" type="button">教學達標組合</button></div>
-  <p class="lab-hint"><b>模型</b>：Kn′ = 200 µA/V²、Kp′ = 70 µA/V²、Vth = 0.5 V、λn = 0.02/L、λp = 0.025/L。gm = 2Id/(Vov + 0.073)（遊戲為了避免 Vov→0 時 gm 爆掉加的小偏移）。<br><b>兩個預設</b>：「全部最大」是教學模式的起點（增益看起來很高、但 PM 幾乎歸零、面積爆表）；「達標組合」是同一關真的能過的一組解，可以對照它在教學模式裡的樣子。</p>
+  <p class="lab-hint"><b>模型</b>：Kn′ = 200 µA/V²、Kp′ = 70 µA/V²、Vth = 0.5 V、λn = 0.02/L、λp = 0.025/L。gm = 2Id/(Vov + 0.073)（遊戲為了避免 Vov→0 時 gm 爆掉加的小偏移）。M5 當成理想電流源（固定 L_bias = 0.5 µm），所以面積公式裡它不吃 L²。<br><b>兩個預設</b>：「全部最大」是教學模式的起點（增益看起來很高、但 PM 幾乎歸零、面積爆表）；「達標組合」是同一關真的能過的一組解，可以對照它在教學模式裡的樣子。</p>
 </div>
 <div class="panel" style="margin-top:14px">
   <div class="panel-h">結果</div>
@@ -2534,7 +2864,7 @@ function labCalc(doc) {
     const av = gm1 * ro, avDb = 20 * Math.log10(av);
     const gbw = gm1 / (TP * cl * 1e-12);
     const pwr = VDD * it * 1e-6;
-    const area = (2 * w1 + 2 * w3 + AREA_TAIL * it) * L * L;
+    const area = (2 * w1 + 2 * w3) * L * L + AREA_TAIL * it * LBIAS * LBIAS;
     q('cOut').innerHTML = `
       <div class="row"><span>Vov1</span><b>${(vov1 * 1e3).toFixed(0)} mV</b></div>
       <div class="row"><span>gm1</span><b>${(gm1 * 1e6).toFixed(0)} µS</b></div>
@@ -2622,6 +2952,207 @@ function labMirror(doc) {
   paint();
 }
 
+/* ---------- 基礎區：CIC018（0.18 µm 1P6M 1.8 V）元件設計圖表 ---------- */
+const GMVT = 0.02585;
+const C18P = {
+  n: { nm: 'NMOS', vth: 0.45, mu: 3.72e-2, cox: 8.6e-3, coxu: 8.6e-15, cov: 0.12e-15, eta: 1.25, theta: 0.06, vsat: 1.5e5, va0: 2.5, va1: 14 },
+  p: { nm: 'PMOS', vth: 0.45, mu: 9.30e-3, cox: 8.6e-3, coxu: 8.6e-15, cov: 0.14e-15, eta: 1.35, theta: 0.10, vsat: 1.0e5, va0: 3.5, va1: 16 }
+};
+const GM_L = [0.18, 0.36, 0.72, 1.44];
+function c18Id(vov, L, p) {
+  const v = Math.max(vov, -0.5), vp = Math.max(v, 0);
+  const ueff = p.mu * p.cox / (1 + p.theta * vp);
+  const x = Math.log(1 + Math.exp(v / (2 * p.eta * GMVT)));
+  const ecl = p.vsat * L * 1e-6 * (1 + p.theta * vp) / p.mu;
+  return 2 * p.eta * ueff * GMVT * GMVT * x * x / (1 + vp / ecl);
+}
+function c18Pt(vov, L, p) {
+  const h = 1e-3, i0 = c18Id(vov, L, p);
+  const gm = (c18Id(vov + h, L, p) - c18Id(vov - h, L, p)) / (2 * h);
+  const v = Math.max(vov, 0);
+  const ecl = p.vsat * L * 1e-6 * (1 + p.theta * v) / p.mu;
+  const roID = p.va0 + p.va1 * (L - 0.18);
+  const cgg = (2 / 3) * L * p.coxu + 2 * p.cov;
+  const gmID = gm / i0;
+  const ft = 1 / (2 * Math.PI * (cgg / (gm / L) + 0.7 * L * 1e-6 / p.vsat));
+  return {
+    vov, I: i0, idw: i0 / L * 1e6, gmID, gmw: gm / L, gmwU: gm / L * 1e6, roID, ro: roID / i0,
+    gmro: gmID * roID, ftG: ft / 1e9, fomG: ft * gmID / 1e9,
+    vdsat: v ? v * ecl / (v + ecl) : 0
+  };
+}
+const GM_CH = [
+  { id: 'gmid', t: 'gm/ID–Vov', x: 'vov', y: 'gmID', xr: [-0.2, 1.25], yr: [0, 25], yl: 'gm/ID (1/V)', xl: 'Vov = VGS − Vth (V)', ylog: false },
+  { id: 'gmw', t: 'gm/W–Vov', x: 'vov', y: 'gmwU', xr: [-0.2, 1.25], yr: [1, 1000], yl: 'gm/W (µS/µm)', xl: 'Vov = VGS − Vth (V)', ylog: true },
+  { id: 'gmro', t: 'gm·ro–Vov', x: 'vov', y: 'gmro', xr: [-0.2, 1.25], yr: [1, 200], yl: 'gm·ro（單級增益）', xl: 'Vov (V)', ylog: true },
+  { id: 'gmrogid', t: 'gm·ro–gm/ID', x: 'gmID', y: 'gmro', xlog: true, ylog: true, xr: [1, 30], yr: [1, 200], yl: 'gm·ro', xl: 'gm/ID (1/V)' },
+  { id: 'ft', t: 'fT–gm/ID', x: 'gmID', y: 'ftG', xlog: true, ylog: true, xr: [1, 30], yr: [0.3, 60], yl: 'fT (GHz)', xl: 'gm/ID (1/V)' },
+  { id: 'idw', t: 'ID/W–gm/ID', x: 'gmID', y: 'idw', xlog: true, ylog: true, xr: [1, 30], yr: [0.01, 1000], yl: 'ID/W (µA/µm)', xl: 'gm/ID (1/V)' },
+  { id: 'fom', t: 'FOM–gm/ID', x: 'gmID', y: 'fomG', xlog: true, ylog: true, xr: [1, 30], yr: [1, 400], yl: 'fT·gm/ID (GHz/V)', xl: 'gm/ID (1/V)' },
+  { id: 'vdsat', t: 'Vdsat–gm/ID', x: 'gmID', y: 'vdsat', xlog: true, ylog: false, xr: [1, 30], yr: [0, 0.6], yl: 'Vdsat (V)', xl: 'gm/ID (1/V)' }
+];
+const GM = { chart: 'gmid', type: 'n', L: 0.18, vov: 0.2 };
+function fmtTick(v) {
+  const a = Math.abs(v);
+  if (v === 0) return '0';
+  if (a >= 1000) return String(+(v / 1000).toFixed(a >= 10000 ? 0 : 1)) + 'k';
+  if (a >= 100) return v.toFixed(0);
+  if (a >= 10) return String(+v.toFixed(1));
+  if (a >= 1) return String(+v.toFixed(2));
+  return String(+v.toFixed(3));
+}
+function mkScale(lo, hi, log, a, b) {
+  if (log) {
+    const l0 = Math.log10(lo), l1 = Math.log10(hi);
+    return v => a + (Math.log10(Math.max(v, lo * 1e-3)) - l0) / (l1 - l0) * (b - a);
+  }
+  return v => a + (v - lo) / (hi - lo) * (b - a);
+}
+function tickVals(lo, hi, log) {
+  const out = [];
+  if (log) {
+    for (let d = Math.floor(Math.log10(lo)); d <= Math.ceil(Math.log10(hi)); d++) {
+      [1, 2, 5].forEach(m => { const v = m * Math.pow(10, d); if (v >= lo * 0.999 && v <= hi * 1.001) out.push(v); });
+    }
+    return out;
+  }
+  const span = hi - lo, raw = span / 5, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= raw * 0.8) || mag;
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
+  return out;
+}
+function gmSeries(ch, p) {
+  const out = [];
+  GM_L.forEach(L => {
+    const pts = [];
+    for (let v = -0.17; v <= 1.26; v += 0.01) {
+      const d = c18Pt(v, L, p);
+      const xv = d[ch.x], yv = d[ch.y];
+      if (!isFinite(xv) || !isFinite(yv) || xv <= 0 || yv <= 0) continue;
+      pts.push([xv, yv]);
+    }
+    if (pts.length > 1) out.push({ L, pts });
+  });
+  return out;
+}
+let gmClipN = 0;
+function gmSvg() {
+  const ch = GM_CH.find(c => c.id === GM.chart) || GM_CH[0];
+  const p = C18P[GM.type];
+  const W = 470, H = 272, x0 = 58, x1 = 450, y0 = 20, y1 = 214;
+  const cid = 'gclip' + (++gmClipN);
+  const sx = mkScale(ch.xr[0], ch.xr[1], !!ch.xlog, x0, x1);
+  const sy = mkScale(ch.yr[0], ch.yr[1], !!ch.ylog, y1, y0);
+  let g = '';
+  const xt = tickVals(ch.xr[0], ch.xr[1], !!ch.xlog).filter(v => ch.xr[0] <= v && v <= ch.xr[1]);
+  const yt = tickVals(ch.yr[0], ch.yr[1], !!ch.ylog).filter(v => ch.yr[0] <= v && v <= ch.yr[1]);
+  xt.forEach(v => { const X = sx(v); g += `<line class="grid" x1="${X.toFixed(1)}" y1="${y0}" x2="${X.toFixed(1)}" y2="${y1}"/>`; });
+  yt.forEach(v => { const Y = sy(v); g += `<line class="grid" x1="${x0}" y1="${Y.toFixed(1)}" x2="${x1}" y2="${Y.toFixed(1)}"/>`; });
+  let gg = '';
+  if (ch.x === 'gmID') {
+    const a = sx(Math.max(ch.xr[0], 5)), b = sx(Math.min(ch.xr[1], 20));
+    gg += `<rect x="${a.toFixed(1)}" y="${y0}" width="${(b - a).toFixed(1)}" height="${y1 - y0}" fill="rgba(91,227,163,.07)"/>`;
+    gg += `<line class="mark" x1="${a.toFixed(1)}" y1="${y0}" x2="${a.toFixed(1)}" y2="${y1}"/><line class="mark" x1="${b.toFixed(1)}" y1="${y0}" x2="${b.toFixed(1)}" y2="${y1}"/>`;
+    g += `<text class="lab" x="${((a + b) / 2).toFixed(1)}" y="${y0 + 11}" text-anchor="middle" fill="var(--green)">建議 5–20</text>`;
+  }
+  if (ch.id === 'gmid' || ch.id === 'gmro') {
+    const lam = GM.type === 'n' ? 0.02 : 0.025;
+    const pts = [];
+    for (let v = -0.15; v <= 1.25; v += 0.02) {
+      const gi = 2 / (v + 0.073);
+      const yv = ch.id === 'gmid' ? gi : gi / lam;
+      if (yv > 0) pts.push(`${sx(v).toFixed(1)},${sy(yv).toFixed(1)}`);
+    }
+    gg += `<polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,107,115,.7)" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+  }
+  const labs = [];
+  gmSeries(ch, p).forEach(s => {
+    const on = Math.abs(s.L - GM.L) < 1e-6;
+    const pts = s.pts.map(([a, b]) => `${sx(a).toFixed(1)},${sy(b).toFixed(1)}`).join(' ');
+    gg += `<polyline points="${pts}" fill="none" stroke="${on ? 'var(--amber)' : 'rgba(111,216,255,.42)'}" stroke-width="${on ? 2.6 : 1.3}"/>`;
+    let best = s.pts[0];
+    s.pts.forEach(q => { if (q[0] > best[0]) best = q; });
+    labs.push({ on, L: s.L, x: Math.min(sx(best[0]) - 4, x1 - 6), y: sy(best[1]) - 5 });
+  });
+  labs.sort((a, b) => a.y - b.y);
+  const gap = 11.5, top = y0 + 12, bot = y1 - 4;
+  labs.forEach((lb, i) => { lb.y = Math.max(lb.y, i ? labs[i - 1].y + gap : top); });
+  const over = labs.length ? labs[labs.length - 1].y - bot : 0;
+  if (over > 0) labs.forEach(lb => { lb.y -= over; });
+  if (labs.length) {
+    const up = top - labs[0].y;
+    if (up > 0) labs.forEach(lb => { lb.y += up; });
+  }
+  labs.forEach(lb => {
+    g += `<text class="lab" x="${lb.x.toFixed(1)}" y="${lb.y.toFixed(1)}" text-anchor="end" fill="${lb.on ? 'var(--amber)' : 'var(--ink-dim)'}">L ${lb.L}</text>`;
+  });
+  const d0 = c18Pt(GM.vov, GM.L, p);
+  const cx = sx(d0[ch.x]), cy = sy(d0[ch.y]);
+  if (isFinite(cx) && isFinite(cy) && d0[ch.y] > 0) {
+    g += `<line x1="${cx.toFixed(1)}" y1="${y0}" x2="${cx.toFixed(1)}" y2="${y1}" stroke="rgba(255,200,87,.35)" stroke-dasharray="3 3"/>`;
+    g += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="var(--amber)" stroke="#0b1b30" stroke-width="1.5"/>`;
+  }
+  xt.forEach(v => {
+    g += `<text class="lab" x="${sx(v).toFixed(1)}" y="${y1 + 14}" text-anchor="middle">${fmtTick(v)}</text>`;
+  });
+  yt.forEach(v => {
+    g += `<text class="lab" x="${x0 - 6}" y="${(sy(v) + 3.5).toFixed(1)}" text-anchor="end">${fmtTick(v)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${ch.t} 曲線圖">
+    <defs><clipPath id="${cid}"><rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}"/></clipPath></defs>
+    <path class="ax" d="M${x0} ${y0} V${y1} H${x1}"/>
+    ${g}
+    <g clip-path="url(#${cid})">${gg}</g>
+    <text class="lab" x="${(x0 + x1) / 2}" y="${H - 6}" text-anchor="middle">${ch.xl}</text>
+    <text class="lab" x="${x0}" y="${y0 - 6}">${ch.yl}</text>
+    <text class="val" x="${x1}" y="${y0 - 6}" text-anchor="end">CIC018 1.8 V · ${p.nm} · L ${GM.L} µm</text>
+  </svg>`;
+}
+function gmRows() {
+  const p = C18P[GM.type], d = c18Pt(GM.vov, GM.L, p);
+  const zone = d.gmID > 20 ? '弱反轉（subthreshold）' : d.gmID > 12 ? '中反轉（moderate）' : '強反轉（strong）';
+  const tip = d.gmID > 20
+    ? 'gm/ID 最高、gm·ro 最好，但 fT 與 ID/W 都很低 → 面積大、速度慢，只適合當負載或超省電偏壓。'
+    : d.gmID > 12
+      ? '設計甜蜜點：gm·ro 與 fT 都在可用範圍，多數 OPA 的輸入對與負載都挑在這裡。'
+      : '速度快、面積省、Vdsat 大 → headroom 與增益要靠 L 補；0.18 µm 的高速級多半從這個區間起步。';
+  return `
+    <div class="row"><span>工作區</span><b>${zone}</b></div>
+    <div class="row"><span>Vov</span><b>${(d.vov * 1000).toFixed(0)} mV</b></div>
+    <div class="row"><span>gm/ID</span><b>${d.gmID.toFixed(1)} 1/V</b></div>
+    <div class="row"><span>ID / W</span><b>${d.idw.toFixed(2)} µA/µm</b></div>
+    <div class="row"><span>gm / W</span><b>${(d.gmw * 1e6).toFixed(1)} µS/µm</b></div>
+    <div class="row"><span>gm·ro</span><b>${d.gmro.toFixed(1)}（${(20 * Math.log10(d.gmro)).toFixed(0)} dB）</b></div>
+    <div class="row"><span>ro·ID（≈ 1/λ）</span><b>${d.roID.toFixed(1)} V</b></div>
+    <div class="row"><span>fT</span><b>${d.ftG < 1 ? (d.ftG * 1000).toFixed(0) + ' MHz' : d.ftG.toFixed(1) + ' GHz'}</b></div>
+    <div class="row"><span>Vdsat（飽和最低電壓）</span><b>${(d.vdsat * 1000).toFixed(0)} mV</b></div>
+    <div class="row"><span>FOM = fT·gm/ID</span><b>${d.fomG.toFixed(0)} GHz/V</b></div>
+    <div class="row" style="border:0;padding-top:6px;line-height:1.6;display:block"><span style="color:var(--ink-dim)">${tip}</span></div>`;
+}
+function paintGm() {
+  const panel = document.getElementById('gmPanel'); if (!panel) return;
+  panel.querySelectorAll('[data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === GM.chart));
+  panel.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === GM.type));
+  panel.querySelectorAll('[data-l]').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.l - GM.L) < 1e-6));
+  const pl = document.getElementById('gmPlot'); if (pl) pl.innerHTML = gmSvg();
+  const out = document.getElementById('gmOut'); if (out) out.innerHTML = gmRows();
+  const vv = document.getElementById('gmVovV'); if (vv) vv.textContent = (GM.vov * 1000).toFixed(0) + ' mV';
+}
+function initGmChart() {
+  const panel = document.getElementById('gmPanel'); if (!panel) return;
+  panel.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.c) GM.chart = b.dataset.c;
+    else if (b.dataset.t) GM.type = b.dataset.t;
+    else if (b.dataset.l) GM.L = +b.dataset.l;
+    else return;
+    paintGm();
+  });
+  const r = document.getElementById('gmVov');
+  if (r) r.addEventListener('input', e => { GM.vov = +e.target.value; paintGm(); });
+  paintGm();
+}
+
 function renderLessonList() {
   const readN = TUT_LESSONS.filter(l => TUT_READ.has(l.id)).length;
   $('lessonCount').textContent = `${readN} / ${TUT_LESSONS.length} 課`;
@@ -2661,7 +3192,7 @@ function tutTab(which) {
   $('lessonList').hidden = isP; $('practiceList').hidden = !isP;
   $('hubFoot').innerHTML = isP
     ? '實驗台全部即時計算、不會寫入任何紀錄。卡住的話，回<b>教學區</b>看對應的那一課（V=IR → 第 2 課、Vds–Id → 第 3 課、電流鏡 → 第 6 課）。'
-    : '建議順序：<b>1 → 2 → 3 → 4 → 5 → 6 → 動手練習</b>。練習卡住的時候，隨時回來看重點，滑桿數值都可以慢慢試。';
+    : '建議順序：<b>1 → 2 → 3 → 4 → 5 → 6 → 7 → 動手練習</b>。練習卡住的時候，隨時回來看重點，滑桿數值都可以慢慢試。';
 }
 
 function hideStudy() {
@@ -2689,6 +3220,7 @@ function openLesson(i) {
   hideStudy(); $('lessonView').hidden = false;
   $('lessonCrumb').textContent = `第 ${i + 1} / ${TUT_LESSONS.length} 課 · ${l.tag}`;
   $('lessonDoc').innerHTML = `<div class="hub-eyebrow">${l.tag} · 閱讀 ${l.min}</div><h1>${l.t}</h1><p class="lead">${l.s}</p>${l.body}`;
+  if (l.id === 'gmid') initGmChart();
   $('lessonPrev').disabled = i === 0;
   $('lessonNext').disabled = i === TUT_LESSONS.length - 1;
   $('lessonNext').textContent = i === TUT_LESSONS.length - 1 ? '讀完了 ▸' : '下一課 ▸';
@@ -2712,68 +3244,785 @@ function openLab(id) {
 
 
 /* ---------- 進階專區 ---------- */
-const ADV = [
+/* ---------- 進階專區：內容資料（KB / 熱門 IP / 練習題） ---------- */
+const ADV_KB = [
   {
-    id: 'bgr', tag: '參考電路', min: '7 分鐘', st: 'ready',
-    t: 'BGR 帶隙參考電壓',
-    s: '把「隨溫度下降的 VBE」和「隨溫度上升的 PTAT」加在一起，得到一顆幾乎不隨溫度、電源、製程變動的 1.2 V。',
+    id: 'kbbody', tag: '元件物理', min: '6 分鐘', st: 'ready',
+    t: '基體效應（Body Effect）',
+    s: 'source 與 body 不是同電位時，Vth 會被背閘偏壓推高——這是 cascode、stack 與 source follower 最常被漏掉的一階效應。',
     body: `
-<p>整顆晶片的電壓、電流、時間，最後都要有一個「絕對的尺」。這把尺就是 <b>bandgap reference（BGR）</b>：輸出大約 1.2 V——這是把矽的能隙電壓外插到 0 K 的結果（室溫能隙約 1.12 eV，外插值約 1.17–1.2 V）。VBE 的溫度曲線往下外插時剛好也會碰到這個電壓，所以在此附近可以把溫度係數補到接近零。</p>
-<h2>兩個溫度係數相反的東西</h2>
+<p>MOS 的通道由閘極控制，但 body（基體）也帶著一條「背閘」：body 與 source 之間有 V<sub>SB</sub> 時，空乏區變寬，要形成通道就得用更大的閘壓。這叫 <b>body effect</b>（背閘效應）。</p>
+<div class="fx">Vth = Vth0 + γ ( √(2φF + VSB) − √(2φF) )
+γ = √(2 q εsi NA) / Cox        ← 製程給定，典型 0.3–0.6 V^½
+2φF ≈ 0.6–0.9 V（常用 0.7 V 估）</div>
+<h2>NMOS 與 PMOS 差很多</h2>
 <ul>
-<li><b>VBE（CTAT）</b>：BJT 的基射極電壓約 −2 mV/°C，溫度越高越小。</li>
-<li><b>ΔVBE（PTAT）</b>：兩顆 <b>電流密度不同</b> 的 BJT，ΔVBE = VT·ln(N)，而 VT = kT/q 正比於絕對溫度，所以它隨溫度上升。</li>
+<li><b>NMOS</b>：body 是整片 p-sub（除非用 deep n-well 隔出獨立 p-well），所以只要 source 不接地就有 V<sub>SB</sub>。</li>
+<li><b>PMOS</b>：body 就是自己的 n-well，實務上把 source 接到 n-well → V<sub>SB</sub> = 0，幾乎沒有 body effect。這是 PMOS 在 stack 裡受歡迎的原因之一。</li>
 </ul>
-<div class="fx">Vref = VBE + (R2/R1) · ΔVBE
-     = VBE + (R2/R1) · VT · ln(N)
-     ↑ CTAT（往下）      ↑ PTAT（往上）
-選 R2/R1 讓兩項的溫度係數剛好抵消 → ∂Vref/∂T ≈ 0</div>
-<figure class="fig">
-<svg viewBox="0 0 420 200" role="img" aria-label="CTAT 與 PTAT 溫度係數互相抵消的示意圖">
-  <path class="thin" d="M52 168 H386 M52 168 V26"/>
-  <text class="lbl" x="36" y="24">V</text><text class="lbl" x="384" y="184">T</text>
-  <path class="hot" d="M64 56 L360 128"/><text class="val" x="298" y="148">VBE · CTAT</text>
-  <path class="thin" d="M64 132 L360 58"/><text class="lbl" x="304" y="52">PTAT</text>
-  <path class="mark" d="M64 96 H360"/><text class="lbl" x="66" y="90">Vref ≈ 1.2 V（幾乎水平）</text>
-  <text class="lbl" x="64" y="182">−40 °C</text><text class="lbl" x="332" y="182">125 °C</text>
-</svg>
-<figcaption>BGR 的核心就是把一條往下斜的線和一條往上斜的線加成水平線；斜率沒對好，輸出就會隨溫度漂。</figcaption>
-</figure>
-<h2>實作上會踩到的四個坑</h2>
+<h2>哪裡會咬人</h2>
+<ul>
+<li><b>Cascode / 兩顆疊起來</b>：上管的 source 坐在下管的 drain 上，V<sub>SB</sub> ≈ V<sub>ds</sub>，Vth 被抬 100–200 mV → 上管需要更大 V<sub>GS</sub>，headroom 被吃掉。</li>
+<li><b>Source follower</b>：source 隨訊號跑 → Vth 隨訊號跑 → 非線性失真（改用 PMOS 或 body tie 可解）。</li>
+<li><b>電流鏡</b>：cascode 鏡上下不對稱時，MR 與 MO 的 V<sub>SB</sub> 不同，Vth 差直接變成電流誤差。</li>
+<li><b>傳輸閘</b>：訊號落在中間電平時 V<sub>SB</sub> 最大，Ron 變大 → 失真與 settling 變差。</li>
+</ul>
+<div class="callout"><b>本作簡化</b>：遊戲在算 Vth 與 Vov 時把 body effect 當 0（source 與 body 同電位），規格卡上的 Vth 就是 Vth0。真實晶片上疊起來的管子 Vth 更高、headroom 更緊，cascode 與 wide-swing 偏壓要多留 50–100 mV。</div>
+<h2>設計對策</h2>
 <ol>
-<li><b>啟動電路（start-up）</b>：BGR 有「零電流」這個穩定解，上電後可能一直不啟動。所以一定要有 start-up 把電路踢出死點，而且啟動完要自己關掉，否則會偷吃電流。</li>
-<li><b>運算放大器的 offset</b>：offset 會被 R2/R1 放大，直接變成輸出誤差。講究的設計會用 chopper / auto-zero，或把 BJT 比例 N 做大。</li>
-<li><b>失配與佈局</b>：兩顆 BJT 的 N 比例、電阻的比值都要匹配；用 unit device、common-centroid、dummy 是基本動作。</li>
-<li><b>低壓限制</b>：傳統 BGR 輸出 1.2 V，電源只有 1 V 時放不下。這時要改用 fractional BGR（輸出 &lt; 1 V）或 current-mode BGR。</li>
+<li>能 tie 就 tie：PMOS 把 source 接 n-well；NMOS 需要時用 deep n-well 隔出獨立 p-well。</li>
+<li>不能 tie 就把 Vth(V<sub>SB</sub>) 先算進去再算 Vov，headroom 預算多留餘裕。</li>
+<li>電流鏡匹配對要「同 V<sub>SB</sub> 接法」，cascode 鏡上下對稱最保險。</li>
+</ol>`
+  },
+  {
+    id: 'kbclm', tag: '元件物理', min: '6 分鐘', st: 'ready',
+    t: '通道長度調變與本質增益',
+    s: '飽和區不是真的「電流固定」——λ 讓 Id 隨 Vds 微微上升，這個斜率就是 ro，也是單級增益的天花板。',
+    body: `
+<p>飽和區的電流其實還會被 V<sub>ds</sub> 拉動：夾止點往 source 退，有效通道長度 L−ΔL 變短，電流變大。這叫 <b>channel-length modulation（CLM）</b>。</p>
+<div class="fx">Id = ½ μCox (W/L) Vov² (1 + λ Vds)
+ro = ∂Vds/∂Id = 1 / (λ Id)          λ ≈ λ' / L
+本質增益 Av,int = gm · ro = 2 / (λ Vov)</div>
+<h2>三個一定要記住的結論</h2>
+<ol>
+<li><b>ro ∝ L / Id</b>：加長 L 是提升增益最直接的方法，代價是面積與寄生電容（速度變慢）。</li>
+<li><b>Av,int 只跟 λ 和 Vov 有關，跟 W 無關</b>——加大 W 只會加大 gm 與電流，比值不變。這就是為什麼「要增益就得加 L 或降 Vov」。</li>
+<li><b>降 Vov 有雙重好處</b>（gm 上升、ro 上升），但 headroom 與失配變差、fT 下降，所以實務上 Vov 取 100–200 mV。</li>
 </ol>
-<div class="callout"><b>和作業的連結</b>：HW2 的 bias circuit 也要求「start-up circuit」——原因完全一樣：電流鏡 + 自偏壓有零電流的穩定解，沒有 startup 就可能整顆不工作。</div>
-<h2>規格怎麼看</h2>
+<h2>和遊戲的對應</h2>
+<p>本作把 λ 寫成 <b>λ' / L</b>，所以當你把「通道長度 L」往右拉，ro 會變大、增益上升，同時面積變大、極點頻率下降。這就是 5T OTA 那關最核心的取捨：<b>增益 ↔ 速度 ↔ 面積</b>。</p>
+<div class="callout warn"><b>常見誤解</b>：「電流固定，所以增益固定」。錯——同樣 10 µA 下，L 從 0.18 µm 拉到 1 µm，ro 會大約變成 5 倍，增益也是 5 倍（約 +14 dB）。</div>
+<h2>補充：飽和區的邊界</h2>
+<p>教科書寫 V<sub>ds</sub> &gt; V<sub>ov</sub>，實際上考慮 CLM 與速度飽和，設計常要求 V<sub>ds</sub> ≥ 1.2·V<sub>ov</sub>。遊戲用 V<sub>ds</sub> ≥ V<sub>ov</sub> 的簡化模型，實作時請自己留 margin。</p>`
+  },
+  {
+    id: 'kbgmid', tag: '設計方法', min: '7 分鐘', st: 'ready',
+    t: 'gm/ID 設計法與反轉程度',
+    s: '從「指定 gm」出發的設計流程：用 gm/ID 這張圖決定 Vov、W/L 與電流，比背公式更能對抗 PVT。',
+    body: `
+<p>傳統設計從 V<sub>ov</sub> 出發；現代類比設計（Sansen、Jespers 一派）從 <b>gm/ID</b> 出發，因為它把「效率」和「速度」放在同一根軸上。</p>
+<div class="fx">gm/ID = 2 / Vov                  ← 強反轉（square law）近似
+gm/ID ≈ 10–20 V⁻¹                ← 中反轉（moderate inversion）
+gm/ID → q/(n k T) ≈ 25–38 V⁻¹    ← 弱反轉上限（室溫，n ≈ 1.3）
+
+Id = gm / (gm/ID)                ← 指定 gm 後，電流就決定了
+W/L = Id / (½ μCox Vov²)         ← 再由電流反推尺寸</div>
+<h2>三種反轉區的個性</h2>
+<table>
+<thead><tr><th>區域</th><th>gm/ID</th><th>特性</th><th>常見用途</th></tr></thead>
+<tbody>
+<tr><td>強反轉</td><td class="num">5–12</td><td>Vov 大、fT 高、匹配差、headroom 差</td><td>高速級、驅動級</td></tr>
+<tr><td>中反轉</td><td class="num">12–22</td><td>效率與速度平衡，線性度較好</td><td>OTA 輸入對（主流）</td></tr>
+<tr><td>弱反轉</td><td class="num">22–38</td><td>同電流 gm 最大、面積大、速度慢、失配大</td><td>低功耗、subthreshold 電路</td></tr>
+</tbody></table>
+<p class="lab-hint">分界只是粗略指標，會隨製程與 L 移動；想看 CIC018 的實際曲線，到<b>新手專區第 4 課</b>把 Vov 拉一拉，三區的數字立刻對得起來。</p>
+<h2>為什麼工程師愛用</h2>
+<ul>
+<li><b>可預測</b>：給定 gm 與 gm/ID，電流、W/L、面積一次到位，不用來回猜。</li>
+<li><b>PVT 友善</b>：gm/ID 隨溫度的漂移比 Vov 小很多，設計在圖上比較穩。</li>
+<li><b>與製程解耦</b>：換製程只要換一張 gm/ID 表，設計思路不變。</li>
+</ul>
+<div class="callout"><b>和遊戲的連結</b>：遊戲用 square-law + λ 的簡化模型，滑桿調 W/L 就是在調 Vov（W 越大 → Vov 越小 → gm/ID 越大）。如果你把 W/L 拉到很大但電流沒降，就是走進「大面積換一點點增益」的低效率區。</div>
+<h2>實務上的小抄</h2>
+<ol>
+<li>先決定 <b>gm</b>（從 GBW = gm/(2πC<sub>L</sub>) 或增益需求反推）。</li>
+<li>選 <b>gm/ID</b>：低功耗 → 22–30；一般 OTA 輸入對 → 12–20；高速 → 5–12。</li>
+<li>算 <b>Id</b>，再查表得 <b>W/L</b> 與 <b>fT</b>，確認非主極點夠遠。</li>
+<li>最後檢查 headroom、失配（σ ∝ 1/√(WL)）與 1/f 雜訊（面積）。</li>
+</ol>`
+  },
+  {
+    id: 'kbmatch', tag: '可靠度', min: '6 分鐘', st: 'ready',
+    t: '失配、offset 與 Pelgrom 定律',
+    s: '晶片做出來每顆都不一樣：σ ∝ 1/√(WL) 決定了你的 offset 良率，也決定了電路能多小。',
+    body: `
+<p>同一片晶圓上兩顆「相同」的 MOS，臨界電壓與電流因子仍然會差一點點。這是隨機摻雜與製程變異造成的，無法靠模擬消除，只能用<b>面積</b>換。</p>
+<div class="fx">σ(ΔVth) = AVT / √(W·L)          AVT ≈ 2–5 mV·µm
+σ(Δβ/β) = Aβ / √(W·L)          Aβ ≈ 1–3 %·µm
+（µ 指 µm，W、L 以 µm 為單位）</div>
+<h2>換算成電路誤差</h2>
+<ul>
+<li><b>差動對 offset</b>：σ<sub>Vos</sub> ≈ √( σ²(ΔVth1) + σ²(ΔVth2) + (Vov/2)²·σ²(Δβ) )，兩顆並聯 → 除以 √2。</li>
+<li><b>電流鏡誤差</b>：ΔI/I ≈ ΔVth/Vov + Δβ/β。<b>Vov 越小，Vth 失配的殺傷力越大</b>——這是低 Vov 設計最大的代價。</li>
+<li><b>電阻</b>：σ ∝ 1/√(W·L)，所以匹配電阻要用「同寬度、不同長度串接」的 unit resistor，不要用不同寬度。</li>
+<li><b>電容</b>：σ ∝ 1/√(面積)，ADC 的 CDAC 匹配直接對應 INL。</li>
+</ul>
+<h2>系統性失配（比隨機更難救）</h2>
+<ol>
+<li><b>梯度</b>：氧化層厚度、摻雜、應力在晶片上緩慢變化 → 用 common-centroid 或交錯排列抵銷。</li>
+<li><b>鄰居效應</b>：well proximity、STI 應力、金屬密度 → 加 dummy 與對稱環境。</li>
+<li><b>封裝應力 / 熱梯度</b>：BGR 特別敏感，佈局要把對稱對放靠近晶片中心。</li>
+<li><b>製程 corner</b>：這是「整批一起偏」，靠 trimming 或校正解決。</li>
+</ol>
+<div class="callout"><b>良率直覺</b>：offset 是常態分佈，規格要求 ±3σ 覆蓋 → 你需要的 σ 是規格的三分之一。想讓 σ 減半，面積要變 <b>4 倍</b>。</div>
+<h2>設計順序</h2>
+<ol>
+<li>由規格反推 σ 預算（例如 offset ≤ 5 mV → σ ≤ 1.7 mV）。</li>
+<li>用 Pelgrom 算最小 W·L，再分配 W 與 L（L 大 → 匹配好但速度慢）。</li>
+<li>剩下的系統性失配用佈局（下一課）與 chopper / auto-zero 解決。</li>
+</ol>`
+  },
+  {
+    id: 'kbnoise', tag: '可靠度', min: '7 分鐘', st: 'ready',
+    t: '雜訊：熱雜訊與 1/f',
+    s: '電路能處理多小的訊號，取決於輸入端的雜訊。兩個來源、兩條不同的解法：一個花電流，一個花面積。',
+    body: `
+<div class="fx">熱雜訊（飽和區 MOS）：i²n = 4 k T γ gm ,  γ ≈ 2/3
+電阻：v²n = 4 k T R
+1/f 雜訊：v²n = Kf / (Cox · W · L · f)
+
+輸入參考（5T OTA）：v²in ≈ 8kTγ/gm1 · (1 + gm3/gm1)
+積分到頻寬：Vn,rms = √( v²in · GBW · π/2 )</div>
+<h2>兩條完全不同的路</h2>
+<table>
+<thead><tr><th>來源</th><th>頻譜</th><th>解法</th><th>代價</th></tr></thead>
+<tbody>
+<tr><td>熱雜訊</td><td>白（平坦）</td><td>加大 gm<sub>1</sub>（加電流）、降低負載對的 gm<sub>3</sub></td><td>功耗</td></tr>
+<tr><td>1/f 閃爍</td><td>低頻翹起（−10 dB/dec）</td><td>加大 W·L（面積）、chopper / auto-zero</td><td>面積、複雜度</td></tr>
+</tbody></table>
+<h2>幾個實務結論</h2>
+<ul>
+<li><b>輸入對是主角</b>：第一級的雜訊會被後面除以增益，所以 gm<sub>1</sub> 越大越好；電流鏡負載（M3/M4）貢獻的是被 gm<sub>3</sub>/gm<sub>1</sub> 縮小後的量。</li>
+<li><b>積分到整個頻寬</b>：關掉頻寬就關掉雜訊。所以「剛好夠用的 GBW」比「越大越好」更省電。</li>
+<li><b>1/f 只影響低頻</b>：音頻、感測器、BGR 這種低頻應用才需要 chopper；高速訊號鏈通常只看熱雜訊。</li>
+<li><b>取樣電路</b>：開關導通電阻的 kT/C 雜訊 → 只能靠加大 C（這也是 ADC 電容不能太小的原因）。</li>
+</ul>
+<div class="callout"><b>和遊戲的連結</b>：遊戲沒有把雜訊放進規格卡，但「加大輸入對 W/L」同時會降 Vov、升 gm——在真實晶片上這一步就是在降熱雜訊。代價是面積與電容（極點頻率下降）。</div>
+<h2>量測與規格怎麼寫</h2>
+<ol>
+<li>輸入參考雜訊密度：nV/√Hz @ 1 kHz（順便看 corner frequency）。</li>
+<li>積分雜訊：µV<sub>rms</sub>（要註明頻寬 20 Hz–20 kHz 或 0.1 Hz–10 Hz）。</li>
+<li>SNR / 等效輸入位元數：SNR = 20·log10(V<sub>signal,rms</sub> / V<sub>n,rms</sub>)。</li>
+</ol>`
+  },
+  {
+    id: 'kblay', tag: '佈局', min: '6 分鐘', st: 'ready',
+    t: '佈局匹配：common-centroid、dummy、交錯',
+    s: '同樣的電路圖，換一種排法 offset 可以差 3 倍。匹配是「畫」出來的，不是「調」出來的。',
+    body: `
+<p>電路圖上兩顆「一樣」的元件，在晶片上位置不同就會不一樣。佈局的工作就是把系統性差異變成共模，讓它被抵銷。</p>
+<h2>四個基本動作</h2>
+<ol>
+<li><b>Unit device + 串並聯</b>：把大元件切成相同的小單位，用整數顆並聯／串聯湊出比值。避免「一顆大、一顆小」。</li>
+<li><b>Common-centroid</b>：A 與 B 的「重心」重疊（ABBA / ABAB / 二維棋盤），梯度造成的誤差會一階抵銷。</li>
+<li><b>Dummy</b>：兩側加不接電的假元件，讓邊緣的蝕刻／應力環境與內部一致。</li>
+<li><b>同方向、同環境</b>：同一方向的電流、同樣的金屬密度、同樣的 well 邊界距離；匹配對盡量遠離 power device 與時脈線。</li>
+</ol>
+<h2>依元件分類</h2>
+<table>
+<thead><tr><th>元件</th><th>關鍵</th><th>常見錯誤</th></tr></thead>
+<tbody>
+<tr><td>MOS 對</td><td>同 W、同 L、同方向、共同 centroid、加 dummy</td><td>折疊方向不同（source/drain 對調）造成不對稱</td></tr>
+<tr><td>電阻</td><td>unit resistor 串接、同寬度、兩端加 dummy</td><td>用不同寬度湊比值（寬度差 → 蝕刻差）</td></tr>
+<tr><td>電容</td><td>unit cap 並聯、四周加 dummy、上下極板一致</td><td>邊緣電容占比不同（小電容匹配最差）</td></tr>
+<tr><td>BJT</td><td>N 比例用「整數顆並聯」、共用 collector、遠離熱源</td><td>把 8 顆排成一長條（梯度直接進 VBE）</td></tr>
+</tbody></table>
+<div class="callout warn"><b>寄生也是設計</b>：匹配做得好但走線亂繞，gate 電容與 RC 延遲不對稱，照樣在高速下失衡。匹配對的走線要「等長、同層、同鄰居」。</div>
+<h2>驗證清單</h2>
+<ul>
+<li>DRC / LVS / ERC 過了嗎？（well tie、guard ring、latch-up 距離）</li>
+<li>匹配對的 centroid 真的重合嗎？（畫對角線檢查）</li>
+<li>有沒有把 sensitive 節點（BGR 的 Vref、ADC 的比較器輸入）放在時脈線旁邊？</li>
+<li>電源與地有沒有分開（analog / digital）並用 star connection？</li>
+</ul>`
+  },
+  {
+    id: 'kbmiller', tag: '頻率補償', min: '8 分鐘', st: 'ready',
+    t: '米勒補償、Rz 與 RHP 零點',
+    s: '兩級放大器一定要補償：Cc 把兩個極點拆開，Rz 再把討厭的右半平面零點搬走。',
+    body: `
+<p>兩級放大器有兩個低頻極點（第一級輸出、第二級輸出），直接串起來相位會掉到 −180° 而振盪。<b>米勒補償</b>在兩級之間跨接 C<sub>c</sub>，利用米勒效應把主極點壓低、把第二極點推高（pole splitting）。</p>
+<div class="fx">主極點  p1 ≈ 1 / (A2 · R1 · Cc)
+第二極點 p2 ≈ gm2 / CL
+GBW = gm1 / Cc            ← 只看第一級 gm 與 Cc
+RHP 零點 z = gm2 / Cc     ← 相位更差，必須處理
+
+加 Rz 串在 Cc 上：z = 1 / (Cc (1/gm2 − Rz))
+Rz = 1/gm2  → 零點搬到無窮遠（最常用）
+Rz &gt; 1/gm2  → 零點進左半平面，還能補相位（+PM）</div>
+<h2>設計流程（背起來）</h2>
+<ol>
+<li>由負載與速度決定 <b>C<sub>L</sub></b> 與 <b>GBW</b> → C<sub>c</sub> = gm1 / (2π·GBW)。</li>
+<li>慣例取 <b>C<sub>c</sub> ≈ 0.2–0.3 C<sub>L</sub></b>；太小則 p2 不夠遠，太大則 SR 與面積變差。</li>
+<li>檢查 <b>p2 ≥ 2–3 × GBW</b>（PM 60–70° 的經驗條件）。</li>
+<li>用 <b>Rz = 1/gm2</b> 消掉 RHP 零點；需要更多 PM 就再往上加一點。</li>
+<li>確認 <b>SR = I<sub>tail</sub>/C<sub>c</sub></b> 與 settling 夠用。</li>
+</ol>
+<h2>三個常見錯誤</h2>
+<ul>
+<li><b>只看 GBW 不看 PM</b>：GBW 達標但 p2 太近 → 步階響應大幅振鈴，settling 反而更慢。</li>
+<li><b>Rz 亂加</b>：Rz 太大會把零點推到低頻左半平面，雖然加 PM，但 gain margin 變差、高頻增益回升（雜訊與 PSRR 變糟）。</li>
+<li><b>忽略 Cc 的前饋</b>：C<sub>c</sub> 本身就是一條前饋路徑，在高頻讓增益不降反升（RHP 零點的成因）。</li>
+</ul>
+<div class="callout"><b>和遊戲的連結</b>：Two-stage 那關的「Cc」滑桿同時影響 GBW 與 PM；「Rz」開關就是本節的 Rz = 1/gm2。你把 Cc 拉大 → GBW 下降但 PM 上升，這個取捨在遊戲的 Bode 圖上看得一清二楚。</div>
+<h2>其他補償家族</h2>
+<ul>
+<li><b>Miller + nulling resistor</b>：最常見，兩級 OTA 的標準答案。</li>
+<li><b>Cascode compensation (Ahuja)</b>：把 Cc 接到 cascode 節點，避免前饋零點，PSRR 更好。</li>
+<li><b>Feedforward / damping-factor control</b>：低壓、大電容負載（LDO）常用。</li>
+<li><b>Nested Miller</b>：三級以上，需要多組 Cc 與零點安排。</li>
+</ul>`
+  },
+  {
+    id: 'kbpsrr', tag: '電源完整度', min: '6 分鐘', st: 'ready',
+    t: 'PSRR、CMRR 與電源抑制',
+    s: '電源不是理想的地：VDD 上的雜訊會從很多條路徑漏到輸出。PSRR 就是量這件事。',
+    body: `
+<div class="fx">PSRR(dB) = 20 log10 ( |ΔVDD| / |ΔVout| )        ← 越大越好
+CMRR(dB) = 20 log10 ( |Adm| / |Acm| )</div>
+<h2>PSRR 的頻率行為</h2>
+<ul>
+<li><b>低頻</b>：迴路增益還在，PSRR ≈ 迴路增益（例如 60 dB）——輸出幾乎不受影響。</li>
+<li><b>中頻</b>：主極點之後迴路增益以 −20 dB/dec 下降，PSRR 跟著掉。</li>
+<li><b>高頻</b>：迴路來不及反應，PSRR 由 <b>被動路徑</b> 決定：C<sub>L</sub> 與輸出阻抗分壓、cascode 的 ro、以及 VDD→輸出的寄生電容。</li>
+</ul>
+<h2>CMRR 從哪裡來</h2>
+<p>差動對的尾電流源不理想（有限的 R<sub>tail</sub>）時，共模訊號會被轉成差動。所以 <b>尾電流要用 cascode 或加長 L</b>；輸入對的匹配（σ）則決定低頻 CMRR 的另一半。</p>
+<h2>改善手段（由便宜到貴）</h2>
+<ol>
+<li><b>加大迴路增益</b>（cascode、加 L）→ 直接改善低頻 PSRR。</li>
+<li><b>電源去耦</b>（on-chip decap、RC 濾波）→ 砍高頻。</li>
+<li><b>Cascode 或 regulated cascode</b> → 讓電源變動不直接調變輸出電流。</li>
+<li><b>在 VDD 路徑串一個小頭（RC / 電流源）</b>→ 常用在 BGR、reference buffer。</li>
+<li><b>迴路前饋補償</b>（把電源雜訊灌回誤差放大器）→ LDO 的 ripple rejection 技巧。</li>
+</ol>
+<div class="callout"><b>LDO 的 PSRR 特別難</b>：pass 元件本身就是 VDD→VOUT 的導通路徑，低頻靠迴路壓抑、高頻幾乎完全靠 C<sub>out</sub>。所以 LDO 的 PSRR 曲線常常在 100 kHz–1 MHz 出現一個「扛不住」的凹陷。</div>
+<h2>量測方式</h2>
+<ol>
+<li>VDD 上疊一個小 ac 訊號（10–50 mV），掃頻。</li>
+<li>量 Vout/VDD 的比值，取 20log10 → 負值表示衰減，習慣上報絕對值。</li>
+<li>要註明負載電流與 V<sub>dropout</sub>，因為 PSRR 隨這兩者變化很大。</li>
+</ol>`
+  },
+  {
+    id: 'kbsettle', tag: '頻率補償', min: '6 分鐘', st: 'ready',
+    t: '迴轉率（Slew Rate）與穩定時間',
+    s: '大訊號看 SR，小訊號看 GBW：兩段完全不同機制，卻要在同一顆電路裡都達標。',
+    body: `
+<div class="fx">SR = I_tail / Cc        （兩級，Cc 是被充放的電容）
+SR = I_tail / CL        （5T OTA，負載直接充放）
+線性區時間常數 τ = 1 / (2π · GBW)
+0.1% 穩定 ≈ 6.9 τ；1% ≈ 4.6 τ
+Settling ≈ t_slew + n·τ</div>
+<h2>為什麼大訊號會「卡住」</h2>
+<p>步階很大時，輸入對會被完全切斷（一邊全開、一邊全關），整個尾電流都拿去充 C<sub>c</sub>——這時候輸出是以<b>固定斜率</b>在跑，跟 GBW 無關。等輸出追上目標，電路才回到線性區，開始指數收斂。</p>
+<h2>設計上的取捨</h2>
+<ul>
+<li><b>加大 I<sub>tail</sub></b>：SR 變快，代價是功耗與（在固定 Vov 下）更大的 gm → 更寬的 GBW。</li>
+<li><b>減小 C<sub>c</sub></b>：SR 變快、GBW 上升，但 PM 變差（p2 相對靠近）。</li>
+<li><b>加大 C<sub>L</sub></b>：settling 變慢，而且會推低 p2。</li>
+<li><b>Clocked / class-AB 輸出</b>：動態加大電流，靜態功耗不變——高速 ADC driver 常用。</li>
+</ul>
+<div class="callout"><b>典型數字</b>：CL = 3 pF、GBW = 100 MHz 的 OTA，τ ≈ 1.6 ns；若要求 0.1% settling，光線性段就要 ~11 ns，再加上 slew 段。這也是為什麼 ADC driver 的 SR 規格常常比 GBW 更難達成。</div>
+<h2>量測與模擬</h2>
+<ol>
+<li>SR：打一個大步階（滿刻度），量 10%–90% 的斜率（V/µs）。</li>
+<li>Settling：量到誤差帶（0.1% / 0.01%）的時間，注意要包含 slew 段。</li>
+<li>兩者都要在 corner（SS/FF、溫度、電壓）下檢查，慢 corner 常常是 settling 掛掉的地方。</li>
+</ol>`
+  },
+  {
+    id: 'kbbias', tag: '設計方法', min: '7 分鐘', st: 'ready',
+    t: '偏壓電路：電流鏡、cascode 偏壓與 startup',
+    s: '整顆晶片的電流都源自這裡。鏡像誤差、headroom、啟動失敗，三件事一次講清楚。',
+    body: `
+<p>偏壓電路只做一件事：把一個「參考電流」複製給全晶片。但複製得準不準、需不需要 headroom、上電會不會啟動，決定了整顆晶片能不能用。</p>
+<h2>1. 鏡像誤差從哪來</h2>
+<div class="fx">Iout / Iref = (W/L)2 / (W/L)1 × (1 + λVds2) / (1 + λVds1)
+誤差 ≈ Δ(W/L)/(W/L) + ΔVth/Vov + λ(Vds2 − Vds1)
+      ↑ 佈局/失配      ↑ 失配      ↑ 有限 ro（系統性）</div>
+<ul>
+<li><b>有限 ro</b>：兩邊 V<sub>ds</sub> 不同就會有系統誤差 → 用 cascode 把 ro 拉高，或讓兩邊 V<sub>ds</sub> 相等（wide-swing 偏壓）。</li>
+<li><b>Vth 失配</b>：Vov 越小越嚴重，所以低壓設計要更長的面積。</li>
+<li><b>通道長度調變</b>：L 加大可降低 λ；這也是「匹配用長通道」的另一個理由。</li>
+</ul>
+<h2>2. 三種鏡像與 headroom</h2>
+<table>
+<thead><tr><th>型式</th><th>最低輸出電壓</th><th>Rout</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>simple</td><td class="num">Vov</td><td>ro</td><td>只要 headroom、不要精度</td></tr>
+<tr><td>cascode</td><td class="num">2·Vov + Vth</td><td>gm·ro²</td><td>需要高 ro、headroom 還夠</td></tr>
+<tr><td>wide-swing</td><td class="num">2·Vov</td><td>gm·ro²</td><td>低壓 + 高 ro（多一組偏壓）</td></tr>
+</tbody></table>
+<div class="callout"><b>wide-swing 的代價</b>：多一組偏壓（通常用一顆「故意處在 triode 邊緣」的 MOS 產生 Vov 電平），需要更多電流與面積，而且偏壓本身也要匹配。</div>
+<h2>3. 啟動電路（startup）</h2>
+<p>電流鏡 + 自我偏壓（例如 β-multiplier、constant-gm）有兩個穩定解：正常工作點與<b>零電流</b>。上電時若停在零電流，整顆電路死掉。</p>
+<ol>
+<li><b>偵測 + 注入</b>：用一個弱元件（大 L 的 MOS 或高阻）在零電流時把電流注入節點，正常工作後它自動關閉。</li>
+<li><b>必須會關</b>：startup 若一直開著，會變成固定的電流誤差來源（BGR 尤其明顯）。</li>
+<li><b>慢上電 / 快上電都要测</b>：VDD ramp 太慢時，startup 可能還沒動作就被漏電吃掉。</li>
+</ol>
+<h2>4. 驗證清單</h2>
+<ul>
+<li>VDD 從 0 慢慢 ramp 到標稱值：每一顆 corner 都會啟動嗎？</li>
+<li>啟動後 startup 真的關掉了嗎？（量它的電流）</li>
+<li>Iref 的 PVT 變化在規格內嗎？（±10–20% 很常見）</li>
+<li>鏡像的 V<sub>ds</sub> 兩邊相等嗎？（cascode 鏡要對稱）</li>
+</ul>`
+  },
+];
+/* ---------- 進階專區：電路圖用小元件（配 .fig 的樣式） ---------- */
+/* MOS：通道端點在 (tx, cy±22)，閘極端點在 (gx, cy)；g = +1 閘極朝右、-1 朝左 */
+function fMos(cx, cy, kind, label, g = -1) {
+  const tx = cx - g * 10, gx = cx + g * 22;
+  const arrow = kind === 'n' ? tri(cx - g * 4, cy + 12, -g) : tri(cx - g * 4, cy - 12, g);
+  const lx = gx + g * 5, an = g > 0 ? 'start' : 'end';
+  return `<path class="w" d="M${tx} ${cy - 22} V${cy - 12} H${cx} V${cy + 12} H${tx} V${cy + 22}"/>`
+    + `<path class="w" d="M${cx + g * 5} ${cy - 9} V${cy + 9}"/><path class="w" d="M${cx + g * 5} ${cy} H${gx}"/>`
+    + `<polygon class="arrow" points="${arrow}"/>`
+    + `<text class="lbl" x="${lx}" y="${cy + 4}" text-anchor="${an}">${label}</text>`;
+}
+/* 電阻（垂直）：x 左右各 8，y 由 y0 到 y0+h */
+function fRes(cx, y0, h, label) {
+  return `<rect class="w" x="${cx - 8}" y="${y0}" width="16" height="${h}"/>`
+    + (label ? `<text class="lbl" x="${cx - 12}" y="${y0 + h / 2 + 4}" text-anchor="end">${label}</text>` : '');
+}
+/* 二極體接法的 BJT（集極在上）：集極端點 (cx, cy-24)、射極端點 (cx, cy+24)、基極端點 (cx-30, cy) */
+function fBjt(cx, cy, label, diode) {
+  const b = cx - 6;
+  return `<path class="w" d="M${cx} ${cy - 24} V${cy - 9} L${b} ${cy - 4}"/><path class="w" d="M${cx} ${cy + 24} V${cy + 9} L${b} ${cy + 4}"/>`
+    + `<path class="w" d="M${b} ${cy - 10} V${cy + 10}"/><path class="w" d="M${b - 14} ${cy} H${b}"/>`
+    + (diode ? `<path class="thin" d="M${b - 14} ${cy} V${cy - 24} H${cx}"/>` : '')
+    + `<text class="lbl" x="${cx + 12}" y="${cy + 4}">${label}</text>`;
+}
+/* 電流源（圓 + 箭頭）：端點在上 (cx, cy-20) 與下 (cx, cy+20) */
+function fSrc(cx, cy, label, up) {
+  const d = up ? -1 : 1;
+  return `<circle class="w" cx="${cx}" cy="${cy}" r="11"/>`
+    + `<path class="w" d="M${cx} ${cy + d * 8} V${cy - d * 5}"/>`
+    + `<polygon class="arrow" points="${cx},${cy + d * 9} ${cx - 3.6},${cy + d * 3} ${cx + 3.6},${cy + d * 3}"/>`
+    + (label ? `<text class="lbl" x="${cx + 16}" y="${cy + 4}">${label}</text>` : '');
+}
+
+const ADV_IP = [
+  {
+    id: 'bgr', tag: '參考電路', min: '45 分鐘 · 5 頁', st: 'ready',
+    t: 'BGR 帶隙參考電壓',
+    s: '整顆晶片的「絕對的尺」：把隨溫度下降的 VBE 和隨溫度上升的 PTAT 加在一起，得到幾乎不隨溫度、電源、製程變動的 1.2 V。',
+    pages: [
+      {
+        t: '架構與優缺點',
+        body: `
+<p>整顆晶片的電壓、電流、時間，最後都要有一個「絕對的尺」。這把尺就是 <b>bandgap reference（BGR）</b>：輸出約 1.2 V——矽的能隙電壓外插到 0 K 的結果（室溫 1.12 eV，外插約 1.17–1.2 V）。VBE 的溫度曲線往下外插剛好也碰到這個電壓，所以在這附近可以把溫度係數補到接近零。</p>
+<figure class="fig">
+<svg viewBox="0 0 460 252" role="img" aria-label="電壓模式 BGR 核心電路：PMOS 鏡像、OPA 強制兩節點等電位、R2 疊在 VBE1 上">
+  <path class="rail" d="M30 24 H430"/><path class="rail" d="M30 236 H430"/>
+  <text class="lbl" x="430" y="18" text-anchor="end">VDD</text><text class="lbl" x="430" y="248" text-anchor="end">GND</text>
+  ${fMos(110, 58, 'p', 'M3', 1)}${fMos(330, 58, 'p', 'M4', -1)}
+  <path class="thin" d="M100 36 V24 M340 36 V24 M100 80 V96 M340 80 V96 M132 58 H308"/>
+  <path class="thin" d="M208 150 V58 M100 96 H58"/><polygon class="arrow" points="52,96 59,92.5 59,99.5"/>
+  <text class="lbl" x="48" y="100" text-anchor="end">VREF</text>
+  ${fRes(100, 100, 32, 'R2')}${fRes(396, 166, 34, 'R1')}
+  <path class="thin" d="M100 96 V100 M100 132 V146 M100 146 V150 M100 198 V236 M100 146 H160 V176 H190"/>
+  ${fBjt(100, 174, 'Q1 1×', true)}
+  <path class="thin" d="M340 96 H396 M396 96 V112 M396 160 V166 M396 200 V236"/>
+  ${fBjt(396, 136, 'Q2 N×', true)}
+  <polygon class="w" points="170,204 246,204 208,150"/>
+  <text class="lbl" x="208" y="192" text-anchor="middle">OPA</text>
+  <path class="thin" d="M340 96 H226 V176"/>
+  <circle class="dot" cx="100" cy="146" r="2.6"/><circle class="dot" cx="340" cy="96" r="2.6"/><circle class="dot" cx="208" cy="58" r="2.6"/>
+  <text class="lbl" x="106" y="140">X</text><text class="lbl" x="330" y="90" text-anchor="end">Y</text>
+  <text class="lbl" x="186" y="168" text-anchor="end">V+</text><text class="lbl" x="230" y="168">V−</text>
+  <text class="val" x="208" y="228" text-anchor="middle">Vref = VBE1 + (R2/R1)·VT·ln N</text>
+</svg>
+<figcaption>電壓模式（Kuijk / OPA-forced）核心：OPA 用虛短把 X、Y 壓成同電位，R1 上的壓差就是 ΔV<sub>BE</sub> = V<sub>T</sub>·ln N → 產生 PTAT 電流；再讓同一股電流流過 R2 疊在 V<sub>BE1</sub> 上。OPA 的輸出驅動 M3/M4 這對 PMOS 鏡像，鏡像的作用只有一個：<b>保證兩條支路電流相等</b>。</figcaption>
+</figure>
+<div class="fx">Vref = VBE + K · ΔVBE ,  K = R2/R1
+     = VBE + K · VT · ln(N)        VT = kT/q
+↑ CTAT（−1.8 ~ −2.2 mV/°C）   ↑ PTAT（+0.085 mV/°C × ln N）</div>
+<h2>四大實作家族</h2>
+<table>
+<thead><tr><th>家族</th><th>核心</th><th>優點</th><th>缺點</th></tr></thead>
+<tbody>
+<tr><td><b>電壓模式 BJT</b><br>（Widlar / Kuijk）</td><td>VBE + K·ΔVBE 直接相加</td><td>最準（10–30 ppm/°C）、低雜訊、電路簡單</td><td>Vref 固定 ≈1.2 V，電源必須 &gt;1.3 V；需要 vertical PNP</td></tr>
+<tr><td><b>電流模式</b><br>（Banba）</td><td>CTAT 電流 + PTAT 電流相加，再乘 R</td><td>可輸出 &lt;1 V（0.6–0.8 V）、低壓適用</td><td>多一顆 OPA、匹配項變多、電流鏡誤差直接進 Vref</td></tr>
+<tr><td><b>CMOS 次臨界</b><br>（ΔVgs / self-cascode）</td><td>利用 subthreshold 的 exponential I–V</td><td>純 MOS、無 BJT、可超低壓</td><td>TC 較差（30–100 ppm/°C）、曲度大、1/f 雜訊大</td></tr>
+<tr><td><b>混合 / 數位輔助</b></td><td>trim + curvature + chopper</td><td>量產精度最好</td><td>需要測試與 OTP/fuse，成本高</td></tr>
+</tbody></table>
+<h2>電流模式（Banba）：把電流相加，Vref 就能 &lt;1 V</h2>
+<figure class="fig">
+<svg viewBox="0 0 460 200" role="img" aria-label="Banba 電流模式 BGR：CTAT 電流與 PTAT 電流在鏡像節點相加，再乘上 R3 得到低於 1 V 的參考電壓">
+  <path class="rail" d="M14 170 H440"/>
+  <rect class="box" x="14" y="30" width="200" height="36" rx="4"/>
+  <text class="lbl" x="24" y="53">CTAT 電流 I1 = VBE1 / R2</text>
+  <rect class="box" x="14" y="100" width="200" height="36" rx="4"/>
+  <text class="lbl" x="24" y="123">PTAT 電流 I2 = VT·lnN / R1</text>
+  <path class="thin" d="M214 48 H244 M214 118 H244 V48 M244 48 H268"/>
+  <polygon class="arrow" points="276,48 268,44 268,52"/>
+  <circle class="dot" cx="244" cy="48" r="2.6"/>
+  <text class="lbl" x="257" y="36" text-anchor="middle">Σ</text>
+  <rect class="box" x="276" y="26" width="112" height="44" rx="4"/>
+  <text class="lbl" x="332" y="45" text-anchor="middle">PMOS 鏡像</text>
+  <text class="lbl" x="332" y="60" text-anchor="middle">I3 = I1 + I2</text>
+  <path class="thin" d="M388 48 H410 M410 48 V56 M410 96 V170"/>
+  <circle class="dot" cx="410" cy="48" r="2.6"/>
+  <text class="lbl" x="418" y="52">VREF</text>
+  ${fRes(410, 56, 40, 'R3')}
+  <text class="val" x="230" y="158" text-anchor="middle">Vref = R3 · ( VBE1/R2 + VT·lnN/R1 ) ≈ 0.6–0.8 V</text>
+</svg>
+<figcaption>電流模式先把「溫度係數相反的兩股電流」加起來，最後才用 R3 轉成電壓——所以 Vref 不再被 1.2 V 的矽能隙綁住，可以用 1 V 以下的電源。代價是多一組鏡像與電阻，匹配誤差直接進 Vref。</figcaption>
+</figure>
+<h2>電流鏡 vs OPA：怎麼選</h2>
+<p>核心問題只有一個：<b>怎麼讓兩條支路的電壓相等</b>。</p>
+<table>
+<thead><tr><th></th><th>電流鏡（mirror-forced）</th><th>OPA（amp-forced）</th></tr></thead>
+<tbody>
+<tr><td>原理</td><td>用鏡像強制兩支路電流相等</td><td>用 OPA 的虛短強制兩節點電壓相等</td></tr>
+<tr><td>誤差</td><td>鏡像失配 + 兩邊 V<sub>ds</sub> 不等（λ 效應）</td><td>OPA offset（被 1+K 放大）</td></tr>
+<tr><td>headroom</td><td>好（可以只留一個 Vov）</td><td>較差（OPA 輸入範圍要涵蓋節點電壓）</td></tr>
+<tr><td>功耗 / 面積</td><td>小</td><td>多一顆 OPA，面積與功耗增加</td></tr>
+<tr><td>精度</td><td>中（cascode 可改善）</td><td>高（offset 可用 chopper 壓到 µV）</td></tr>
+</tbody></table>
+<div class="fx">OPA 版誤差：ΔVref ≈ Vos · (1 + K) + K · VT · ln(N) · (ΔR/R)
+鏡像版誤差：ΔVref ≈ K · VT · (ΔN/N) + (λ 造成的 Vds 不等項)</div>
+<h2>gain error 從哪裡來</h2>
+<ul>
+<li><b>OPA 有限增益</b>：迴路增益不足 → 兩節點沒有真正相等 → 等效 offset，誤差 ≈ Vos/(1+A)。</li>
+<li><b>OPA offset</b>：直接被 (1+K) 放大，通常是最主要誤差 → chopper / auto-zero / 大面積輸入對。</li>
+<li><b>電阻比值失配</b>：K 的誤差 → PTAT 項比例錯 → TC 直接變差（K 差 1% 就可能多出 100 ppm/°C）。</li>
+<li><b>N 的比例失配</b>：ΔVBE = VT·ln(N)，N 從 8 變 8.1 就差 1.2% → 同樣打進 TC。</li>
+<li><b>BJT 的 β 與 Early 效應</b>：base current 與 VCE 不同 → VBE 差 → PTAT 項被污染。</li>
+</ul>
+<h2>高階（曲度）補償</h2>
+<ol>
+<li><b>不同 TC 的電阻相加</b>：把 PTAT 項用兩種材料（poly / diffusion）分攤，讓等效 TC 隨溫度微調。</li>
+<li><b>I<sub>PTAT</sub>² 注入</b>：把 PTAT 電流的平方灌回節點，產生 +T² 項抵銷 VBE 的曲度。</li>
+<li><b>分段（piecewise）補償</b>：在高低溫各開一組小電流。</li>
+<li><b>數位 trim</b>：量產時在常溫與高溫各量一次，燒 fuse 調 R 比值。</li>
+</ol>
+<div class="callout"><b>選型速記</b>：一般 SOC（1.8 V 以上）→ 電壓模式 BJT + OPA；低壓 / 快到 1 V 以下 → 電流模式；純數位製程、精度不重要 → CMOS 次臨界；量產要求 &lt;10 ppm/°C → 混合 + trim。</div>
+<div class="quiz">
+  <div class="qk">小試身手</div>
+  <p class="q">OPA 版的 BGR 中，運算放大器的 offset 對輸出的影響大約是？</p>
+  <div class="qbtns">
+    <button class="qbtn" type="button" data-ok="1">被 (1 + R2/R1) 放大，通常主導整體誤差</button>
+    <button class="qbtn" type="button" data-ok="0">完全被迴路抵銷，可以忽略</button>
+    <button class="qbtn" type="button" data-ok="0">只影響 PSRR，不影響 TC</button>
+  </div>
+  <div class="ans" hidden><b>解析</b>：offset 會讓兩支路節點不等，等效誤差進到 Vref 後被 PTAT 的放大倍率 (1+K) 放大，所以高精度 BGR 幾乎都會用 chopper 或大面積輸入對把 offset 壓下來。</div>
+</div>`
+      },
+      {
+        t: '啟動電路（start-up）',
+        body: `
+<p>自偏壓的 BGR / 電流源都有一個致命弱點：<b>I = 0 也是穩定解</b>。上電後如果停在零電流，整顆晶片就沒有參考電壓。startup 的唯一任務：把電路踢出零電流，然後<b>自己退場</b>。</p>
+<figure class="fig">
+<svg viewBox="0 0 420 200" role="img" aria-label="BGR 啟動電路示意：透過弱元件注入電流把電路推出零電流狀態">
+  <path class="rail" d="M40 26 H380"/><path class="rail" d="M40 178 H380"/>
+  <text class="lbl" x="352" y="20">VDD</text><text class="lbl" x="352" y="194">GND</text>
+  <path class="w thin" d="M96 26 V54 M96 78 V120 M96 120 H150 M96 120 V178"/>
+  <rect class="w" x="88" y="54" width="16" height="24"/>
+  <path class="w thin" d="M210 26 V40 M210 64 V90 M210 90 H262 M210 90 V120"/>
+  <circle class="w" cx="210" cy="52" r="12"/><path class="w" d="M210 46 V58 M206 54 L210 60 L214 54"/>
+  <text class="lbl" x="230" y="50">M_su</text>
+  <path class="w thin" d="M150 120 H262 M262 120 V178"/>
+  <circle class="dot" cx="210" cy="120" r="3"/>
+  <text class="lbl" x="128" y="112">Rs</text><text class="lbl" x="272" y="116">偏壓節點</text>
+  <path class="thin" d="M150 120 v6 h-16 v-12 h16" />
+</svg>
+<figcaption>最常見的 startup：一顆弱導通或高阻元件在零電流時把偏壓節點往上拉，正常工作後它就不再影響（或被開關切掉）。</figcaption>
+</figure>
+<h2>三種常見做法</h2>
+<ol>
+<li><b>弱注入（weak pull）</b>：大 L 的 MOS 或高阻電阻把節點拉向 VDD。正常工作時節點電壓被主電路壓住，它只貢獻微小電流。</li>
+<li><b>偵測 + 開關</b>：用一顆 MOS 偵測「電流有沒有起來」，沒起來才導通；起來後關斷（漏電最小，但多一點邏輯）。</li>
+<li><b>RC 延時</b>：上電瞬間靠電容耦合把電路踢一下，之後由電阻放電關閉。</li>
+</ol>
+<h2>四個常見失敗</h2>
+<ul>
+<li><b>startup 關不掉</b>：正常工作後還持續注入電流 → BGR 出現固定的系統誤差（尤其 TC）。</li>
+<li><b>VDD ramp 太慢</b>：慢速上電時 startup 早就放電完，電路還沒啟動 → 卡在零電流。</li>
+<li><b>VDD ramp 太快</b>：耦合過衝把電路推進另一個 degenerate 點，或造成 latch-up。</li>
+<li><b>PVT 失效</b>：FF corner + 高溫時偵測門檻跑掉，startup 永遠不動作。</li>
+</ul>
+<div class="callout warn"><b>驗證方式</b>：對 VDD 做 0→標稱的 ramp（10 µs / 1 ms / 10 ms 三種速度），每一顆 corner、每個溫度都要確認輸出在 100 µs 內建立到 1% 內，且 startup 支路電流 &lt; 100 nA。</div>
+<h2>和作業的連結</h2>
+<p>HW2 的 bias circuit 也要求「start-up circuit」——原因完全一樣：電流鏡 + 自偏壓有零電流的穩定解，沒有 startup 就可能整顆不工作。</p>`
+      },
+      {
+        t: 'TC 與曲度補償',
+        body: `
+<div class="fx">TC (ppm/°C) = (Vmax − Vmin) / (Vnom × ΔT) × 10⁶
+ΔT 通常是 −40 ~ 125 °C = 165 °C
+例：1.200 V 輸出、Vmax−Vmin = 3.6 mV
+    → 3.6m / (1.2 × 165) × 1e6 = 18.2 ppm/°C</div>
+<p>這個算法叫 <b>box method</b>（取整個溫度區間的最大最小值），是業界最常用的定義。另一種是 <b>best-fit</b>（對溫度做一次回歸，取斜率），數字會好看一些，但比較不能反映「兩端翹起來」的曲度。</p>
+<h2>形狀比數字重要</h2>
+<figure class="fig">
+<svg viewBox="0 0 420 200" role="img" aria-label="Vref 對溫度的三種曲線：線性補償不足、過補償、以及曲度補償後">
+  <path class="thin" d="M52 168 H386 M52 168 V26"/>
+  <text class="lbl" x="34" y="24">Vref</text><text class="lbl" x="386" y="184">T</text>
+  <text class="lbl" x="58" y="184">−40</text><text class="lbl" x="330" y="184">125</text>
+  <path class="hot" d="M64 96 Q210 108 360 74"/>
+  <text class="val" x="150" y="120">補償不足（VBE 佔上風）</text>
+  <path class="thin" d="M64 82 Q210 66 360 96"/>
+  <text class="lbl" x="160" y="58">過補償</text>
+  <path class="mark" d="M64 86 Q210 92 360 86"/>
+  <text class="lbl" x="248" y="82">一階補償後（殘留曲度）</text>
+</svg>
+<figcaption>一階補償只能把兩端對平，中間一定留下一條「微笑」或「皺眉」的曲度——這就是二階（curvature）補償要處理的東西。</figcaption>
+</figure>
+<h2>曲度從哪裡來</h2>
+<p>VBE 的溫度關係不是直線：<b>VBE(T) = VG0 − (VG0 − VBE0)·T/T0 − (η − 1)·VT·ln(T/T0)</b>。最後那一項 ln(T/T0) 就是曲度的來源，大小約幾 mV，換算成 TC 就是 10–50 ppm/°C 的「地板」。</p>
+<h2>補償手段</h2>
+<ol>
+<li><b>二階項注入</b>（I<sub>PTAT</sub>² 或 TlnT 項）→ 直接把曲度抵掉，可到 &lt;5 ppm/°C。</li>
+<li><b>分段補償</b>：在低溫與高溫各加一組小電流，把兩端翹起來的部分壓平（最常見於量產晶片）。</li>
+<li><b>電阻材料混搭</b>：poly 與 diffusion 的 TC 不同，用比例可以做出等效的 T² 項。</li>
+<li><b>trim</b>：常溫一次、高溫一次，燒 fuse 調 R2/R1 → 把一階與曲度同時校掉。</li>
+</ol>
+<div class="callout"><b>實務目標</b>：消費性產品 20–50 ppm/°C 很常見；精密參考（電表、ADC 基準）會做到 5–10 ppm/°C 並在出廠時 trim。要做到 &lt;2 ppm/°C 通常需要恆溫槽或非常複雜的曲度補償。</div>
+<h2>模擬怎麼看</h2>
+<ul>
+<li>掃 −40 ~ 125 °C，至少 5 點（-40/0/27/85/125），看 <b>Vmax、Vmin 與形狀</b>。</li>
+<li>跑 corner（TT/SS/FF + 電阻 ±20%），確認最差 corner 的 TC 還在規格內。</li>
+<li>用 Monte Carlo 看 σ(TC)——量產良率看的是這個，不是 nominal。</li>
+</ul>`
+      },
+      {
+        t: 'PSRR 與雜訊量測',
+        body: `
+<p>BGR 的輸出會餵給 ADC、LDO、比較器，所以它的<b>乾淨程度</b>跟精度一樣重要。兩個指標：PSRR（電源抑制）與輸出雜訊。</p>
+<div class="fx">PSRR(dB) = 20 log10 ( |ΔVDD| / |ΔVref| )
+輸出雜訊積分：Vn,rms = √( ∫ Vn²(f) df )   ← 通常 0.1 Hz–10 Hz 或 10 Hz–100 kHz</div>
+<h2>PSRR 的三條路徑</h2>
+<ol>
+<li><b>迴路內</b>：電源變動 → 偏壓電流變 → 鏡像誤差 → Vref 變。低頻時迴路增益（OPA）把它壓住。</li>
+<li><b>Pass 元件 / 鏡像的 λ</b>：VDD 直接調變電流，這是最難救的一條，靠 cascode 或加長 L 降低 λ。</li>
+<li><b>寄生電容前饋</b>：高頻時 VDD 的雜訊透過 C<sub>gs</sub>/C<sub>db</sub> 直接耦合到輸出 → PSRR 在高頻掉得很快。</li>
+</ol>
+<h2>常見改善手法</h2>
+<ul>
+<li><b>Cascode 疊在鏡像上</b>：把 ro 拉高，PSRR 直接改善 10–20 dB。</li>
+<li><b>VDD 先過 RC / 電流源濾波</b>：BGR 通常會自己拉一條「乾淨的電源」（RC + 大 L 的 MOS）。</li>
+<li><b>加大 OPA 增益</b>：低頻 PSRR ≈ 迴路增益。</li>
+<li><b>對稱佈局 + 對稱走線</b>：減少電源雜訊的不對稱耦合（這也是 PSRR 常常「模擬很好、量測很差」的原因）。</li>
+</ul>
+<h2>雜訊：BGR 的敵人是 1/f</h2>
+<p>BGR 是低頻電路，1/f 雜訊（閃爍雜訊）主導。它來自 BJT 的 base current 與 MOS 的界面態，解法只有兩個：<b>面積</b>與<b>chopper</b>。</p>
+<ul>
+<li>BJT 面積 ×4 → 1/f 雜訊降一半（更準確地說，V<sub>n,1/f</sub> ∝ 1/√(A<sub>E</sub>)）。</li>
+<li>OPA 用 chopper → offset 與低頻雜訊一起壓掉，代價是 chopper 漣波（要加 notching filter）。</li>
+<li>輸出加 RC 濾波（幾十 kΩ + 幾十 pF）→ 把 10 kHz 以上的雜訊砍掉，代價是啟動時間變慢。</li>
+</ul>
+<h2>量測怎麼做</h2>
+<ol>
+<li><b>PSRR</b>：VDD 疊 10–50 mV ac，掃 10 Hz–10 MHz，量 Vref/VDD。要記錄負載（Vref 有負載時 PSRR 會變差）。</li>
+<li><b>TC</b>：放進溫箱，等熱平衡再量，避免「量到溫變速度」而不是溫度。</li>
+<li><b>雜訊</b>：用低雜訊放大器 + 頻譜分析儀，注意量測系統本身的底噪與 1/f。</li>
+<li><b>啟動</b>：示波器看 VDD ramp 與 Vref 建立時間，反覆上電 100 次確認不會卡在零電流。</li>
+</ol>
+<div class="callout warn"><b>量產陷阱</b>：BGR 的 TC 常常在 PCB 上「變好」——因為板子溫度不均、封裝應力不同。做規格時要註明量測條件（T<sub>A</sub> 還是 T<sub>J</sub>、有沒有強制氣流）。</div>`
+      },
+      {
+        t: '佈局重點',
+        body: `
+<p>BGR 是「靠匹配吃飯」的電路：電路圖畫對只完成一半，佈局決定你量到的是 20 ppm/°C 還是 200 ppm/°C。</p>
+<h2>1. BJT 陣列</h2>
+<ul>
+<li>N = 8 的寫法：<b>3×3 陣列、中心放 dummy</b>，8 顆圍一圈 → 每顆的鄰居與應力幾乎相同。</li>
+<li>兩組（1× 與 8×）要交錯（interdigitate）：例如 unit 排成 A B B A / B A A B，讓重心重合。</li>
+<li>所有 BJT 共用同一個 collector 環（deep n-well + ring），並遠離 power device 與時脈線。</li>
+<li>不要用不同尺寸的 BJT 湊比例——只用 unit device 並聯。</li>
+</ul>
+<h2>2. 電阻</h2>
+<ul>
+<li>unit resistor 串並聯，<b>同寬度</b>、同方向、同材料；兩端加 dummy resistor。</li>
+<li>R2/R1 的比值決定 TC，所以比對「比值」而不是絕對值 → 用相同 unit 的整數比。</li>
+<li>電阻區下方不要走訊號線，避免耦合與應力。</li>
+</ul>
+<h2>3. OPA 與鏡像</h2>
+<ul>
+<li>輸入對 common-centroid，加 dummy，方向一致（折疊方向也要一致）。</li>
+<li>鏡像對靠近，並在兩側加 dummy；cascode 上下對稱。</li>
+<li>OPA 的 offset 會 ×(1+K) 進 Vref，所以輸入對面積通常是全電路最大的。</li>
+</ul>
+<h2>4. 環境</h2>
+<ol>
+<li><b>熱對稱</b>：BGR 對溫差極敏感（VBE 約 −2 mV/°C），所以匹配對要放在等溫線上、遠離 LDO / 功率管。</li>
+<li><b>封裝應力</b>：piezo-resistive 效應會改變電阻與 BJT 的 VBE → 盡量放晶片中心，避免角落。</li>
+<li><b>Guard ring + deep n-well</b>：把 BGR 的 p-sub 雜訊（數位電路的地彈）擋在外面。</li>
+<li><b>電源/地</b>：獨立的 analog VDD/GND 走線，star connection 回到 source 端。</li>
+</ol>
+<div class="callout"><b>檢查清單</b>：匹配對的重心重合嗎？BJT 陣列對稱嗎？電阻只有一種寬度嗎？敏感節點旁邊有時脈線嗎？Vref 走線有被數位訊號跨過嗎？</div>
+<h2>面積換精度</h2>
+<p>BJT 面積 ×4 → σ(VBE) 減半、1/f 雜訊減半；電阻面積 ×4 → σ(R)/R 減半。BGR 通常吃掉幾千到上萬 µm²，這是精度必須付的租金。</p>`
+      }
+    ]
+  },
+  {
+    id: 'ldo', tag: '電源電路', min: '30 分鐘 · 4 頁', st: 'ready',
+    t: 'LDO 低壓降穩壓器',
+    s: '一顆誤差放大器 + 一顆 pass 元件 + 兩顆回授電阻：把不乾淨的 VDD 變成穩定的 VOUT，還要又快又穩又不吃電。',
+    pages: [
+      {
+        t: '架構與回授',
+        body: `
+<p>LDO（low-dropout regulator）是「線性」穩壓器：pass 元件當成一個可變電阻，靠回授把 V<sub>OUT</sub> 壓在設定值。它不切換、沒有漣波，代價是壓差全部變成熱。</p>
+<figure class="fig">
+<svg viewBox="0 0 420 200" role="img" aria-label="LDO 方塊圖：誤差放大器驅動 PMOS pass 元件，回授電阻分壓回輸入">
+  <path class="rail" d="M40 24 H380"/><path class="rail" d="M40 180 H380"/>
+  <text class="lbl" x="340" y="18">VIN</text><text class="lbl" x="340" y="196">GND</text>
+  <polygon class="w" points="196,70 196,120 240,95"/>
+  <text class="lbl dev" x="203" y="99">EA</text>
+  <path class="w thin" d="M240 95 H270 M270 95 V60 M270 60 H300"/>
+  <rect class="w" x="288" y="84" width="24" height="22"/>
+  <text class="lbl" x="286" y="76">MP</text>
+  <path class="w thin" d="M270 60 V24 M312 95 H360 M300 106 V150 M300 150 H360"/>
+  <text class="lbl" x="366" y="99">VOUT</text>
+  <rect class="w" x="352" y="120" width="14" height="26"/><rect class="w" x="352" y="154" width="14" height="26"/>
+  <text class="lbl" x="330" y="138">R1</text><text class="lbl" x="330" y="172">R2</text>
+  <path class="w thin" d="M359 146 V154 M359 130 V120 M359 120 H300 V95"/>
+  <text class="lbl" x="150" y="150">VREF</text>
+  <path class="thin" d="M188 95 H196 M170 95 H188"/>
+</svg>
+<figcaption>標準 LDO：EA 比較 V<sub>REF</sub> 與回授分壓，驅動 PMOS pass 元件；PMOS 的源極接 VIN，所以 dropout 只需要一個 V<sub>ov</sub>。</figcaption>
+</figure>
+<div class="fx">VOUT = VREF · (1 + R1/R2)
+Dropout：VIN,min = VOUT + Vov,pass  （PMOS，只需一個 Vov）
+效率：η ≈ VOUT · ILOAD / (VIN · (ILOAD + IQ))</div>
+<h2>PMOS 還是 NMOS pass？</h2>
+<table>
+<thead><tr><th></th><th>PMOS（PMOS pass）</th><th>NMOS（需 charge pump）</th></tr></thead>
+<tbody>
+<tr><td>dropout</td><td>一個 V<sub>ov</sub>（好）</td><td>V<sub>gs</sub> = V<sub>ov</sub> + V<sub>th</sub>（需要升壓驅動）</td></tr>
+<tr><td>驅動</td><td>EA 輸出往低拉即可</td><td>要多一顆 charge pump / bootstrap</td></tr>
+<tr><td>穩定性</td><td>pass 是 common-source，增益高、極點在 gate</td><td>pass 是 source follower，低阻抗輸出，比較好穩定</td></tr>
+<tr><td>適用</td><td>一般低壓差應用（主流）</td><td>超低壓差、大電流</td></tr>
+</tbody></table>
+<h2>EA 的三種選擇</h2>
+<ul>
+<li><b>5T OTA</b>：最簡單、功耗低、增益約 40 dB；適合小電流、Cout 大的應用。</li>
+<li><b>Two-stage Miller</b>：增益高（60–80 dB），但多一個極點，補償要小心。</li>
+<li><b>Folded cascode</b>：增益高、頻寬好，是高效能 LDO 的主流；輸入範圍要檢查。</li>
+</ul>
+<div class="callout"><b>IQ（靜態電流）</b>：EA + 回授電阻 + 偏壓就是 IQ。電池供電的 LDO 會把 IQ 壓到 1 µA 以下，代價是頻寬很小、暫態很差——這就是「低功耗 LDO 反應慢」的根本原因。</div>`
+      },
+      {
+        t: '穩定性與補償',
+        body: `
+<p>LDO 是一個回授系統，而且它的負載（I<sub>LOAD</sub>、C<sub>OUT</sub>、ESR）會變，所以穩定性比一般 OTA 更難搞。</p>
+<div class="fx">輸出極點  p_out ≈ 1 / (2π · R_out · C_OUT)
+Gate 極點  p_gate ≈ 1 / (2π · R_ea · C_g,pass)
+ESR 零點   z_esr = 1 / (2π · ESR · C_OUT)
+迴路增益   T(s) = A_ea · gm_pass · R_out · β ,  β = R2/(R1+R2)</div>
+<h2>典型補償策略</h2>
+<ol>
+<li><b>External cap（C<sub>OUT</sub> 大）</b>：把 p_out 壓低當主極點，gate 極點當非主極點 → pole splitting 自動完成。ESR 零點用來補相位。</li>
+<li><b>Internal compensation（C<sub>OUT</sub> 小或片上）</b>：主極點放在 EA 輸出，靠 Miller 或 RC 零點補相位；這種 LDO 對 C<sub>OUT</sub> 不敏感（cap-less LDO）。</li>
+<li><b>DFC / feedforward</b>：把零點做在迴路裡，讓 PM 對負載變化不敏感（先進 LDO 常用）。</li>
+</ol>
+<h2>ESR 的兩面刃</h2>
+<ul>
+<li><b>ESR 太小</b>（陶瓷電容）：z<sub>esr</sub> 跑到高頻，相位沒有補到 → PM 下降、振鈴。</li>
+<li><b>ESR 太大</b>：z<sub>esr</sub> 跑到低頻，雖然補相位，但輸出突波 ΔI·ESR 變大，而且可能出現雙零點行為。</li>
+<li><b>所以有「ESR 窗口」</b>：資料手冊常寫「C<sub>OUT</sub> = 1–10 µF，ESR = 0.1–1 Ω」就是這個原因。</li>
+</ul>
+<div class="callout warn"><b>負載相關的極點</b>：p_out = 1/(2πR<sub>out</sub>C<sub>OUT</sub>) 會隨 I<sub>LOAD</sub> 移動（R<sub>out</sub> ≈ V<sub>A</sub>/I<sub>LOAD</sub>）——輕載時 p_out 跑到低頻，可能變成主極點，PM 就變了。所以 LDO 的穩定性要在<b>最小與最大負載</b>兩端都驗。</div>
+<h2>PM 目標與量測</h2>
+<ul>
+<li>目標 PM 50–70°、GM &gt; 10 dB；PM &gt; 80° 通常代表過阻尼（反應慢）。</li>
+<li>模擬：斷迴路（break the loop）掃 loop gain，或在 VOUT 注入小訊號看閉迴路峰值。</li>
+<li>量測：負載電流用電子負載做步階，看 VOUT 的振鈴頻率與衰減 → 反推 PM。</li>
+</ul>`
+      },
+      {
+        t: '暫態響應與 PSRR',
+        body: `
+<p>LDO 最常被客訴的兩件事：<b>負載一變電壓就掉</b>、<b>電源雜訊壓不住</b>。兩者其實是同一個迴路在不同頻率的表現。</p>
+<div class="fx">負載突波：ΔV ≈ ΔI · ESR + ΔI · t_resp / C_OUT
+         t_resp ≈ 1 / (2π · f_BW)      ← 迴路反應時間
+例：ΔI = 100 mA、C = 1 µF、BW = 1 MHz
+    ΔI·t/C = 0.1 × 159n / 1µ ≈ 16 mV
+    ESR 0.1 Ω → 再加 10 mV ⇒ 共 26 mV</div>
+<h2>三招改善暫態</h2>
+<ol>
+<li><b>加大 C<sub>OUT</sub></b>：最直接，但面積/成本上升，而且會推低 p_out（影響穩定性）。</li>
+<li><b>加寬頻寬</b>（加大 I<sub>Q</sub> 或 adaptive biasing）：反應變快，代價是靜態功耗。</li>
+<li><b>Adaptive / transient boosting</b>：偵測到誤差瞬間加大 EA 電流，穩態時再降回來（電荷泵式驅動 gate 也常見）。</li>
+</ol>
+<h2>PSRR 的頻率形狀</h2>
+<figure class="fig">
+<svg viewBox="0 0 420 180" role="img" aria-label="LDO 的 PSRR 曲線：低頻由迴路增益決定，中高頻因輸出極點而變差">
+  <path class="thin" d="M52 148 H390 M52 148 V24"/>
+  <text class="lbl" x="20" y="22">PSRR</text><text class="lbl" x="386" y="164">f</text>
+  <path class="mark" d="M64 48 H150 L246 116 L330 132 H378"/>
+  <text class="lbl" x="64" y="42">−70 dB（迴路增益）</text>
+  <text class="lbl" x="250" y="128">−20 dB（C_OUT 分壓）</text>
+  <text class="lbl" x="60" y="162">100 Hz</text><text class="lbl" x="300" y="162">1 MHz</text>
+</svg>
+<figcaption>低頻 PSRR ≈ 迴路增益；過了迴路頻寬後由被動路徑（C<sub>OUT</sub>、pass 的寄生）決定，所以高頻通常只剩 20–30 dB。</figcaption>
+</figure>
+<ul>
+<li><b>低頻</b>：靠迴路增益，所以「加大 EA 增益」等於「改善低頻 PSRR」。</li>
+<li><b>中頻</b>：迴路開始跟不上，pass 元件的 λ 與 gate 耦合開始漏。</li>
+<li><b>高頻</b>：C<sub>OUT</sub> 的低阻抗把 VIN 雜訊旁路到地，PSRR 由 C<sub>OUT</sub> 與負載決定。</li>
+</ul>
+<h2>其他一定要檢查的項目</h2>
+<ul>
+<li><b>Reverse current</b>：V<sub>IN</sub> 掉得比 V<sub>OUT</sub> 快時，電荷會從輸出倒灌回輸入 → 需要 reverse-blocking（背對背 diode 或 body 切換）。</li>
+<li><b>Soft start</b>：啟動時 C<sub>OUT</sub> 是大負載，inrush 會拉垮 V<sub>IN</sub> → 用 soft-start 把 V<sub>REF</sub> 慢慢升上去。</li>
+<li><b>Over-current / thermal shutdown</b>：量產必備。</li>
+<li><b>Line transient</b>：V<sub>IN</sub> 步階時 V<sub>OUT</sub> 的過衝與回穩時間。</li>
+</ul>`
+      },
+      {
+        t: '規格、設計流程與常見錯誤',
+        body: `
+<h2>規格表怎麼讀</h2>
 <table>
 <thead><tr><th>規格</th><th>意思</th><th>典型值</th></tr></thead>
 <tbody>
-<tr><td>Vref</td><td>輸出參考電壓</td><td class="num">1.2 V</td></tr>
-<tr><td>TC</td><td>溫度係數（ppm/°C）</td><td class="num">10–50 ppm/°C</td></tr>
-<tr><td>PSRR</td><td>電源變動傳到輸出的比例</td><td class="num">−40 ~ −70 dB</td></tr>
-<tr><td>Iq</td><td>自身消耗電流</td><td class="num">幾 µA ~ 幾十 µA</td></tr>
+<tr><td>V<sub>OUT</sub></td><td>輸出電壓（固定或可調）</td><td class="num">0.8–3.3 V</td></tr>
+<tr><td>Dropout</td><td>V<sub>IN</sub> − V<sub>OUT</sub> 的最低需求</td><td class="num">100–300 mV</td></tr>
+<tr><td>I<sub>LOAD</sub></td><td>最大輸出電流</td><td class="num">10 mA–3 A</td></tr>
+<tr><td>I<sub>Q</sub></td><td>自身消耗（不含負載）</td><td class="num">1 µA–100 µA</td></tr>
+<tr><td>Load / Line reg.</td><td>負載或輸入變動造成的輸出變化</td><td class="num">0.1–1 %</td></tr>
+<tr><td>PSRR</td><td>電源抑制（要註明頻率與負載）</td><td class="num">60 dB @1 kHz</td></tr>
+<tr><td>Noise</td><td>輸出雜訊密度</td><td class="num">10–100 µV<sub>rms</sub></td></tr>
 </tbody></table>
+<h2>設計流程</h2>
+<ol>
+<li>決定 <b>V<sub>OUT</sub></b>、<b>I<sub>LOAD,max</sub></b>、<b>dropout</b> → 算出 pass 元件的最大 V<sub>ov</sub> 與尺寸（W/L = 2I/(µC<sub>ox</sub>V<sub>ov</sub>²)）。</li>
+<li>選 <b>EA 架構</b>（5T / two-stage / folded cascode）→ 決定增益與頻寬。</li>
+<li>決定 <b>C<sub>OUT</sub></b> 與 <b>ESR 窗口</b> → 檢查 p_out、z_esr 與 PM（輕載/重載兩端）。</li>
+<li>算 <b>I<sub>Q</sub></b> 預算：EA 電流 + 回授電阻電流 → 檢查效率與待機功耗。</li>
+<li>暫態：用 ΔI 步階驗 droop、overshoot 與 settling。</li>
+<li>PSRR：低頻看迴路增益，高頻看 C<sub>OUT</sub>，必要時加 RC 濾波或前饋。</li>
+<li>Protection：OCP、OVP、thermal、reverse current、soft start。</li>
+</ol>
+<h2>五個最常見的錯誤</h2>
+<ol>
+<li><b>只用 nominal 負載驗穩定性</b>：輕載時 p_out 跑到低頻，PM 可能掉 20°。</li>
+<li><b>忽略 ESR 窗口</b>：換一顆「更好」的低 ESR 電容反而振盪。</li>
+<li><b>pass 元件太小</b>：dropout 時進入 triode，迴路增益崩掉 → 輸出不再是穩壓。</li>
+<li><b>回授電阻太大</b>：省電流但 noise 與 offset 變差（β 誤差也被放大）。</li>
+<li><b>沒做 soft start</b>：大 C<sub>OUT</sub> 上電時 inrush 把 V<sub>IN</sub> 拉到復位。</li>
+</ol>
+<div class="callout"><b>和遊戲的連結</b>：主遊戲的 LDO 關卡就是在調 pass 的 W/L、EA 電流與 Cout/ESR——規格卡上的 loop gain、UGF、PM 就是本頁的 T(s) 與 PM。當你看到「PM 太低」，先想的是 p_out 與 z_esr 的相對位置。</div>
 <div class="quiz">
   <div class="qk">小試身手</div>
-  <p class="q">BGR 一定要加 start-up 電路，最主要的原因是？</p>
+  <p class="q">用 PMOS 當 pass 元件的 LDO，dropout 電壓大約是？</p>
   <div class="qbtns">
-    <button class="qbtn" type="button" data-ok="1">自偏壓電路存在「零電流」的穩定解，不啟動就永遠沒電流</button>
-    <button class="qbtn" type="button" data-ok="0">start-up 會提高 PSRR</button>
-    <button class="qbtn" type="button" data-ok="0">start-up 用來補償 BJT 的溫度係數</button>
+    <button class="qbtn" type="button" data-ok="1">一個 V<sub>ov</sub>（過驅電壓）</button>
+    <button class="qbtn" type="button" data-ok="0">一個 V<sub>th</sub> + 一個 V<sub>ov</sub></button>
+    <button class="qbtn" type="button" data-ok="0">兩個 V<sub>ov</sub></button>
   </div>
-  <div class="ans" hidden><b>解析</b>：電流鏡組成的自偏壓有兩個穩定點：零電流與正常工作點。start-up 只是把電路推到正常工作點，推上去之後要關掉才不會多耗電。</div>
+  <div class="ans" hidden><b>解析</b>：PMOS 的源極接 V<sub>IN</sub>，只要 V<sub>IN</sub> − V<sub>OUT</sub> &gt; V<sub>ov</sub> 就能維持飽和。NMOS pass 則需要 V<sub>gs</sub> = V<sub>ov</sub> + V<sub>th</sub>，所以常要 charge pump 把 gate 抬到 V<sub>IN</sub> 之上。</div>
 </div>`
+      }
+    ]
   },
   {
-    id: 'chp', tag: '電源電路', min: '6 分鐘', st: 'ready',
+    id: 'chp', tag: '電源電路', min: '18 分鐘 · 2 頁', st: 'ready',
     t: 'Charge Pump 電荷泵',
     s: '用電容和開關把電壓一階一階往上搬：Dickson 架構、漣波、效率，以及 PLL 裡面那個同名但完全不同的 charge pump。',
-    body: `
-<p>電荷泵（charge pump）顧名思義：<b>用電容搬電荷</b>。它不含電感，靠兩相不重疊的時脈把電容一會兒接輸入、一會兒串上去，電壓就一階一階堆高。優點是可以用標準 CMOS 做在晶片上，缺點是電流能力小、漣波大。</p>
-<h2>Dickson 架構</h2>
+    pages: [
+      {
+        t: 'Dickson 架構與公式',
+        body: `
+<p>電荷泵（charge pump）顧名思義：<b>用電容搬電荷</b>。不含電感，靠兩相不重疊的時脈把電容一會兒接輸入、一會兒串上去，電壓一階一階堆高。優點是可以標準 CMOS 做在晶片上，缺點是電流能力小、漣波大。</p>
 <figure class="fig">
 <svg viewBox="0 0 420 210" role="img" aria-label="三級 Dickson 電荷泵：二極體串接與兩相時脈電容">
   <path class="w" d="M24 62 H48"/><text class="lbl" x="22" y="52">Vin</text>
@@ -2800,12 +4049,34 @@ Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
 <h2>三個設計重點</h2>
 <ul>
 <li><b>時脈不能重疊</b>：兩相若同時導通，電荷會倒流，輸出直接塌掉。所以要用 non-overlapping clock generator。</li>
-<li><b>二極體壓降</b>：用 diode-connected MOS 會損失一個 Vth；低壓設計改用 <b>static CTS</b>（charge transfer switch）或交叉耦合把閘極過驅，把這一個 Vth 補回來。</li>
+<li><b>二極體壓降</b>：用 diode-connected MOS 會損失一個 Vth；低壓設計改用 static CTS（charge transfer switch）或交叉耦合把閘極過驅，把這一個 Vth 補回來。</li>
 <li><b>寄生電容</b>：每級電容的下極板有對地寄生 Cp，會白白吃掉 charge sharing 的效率，所以效率隨級數增加而下降。實務上 2–4 級最常見。</li>
-</ul>
-<div class="callout warn"><b>同名不同物</b>：PLL 裡也有一個「charge pump」，它是把 PFD 的 up/down 脈衝轉成電流脈衝灌進迴路濾波器，不是用來升壓的。兩者都叫 charge pump，但功能、規格、設計重點完全不同。</div>
+</ul>`
+      },
+      {
+        t: '變體、效率與常見錯誤',
+        body: `
+<h2>常見變體</h2>
+<table>
+<thead><tr><th>型式</th><th>特點</th><th>代價</th></tr></thead>
+<tbody>
+<tr><td>Dickson（diode-connected）</td><td>最簡單、面積小</td><td>每級損失一個 Vth</td></tr>
+<tr><td>Static CTS / 交叉耦合</td><td>把 Vth 補回來，效率高</td><td>需要更多時脈相位與驅動</td></tr>
+<tr><td>Charge transfer switch（4-phase）</td><td>低壓啟動、效率最好</td><td>控制複雜、面積大</td></tr>
+<tr><td>Voltage doubler / inverter-based</td><td>適合小電流、可與時脈共用</td><td>級數多時效率掉得快</td></tr>
+</tbody></table>
+<h2>效率怎麼算</h2>
+<p>理想電荷泵的效率其實受「級數」限制：每次搬電荷，電容都要從 Vin 充電，等效上輸入提供的電荷是 (N+1) 倍，所以 <b>η<sub>max</sub> ≈ N/(N+1)</b>。再加上二極體壓降、寄生電容與時脈驅動损耗，實測通常落在 50–80%。</p>
+<div class="callout warn"><b>同名不同物</b>：PLL 裡也有一個「charge pump」，它把 PFD 的 up/down 脈衝轉成電流脈衝灌進迴路濾波器，<b>不是</b>用來升壓的。兩者都叫 charge pump，但功能、規格、設計重點完全不同。</div>
 <h2>用在哪裡</h2>
-<p>Flash / EEPROM 需要 12–20 V 的寫入電壓；LCD 驅動、MEMS、電容式觸控、White LED 驅動也都需要高於 VDD 的電壓。它們的共同點是<b>電流很小</b>——這正是電荷泵最適合的地方。</p>
+<p>Flash / EEPROM 需要 12–20 V 的寫入電壓；LCD 驅動、MEMS、電容式觸控、White LED 驅動也需要高於 VDD 的電壓。共同點是<b>電流很小</b>——這正是電荷泵最適合的地方。</p>
+<h2>常見錯誤</h2>
+<ol>
+<li><b>兩相重疊</b>：電荷倒流，輸出電壓與效率同時崩。</li>
+<li><b>飛馳電容太小</b>：每級能搬的電荷不足，重載時輸出直接掉。</li>
+<li><b>忽略啟動電流</b>：上電瞬間全部電容同時充電，inrush 會拉垮 Vin，需要 soft start 或限流。</li>
+<li><b>Vout 過衝</b>：沒有回授（開迴路）時，輕載會把輸出推到 N·Vin，可能超過元件耐壓。</li>
+</ol>
 <div class="quiz">
   <div class="qk">小試身手</div>
   <p class="q">三級 Dickson 電荷泵，Vin = 1.2 V，二極體壓降 0.3 V，無負載時輸出大約多少？</p>
@@ -2816,118 +4087,1032 @@ Vout ≈ N · (Vin − Vd) − N · Iout / (f · C)
   </div>
   <div class="ans" hidden><b>解析</b>：Vout ≈ N·(Vin − Vd) = 3 × (1.2 − 0.3) = <b>2.7 V</b>。理想公式 N·Vin 忽略了二極體壓降，實務上一定要扣掉。</div>
 </div>`
+      }
+    ]
   },
   {
-    id: 'adc', tag: '資料轉換', min: '即將推出', st: 'soon',
+    id: 'adc', tag: '資料轉換', min: '40 分鐘 · 4 架構', st: 'ready',
     t: 'ADC 類比數位轉換',
-    s: '把連續的類比電壓變成離散的位元：取樣、量化、編碼。',
-    subs: [
-      { id: 'sar', t: 'SAR 逐次逼近', s: '電容陣列 + 比較器，一個 clock 決定一個 bit；中速中精度、功耗低，最常見的選擇。' },
-      { id: 'ds', t: 'Delta-Sigma', s: 'oversampling 加上 noise shaping，把量化雜訊推到高頻再濾掉；低速高精度（audio、sensor）。' },
-      { id: 'pipe', t: 'Pipeline 流水線', s: '多級「減法 + 放大」串起來，每級只處理幾個 bit；高速中高精度（影像、通訊）。' },
-      { id: 'flash', t: 'Flash 全並列', s: '2^N−1 個比較器同時比，最快但面積與功耗爆炸；常當作高速系統裡的第一級。' }
-    ],
-    body: `
-<p>ADC 的三件事永遠不變：<b>取樣</b>（Nyquist / 抗混疊濾波）、<b>量化</b>（LSB、SNR ≈ 6.02N + 1.76 dB）、<b>架構選擇</b>（速度 vs 解析度 vs 功耗）。這一頁先留位置，之後會補上各架構的完整教學與互動練習。</p>
-<h2>之後會補上</h2>
+    s: '把連續的類比電壓變成離散的位元：取樣、量化、編碼。四種主流架構各有各的速度／精度／功耗甜蜜點。',
+    pages: [
+      {
+        t: '取樣、量化與架構選擇',
+        body: `
+<p>ADC 只做三件事：<b>取樣</b>（什麼時候抓）、<b>量化</b>（抓成哪一格）、<b>編碼</b>（變成位元）。所有架構的差異，都是「用多少硬體換多少速度與精度」。</p>
+<div class="fx">LSB = VREF / 2^N
+量化誤差 ≤ ±½ LSB
+SNR(ideal) = 6.02 N + 1.76 dB
+取樣定理：fs ≥ 2 · fmax（實務上要留 5–10 倍給抗混疊濾波器）</div>
+<h2>Nyquist 與 oversampling</h2>
 <ul>
-<li><b>SAR ADC</b>：逐次逼近，電容陣列 + 比較器，中速中精度最常見。</li>
-<li><b>Delta-Sigma ADC</b>：oversampling + noise shaping，低速高精度（audio、sensor）。</li>
-<li><b>Pipeline ADC</b>：多級流水線，高速中高精度（影像、通訊）。</li>
-<li><b>Flash ADC</b>：2^N−1 個比較器，最快但面積與功耗爆炸。</li>
+<li><b>Nyquist ADC</b>（SAR / Pipeline / Flash）：每個取樣點都輸出一個完整碼，速度靠硬體、精度靠匹配。</li>
+<li><b>Oversampling ADC</b>（Delta-Sigma）：取樣率遠高於訊號頻寬，靠數位濾波與 noise shaping 換精度。</li>
 </ul>
-<div class="callout"><b>現況</b>：介面已預留，內容與互動實驗會在後續版本加入。</div>`
+<h2>四種架構怎麼選</h2>
+<table>
+<thead><tr><th>架構</th><th>速度</th><th>解析度</th><th>功耗</th><th>典型應用</th></tr></thead>
+<tbody>
+<tr><td>SAR</td><td class="num">1–100 MS/s</td><td class="num">8–14 bit</td><td>低</td><td>MCU、sensor、可攜裝置（最泛用）</td></tr>
+<tr><td>Delta-Sigma</td><td class="num">10 kS/s–2 MS/s</td><td class="num">16–24 bit</td><td>中</td><td>audio、體重計、精密量測</td></tr>
+<tr><td>Pipeline</td><td class="num">10–500 MS/s</td><td class="num">10–14 bit</td><td>中高</td><td>影像、通訊、示波器</td></tr>
+<tr><td>Flash</td><td class="num">&gt; 1 GS/s</td><td class="num">4–8 bit</td><td>很高</td><td>高速鏈路第一級、光通訊</td></tr>
+</tbody></table>
+<p class="lab-hint">↓ 點下面任一張卡進入該架構的完整教學（不計分）。</p>
+<div class="lessons" id="advSubList">
+  <button class="lesson" type="button" data-sub="sar"><span class="ln">ADC · 架構 01</span><span class="lt">SAR 逐次逼近</span><span class="ls">電容陣列 + 比較器，一個 clock 決定一個 bit；中速中精度、功耗低。</span><span class="lm"><span>9–14 bit · 1–100 MS/s</span><span class="go2">閱讀 ▸</span></span></button>
+  <button class="lesson" type="button" data-sub="ds"><span class="ln">ADC · 架構 02</span><span class="lt">Delta-Sigma</span><span class="ls">oversampling + noise shaping，把量化雜訊推到高頻再濾掉。</span><span class="lm"><span>16–24 bit · 低速</span><span class="go2">閱讀 ▸</span></span></button>
+  <button class="lesson" type="button" data-sub="pipe"><span class="ln">ADC · 架構 03</span><span class="lt">Pipeline 流水線</span><span class="ls">多級「減法 + 放大」串起來，每級只處理幾個 bit。</span><span class="lm"><span>10–14 bit · 高速</span><span class="go2">閱讀 ▸</span></span></button>
+  <button class="lesson" type="button" data-sub="flash"><span class="ln">ADC · 架構 04</span><span class="lt">Flash 全並列</span><span class="ls">2^N−1 個比較器同時比，最快但面積與功耗爆炸。</span><span class="lm"><span>4–8 bit · GS/s</span><span class="go2">閱讀 ▸</span></span></button>
+</div>`
+      },
+      {
+        t: '規格、FoM 與驗證',
+        body: `
+<h2>規格表</h2>
+<table>
+<thead><tr><th>規格</th><th>意思</th><th>怎麼量</th></tr></thead>
+<tbody>
+<tr><td>INL / DNL</td><td>轉換曲線的靜態非線性（LSB）</td><td>掃 ramp 輸入，看每個碼的寬度與中心</td></tr>
+<tr><td>ENOB</td><td>實際有效位元 = (SINAD − 1.76)/6.02</td><td>輸入正弦波做 FFT</td></tr>
+<tr><td>SINAD / SFDR</td><td>訊號對雜訊+失真 / 對最大雜散</td><td>FFT</td></tr>
+<tr><td>Offset / Gain error</td><td>零點與斜率的誤差</td><td>兩點校正即可修掉</td></tr>
+<tr><td>Missing code</td><td>DNL = −1 LSB（某個碼永遠不出現）</td><td>大批量掃描統計</td></tr>
+</tbody></table>
+<h2>FoM：怎麼比較兩顆 ADC</h2>
+<div class="fx">Walden FoM  = P / (2^ENOB · fs)     [fJ/conv-step]   ← 速度取向
+Schreier FoM = SINAD + 10 log10(BW / P)  [dB]        ← 精度取向</div>
+<p>Sar 與 pipeline 常用 Walden（越接近 1–10 fJ 越省），Delta-Sigma 常用 Schreier（可以到 170 dB 以上）。比較時一定要註明頻寬與電源電壓。</p>
+<h2>驗證清單</h2>
+<ol>
+<li>靜態：ramp / histogram 測 DNL、INL，確認沒有 missing code。</li>
+<li>動態：相干取樣（coherent sampling）做 FFT，看 ENOB、SFDR、harmonics。</li>
+<li>輸入頻率掃到 Nyquist 附近，確認 SNDR 沒有崩（sampling network 頻寬夠不夠）。</li>
+<li>PVT + Monte Carlo：INL 是最容易在 corner 掛掉的規格。</li>
+<li>參考電壓的雜訊與驅動能力（VREF 不穩，什麼都免談）。</li>
+</ol>
+<div class="callout"><b>一句話總結</b>：ADC 的精度最後都回到「匹配」與「參考電壓」，速度回到「比較器與 sampling switch」，功耗回到「電容大小」。選架構其實就是選你要在哪裡付錢。</div>`
+      }
+    ],
+    subs: [
+      {
+        id: 'sar', t: 'SAR 逐次逼近', s: '電容陣列 + 比較器，一個 clock 決定一個 bit；中速中精度、功耗低，最常見的選擇。',
+        body: `
+<p>SAR（successive approximation register）用「二分搜尋」找答案：先把最高位元的權重放上去比一次，太大就放下，再試下一個位元。N 個 bit 只需 N 次比較，硬體幾乎只有一組電容陣列 + 一顆比較器。</p>
+<h2>電容陣列（CDAC）長什麼樣</h2>
+<figure class="fig">
+<svg viewBox="0 74 460 122" role="img" aria-label="SAR ADC 的電荷重分配電容陣列：取樣後由 SAR 邏輯逐位把底板切到 VREF 或 GND，比較器做二分搜尋">
+  <text class="lbl" x="30" y="108" text-anchor="end">VIN</text>
+  <path class="thin" d="M34 104 H42 M42 104 L50 96 M52 104 H60 M60 104 H286"/>
+  <text class="lbl" x="66" y="96">V+（共同上極板）</text>
+  <polygon class="w" points="286,80 286,132 336,106"/><text class="lbl" x="296" y="112">CMP</text>
+  <path class="thin" d="M336 106 H368"/><polygon class="arrow" points="376,106 368,102 368,110"/>
+  <rect class="w" x="380" y="82" width="72" height="48" rx="4"/>
+  <text class="lbl" x="416" y="103" text-anchor="middle">SAR</text><text class="lbl" x="416" y="118" text-anchor="middle">邏輯</text>
+  <path class="thin" d="M70 104 V126 M61 126 H79 M61 134 H79 M70 134 V148 M70 148 L79 156 M70 162 V168 M60 168 H266"/>
+  <path class="thin" d="M130 104 V126 M121 126 H139 M121 134 H139 M130 134 V148 M130 148 L139 156 M130 162 V168"/>
+  <path class="thin" d="M190 104 V126 M181 126 H199 M181 134 H199 M190 134 V148 M190 148 L199 156 M190 162 V168"/>
+  <path class="thin" d="M250 104 V126 M241 126 H259 M241 134 H259 M250 134 V148 M250 148 L259 156 M250 162 V168"/>
+  <text class="lbl" x="86" y="131">8C</text><text class="lbl" x="146" y="131">4C</text>
+  <text class="lbl" x="206" y="131">2C</text><text class="lbl" x="266" y="131">C</text>
+  <text class="lbl" x="272" y="172">VREF / GND</text>
+  <text class="lbl" x="60" y="190">每一位的底板由 SAR 邏輯切換：切到 VREF 時把電荷推上共同上極板</text>
+</svg>
+<figcaption>電荷重分配（charge-redistribution）CDAC：取樣時整組電容的上極板記住 V<sub>IN</sub>；轉換時 SAR 邏輯從 MSB 開始，把該位元的底板切到 V<sub>REF</sub>，上極板就被電荷分配推高一段，比較器再回答「現在比 V<sub>IN</sub> 大還是小」。所以精度幾乎全押在<b>電容比值</b>上——SAR 的 DNL/INL 是 layout 問題，不是電路問題。</figcaption>
+</figure>
+<h2>轉換流程（以 4 bit、VREF = 1 V 為例）</h2>
+<div class="fx">VIN = 0.65 V , LSB = 62.5 mV
+1) 試 1000 (0.5 V)  → VIN 較大 → 保留 1
+2) 試 1100 (0.75 V) → VIN 較小 → 該位元歸 0
+3) 試 1010 (0.625 V)→ VIN 較大 → 保留 1
+4) 試 1011 (0.6875 V)→ VIN 較小 → 歸 0
+結果 1010 = 0.625 V，誤差 25 mV ≤ ½ LSB</div>
+<h2>電容陣列的兩個關鍵</h2>
+<ul>
+<li><b>匹配</b>：MSB 電容是 LSB 的 2^(N−1) 倍，靠 unit cap 並聯組成。匹配誤差直接變成 DNL/INL → 面積是精度。</li>
+<li><b>寄生</b>：上極板寄生電容（top-plate parasitic）會造成增益誤差，通常用「底板取樣（bottom-plate sampling）」避開。</li>
+</ul>
+<h2>常見技巧</h2>
+<ol>
+<li><b>Split-capacitor / 分段陣列</b>：大陣列拆成兩段，降低總電容（省功耗）但要處理橋接電容的匹配。</li>
+<li><b>冗餘（redundancy）</b>：多放幾顆輔助電容，允許前面的比較決策出錯，用後面的位元補回來 → 大幅放寬比較器 offset 的需求。</li>
+<li><b>非同步（asynchronous）控制</b>：內部自己產生 clock，速度快又省電（沒有全域 clock 分佈）。</li>
+<li><b>比較器 offset 校正</b>：電容 trim 或 auto-zero。</li>
+</ol>
+<div class="callout"><b>速度極限</b>：轉換時間 ≈ N ×（DAC settling + 比較器延遲）。要更快就減少 N、加大驅動、或用非同步 + 冗餘。</div>`
+      },
+      {
+        id: 'ds', t: 'Delta-Sigma', s: 'oversampling 加上 noise shaping，把量化雜訊推到高頻再濾掉；低速高精度（audio、sensor）。',
+        body: `
+<p>Delta-Sigma 的核心想法：<b>不要跟雜訊硬拚，把它搬到看不見的地方</b>。用遠高於訊號頻寬的取樣率，再用積分器把量化雜訊「整形」到高頻，最後用數位濾波器砍掉。</p>
+<div class="fx">OSR = fs / (2 · BW)
+一階：SQNR ≈ 6.02N + 1.76 − 5.17 + 30 log10(OSR)
+二階：再快 15 dB/oct（noise shaping 斜率 40 dB/dec）
+例：N = 1 bit、OSR = 256 → 約 16–17 bit 等效</div>
+<h2>結構</h2>
+<ul>
+<li><b>迴路濾波器</b>：一階（單一積分器）穩定但精度有限；二階最常用；三階以上要小心穩定性。</li>
+<li><b>量化器</b>：1 bit（比較器）最線性——因為 1 bit DAC 天生完美線性，這是 Delta-Sigma 的最大優勢。</li>
+<li><b>DAC 回授</b>：多 bit 可以提高穩定性與動態範圍，但 DAC 的失配會直接進訊號（常用 DEM / DWA 動態元件匹配）。</li>
+<li><b>數位濾波 + 降取樣</b>：sinc 濾波器 + decimator，把高頻雜訊砍掉。</li>
+</ul>
+<h2>常見問題</h2>
+<ol>
+<li><b>Idle tone</b>：直流輸入時出現可聽的單音 → 用 dither。</li>
+<li><b>穩定性</b>：高階迴路遇到大訊號會過載（integrator 飽和）→ 要設計 overload recovery。</li>
+<li><b>時脈抖動</b>：連續時間（CT）與離散時間（DT）對 jitter 的敏感度不同，CT 對 clock jitter 更敏感。</li>
+<li><b>群延遲</b>：數位濾波器的 latency，控制迴路要考慮。</li>
+</ol>
+<div class="callout"><b>典型規格</b>：audio 20 kHz 頻寬、OSR 64–256、SNR 100–120 dB、功耗 0.1–10 mW。這是「用速度和數位面積換精度」的極致。</div>`
+      },
+      {
+        id: 'pipe', t: 'Pipeline 流水線', s: '多級「減法 + 放大」串起來，每級只處理幾個 bit；高速中高精度（影像、通訊）。',
+        body: `
+<p>Pipeline ADC 把「一位一位比」換成「一級一級算」：每一級先做粗量化，把量化結果減掉、殘餘量放大兩倍交給下一級。因為每一級都有自己的取樣保持電路，資料像生產線一樣同時流動 → 吞吐量 = 取樣率，但代價是固定延遲（latency）。</p>
+<div class="fx">每級 1.5 bit（最常見）：比較 VIN 與 ±¼ VREF
+殘餘 = 2·(VIN − D·VREF/2)  → 交給下一級
+總位元數 ≈ m × 每級 bit 數
+速度 ≈ fs（每級只需在一個 clock 內完成）</div>
+<h2>為什麼是 1.5 bit</h2>
+<p>1.5 bit/級有三個比較區間（01/10 之外還有一個「不確定」區），等於給比較器 offset 留了 ¼ VREF 的容忍度。後面的數位邏輯再把冗餘位元相加，這是 pipeline 能用「不那麼準」的類比換速度的關鍵。</p>
+<h2>誤差來源</h2>
+<ul>
+<li><b>MDAC 增益誤差</b>：乘 2 的放大器增益不準 → 級間增益誤差 → 數位校正（digital calibration）修。</li>
+<li><b>電容失配</b>：決定 INL/DNL，靠 unit cap 與校正。</li>
+<li><b>比較器 offset</b>：1.5 bit 架構已放寬，但仍要校正。</li>
+<li><b>時脈 skew</b>：各級同時取樣，skew 會造成失真。</li>
+<li><b>放大器 settling</b>：每一級只有半個 clock 可用 → 需要高 GBW 與好的 settling（這也是 pipeline 功耗的主因）。</li>
+</ul>
+<h2>與其他架構的比較</h2>
+<table>
+<thead><tr><th></th><th>Pipeline</th><th>SAR</th></tr></thead>
+<tbody>
+<tr><td>吞吐</td><td>高（每級並行）</td><td>中（序列比較）</td></tr>
+<tr><td>延遲</td><td>多個 clock</td><td>N 個 clock</td></tr>
+<tr><td>功耗</td><td>高（多顆放大器）</td><td>低（幾乎只有比較器）</td></tr>
+<tr><td>精度</td><td>10–14 bit</td><td>8–14 bit</td></tr>
+</tbody></table>
+<div class="callout"><b>Pipelined-SAR</b>：把 SAR 當成 pipeline 的一級（第一級用 SAR 做 6–8 bit，殘餘放大後再一級 SAR）→ 兼具低功耗與高速，是目前通訊應用的主流之一。</div>`
+      },
+      {
+        id: 'flash', t: 'Flash 全並列', s: '2^N−1 個比較器同時比，最快但面積與功耗爆炸；常當作高速系統裡的第一級。',
+        body: `
+<p>Flash（也叫 parallel）ADC 用 2<sup>N</sup>−1 個比較器，把參考電壓用電阻串分成 2<sup>N</sup> 段，一次比較就得到全部位元。延遲只有一個比較器的時間 → 最快的架構。</p>
+<div class="fx">比較器數量 = 2^N − 1
+N = 6 → 63 顆；N = 8 → 255 顆
+輸入電容 ∝ 2^N · C_cmp  → 驅動負擔爆炸
+功耗 ∝ 2^N · I_cmp</div>
+<h2>問題與解法</h2>
+<ul>
+<li><b>面積/功耗呈指數上升</b>：所以實務上 Flash 只做 4–8 bit，或當成 pipeline 的第一級（負責高位元）。</li>
+<li><b>比較器 offset → 氣泡碼（bubble error）</b>：溫度計碼出現 0-1-0，需要 bubble correction（ROM / 邏輯修）。</li>
+<li><b>輸入電容大</b>：前面要加 buffer 或取樣保持電路。</li>
+<li><b>參考串的靜態電流</b>：電阻串一直耗電，低功耗設計會用電容分壓（switched-capacitor）取代。</li>
+</ul>
+<h2>變體</h2>
+<table>
+<thead><tr><th>型式</th><th>特點</th></tr></thead>
+<tbody>
+<tr><td>全並列 Flash</td><td>最快，2^N−1 比較器</td></tr>
+<tr><td>Two-step / subranging</td><td>先粗後細，比較器數量大幅下降</td></tr>
+<tr><td>Interpolating</td><td>用電阻內插減少前置放大器數量</td></tr>
+<tr><td>Folding</td><td>用折疊電路把多個比較門檻壓成少數幾條</td></tr>
+</tbody></table>
+<div class="callout"><b>典型應用</b>：光通訊（10–40 GS/s 的前端）、高速示波器、pipeline ADC 的第一級（4–6 bit）。單獨使用時幾乎只出現在「速度 > 一切」的場合。</div>
+<div class="quiz">
+  <div class="qk">小試身手</div>
+  <p class="q">一顆 10 bit、理想條件的 ADC，SNR 大約是多少？</p>
+  <div class="qbtns">
+    <button class="qbtn" type="button" data-ok="0">50 dB</button>
+    <button class="qbtn" type="button" data-ok="1">62 dB</button>
+    <button class="qbtn" type="button" data-ok="0">80 dB</button>
+  </div>
+  <div class="ans" hidden><b>解析</b>：SNR = 6.02N + 1.76 = 6.02×10 + 1.76 ≈ <b>62 dB</b>（ENOB ≈ 10）。實測會更低，因為還有熱雜訊、時脈抖動與失真。</div>
+</div>`
+      }
+    ]
   },
   {
-    id: 'pll', tag: '時脈', min: '即將推出', st: 'soon',
+    id: 'pll', tag: '時脈', min: '45 分鐘 · 4 頁 + 3 架構', st: 'ready',
     t: 'PLL 鎖相迴路',
-    s: '用相位比較把輸出時脈鎖在參考頻率上，順便做倍頻、除頻與去抖動。',
-    subs: [
-      { id: 'intn', t: 'Integer-N PLL', s: '整數除頻，架構最單純；輸出頻率只能是參考頻率的整數倍，解析度與迴路頻寬互相牽制。' },
-      { id: 'fracn', t: 'Fractional-N PLL', s: '小數除頻（DSM 或 injection-locked），頻率解析度細很多；代價是要處理量化雜訊與突波。' },
-      { id: 'dll', t: 'DLL 延遲鎖定', s: '鎖「相位」不鎖頻率，用延遲線對齊時脈；常用在 DDR 與時脈同步，穩定性比 PLL 好。' }
-    ],
-    body: `
-<p>PLL 的四個積木：<b>PFD</b>（相位頻率偵測）、<b>charge pump</b>、<b>loop filter</b>、<b>VCO</b>，再加上除頻器組成回授。鎖定後輸出頻率 = N × 參考頻率。</p>
-<h2>之後會補上</h2>
+    s: '用相位比較把輸出時脈鎖在參考頻率上，順便做倍頻、除頻與去抖動。四個積木、兩個參數（ωn、ζ）就決定一切。',
+    pages: [
+      {
+        t: '四個積木與迴路參數',
+        body: `
+<figure class="fig">
+<svg viewBox="0 0 440 160" role="img" aria-label="PLL 方塊圖：PFD、charge pump、迴路濾波器、VCO 與除頻器">
+  <rect class="w" x="20" y="60" width="66" height="40" rx="4"/><text class="lbl dev" x="32" y="85">PFD</text>
+  <rect class="w" x="104" y="60" width="56" height="40" rx="4"/><text class="lbl dev" x="112" y="85">CP</text>
+  <rect class="w" x="178" y="60" width="64" height="40" rx="4"/><text class="lbl dev" x="184" y="85">LF</text>
+  <rect class="w" x="260" y="60" width="66" height="40" rx="4"/><text class="lbl dev" x="268" y="85">VCO</text>
+  <rect class="w" x="140" y="126" width="86" height="28" rx="4"/><text class="lbl dev" x="150" y="145">÷N</text>
+  <path class="w" d="M86 80 H104 M160 80 H178 M242 80 H260 M326 80 H400"/>
+  <path class="w" d="M140 140 H120 V80 H20 M226 140 H240 V80"/>
+  <text class="lbl" x="404" y="84">FOUT</text><text class="lbl" x="4" y="146">FREF</text>
+  <circle class="dot" cx="400" cy="80" r="3"/><circle class="dot" cx="240" cy="80" r="3"/>
+</svg>
+<figcaption>PFD 比較 F<sub>REF</sub> 與回授的相位，charge pump 把相位差轉成電流，迴路濾波器積分成控制電壓，VCO 依電壓振盪，除頻器把輸出除回參考的頻率。</figcaption>
+</figure>
+<div class="fx">鎖定後：FOUT = N · FREF
+二階 type-II 迴路：
+ωn = √( ICP·KVCO / (2π·N·C1) )
+ζ  = (R1·C1/2) · ωn
+PM ≈ atan(2ζ)        ← 目標 50–70°
+鎖定時間 ≈ 4 / (ζ·ωn)</div>
+<h2>每個積木在幹嘛</h2>
+<table>
+<thead><tr><th>積木</th><th>功能</th><th>設計重點</th></tr></thead>
+<tbody>
+<tr><td>PFD</td><td>比較兩個時脈的相位／頻率</td><td>死區（dead zone）要消除；輸出 up/down 脈衝</td></tr>
+<tr><td>Charge pump</td><td>把脈衝變成電流</td><td>up/down 電流要匹配（不匹配 → 參考突波）</td></tr>
+<tr><td>Loop filter</td><td>決定迴路頻寬與相位裕度</td><td>R1/C1 定 ωn、ζ；C2 抑制漣波</td></tr>
+<tr><td>VCO</td><td>電壓 → 頻率</td><td>K<sub>VCO</sub> 線性度、相位雜訊、頻帶切換</td></tr>
+<tr><td>÷N</td><td>把 F<sub>OUT</sub> 除回 F<sub>REF</sub></td><td>高速除頻器功耗、可程式性</td></tr>
+</tbody></table>
+<h2>兩個最重要的直覺</h2>
+<ol>
+<li><b>迴路是低通</b>：對 VCO 的相位雜訊是高通（迴路會把低頻部分壓掉），對參考與 PFD 的雜訊是低通（原封不動傳到輸出）。所以迴路頻寬就是在選「擋哪一邊的雜訊」。</li>
+<li><b>N 越大越難做</b>：ωn ∝ 1/√N，而且參考突波與 in-band 雜訊都會被 20log(N) 放大 → 高倍頻比要靠 fractional-N 或更好的架構。</li>
+</ol>`
+      },
+      {
+        t: '設計流程、Spur 與 Jitter',
+        body: `
+<h2>設計流程</h2>
+<ol>
+<li>決定 <b>F<sub>REF</sub></b>、<b>F<sub>OUT</sub></b> → 得 N（整數或小數）。</li>
+<li>選 <b>迴路頻寬 f<sub>c</sub></b>：一般取 f<sub>REF</sub>/10 ~ f<sub>REF</sub>/20（要避開參考突波），同時要夠寬以壓抑 VCO 低頻雜訊。</li>
+<li>由 f<sub>c</sub> 與 PM 反推 <b>R1、C1</b>；C2 ≈ C1/10 抑制控制電壓漣波。</li>
+<li>決定 <b>I<sub>CP</sub></b> 與 <b>K<sub>VCO</sub></b>：I<sub>CP</sub> 太小時雜訊敏感，太大則面積與功耗上升。</li>
+<li>檢查 <b>PM 50–70°</b>、<b>GM &gt; 10 dB</b>，跑 corner 與溫度。</li>
+<li>驗 <b>lock time</b>（含頻率切換）、<b>spur</b>、<b>jitter</b>。</li>
+</ol>
+<h2>Spur（突波）從哪裡來</h2>
 <ul>
-<li><b>Integer-N PLL</b>：整數除頻，架構簡單；缺點是參考突波與頻率解析度綁在一起。</li>
-<li><b>Fractional-N PLL</b>：小數除頻（DSM 或 injection-locked），解析度高但要多處理量化雜訊。</li>
-<li><b>DLL / 延遲鎖定迴路</b>：鎖相位不鎖頻率，常用在時脈同步與 DDR。</li>
-<li><b>規格</b>：jitter、phase noise、鎖定時間、spur、迴路頻寬。</li>
+<li><b>參考突波</b>：迴路濾波器對 F<sub>REF</sub> 的漣波抑制不足 → 在 F<sub>OUT</sub> ± F<sub>REF</sub> 出現突波。加大 C2 或降低 f<sub>c</sub> 可改善。</li>
+<li><b>CP 不匹配</b>：up/down 電流差 → 固定相位偏移 → 參考突波變大。</li>
+<li><b>Fractional spur</b>：小數除頻的週期性誤差 → 用 DSM + DAC 補償或 dither。</li>
+<li><b>Integer boundary spur</b>：f<sub>OUT</sub> 接近整數倍時最嚴重，是 fractional-N 的經典難題。</li>
 </ul>
-<div class="callout"><b>現況</b>：介面已預留，內容與互動實驗會在後續版本加入。</div>`
+<h2>Jitter：PLL 的成績單</h2>
+<div class="fx">RMS jitter（秒） = (1/(2π·FOUT)) · √(2 · ∫ L(f) df)
+in-band 相位雜訊 ≈ 20 log10(N) + 參考/PFD 雜訊
+VCO 貢獻：f &lt; fc 被壓抑，f &gt; fc 直接輸出</div>
+<h2>量測</h2>
+<ol>
+<li><b>頻譜</b>：看相位雜訊 L(f)、參考突波、雜散。</li>
+<li><b>時域</b>：示波器看 lock time（頻率切換後多久穩定）、週期 jitter 直方圖。</li>
+<li><b>PVT</b>：K<sub>VCO</sub> 隨 corner 變化最大 → 迴路頻寬與 PM 要留 margin。</li>
+</ol>
+<div class="callout"><b>和練習區的連結</b>：進階練習區的「PLL 除頻鎖定」就是這兩個參數的遊戲版：你調 N、I<sub>CP</sub>、C1、R1，看 F<sub>OUT</sub>、PM 與鎖定時間怎麼一起變。</div>`
+      },
+      {
+        t: 'SUB-BLOCK 拆解（一）PFD · CP · LF',
+        body: `
+<p>迴路圖上的四個方塊，每一個內部都還有自己的小電路。這一頁把它們拆到「可以拿去畫 schematic」的層級：<b>PFD 是兩顆 D 正反器 + 一個 reset</b>、<b>charge pump 是兩組開關 + 兩顆電流源</b>、<b>loop filter 是一組 RC</b>。三個方塊一起決定雜訊、突波與鎖定時間。</p>
+<table>
+<thead><tr><th>方塊</th><th>內部</th><th>關鍵規格</th><th>常見死法</th></tr></thead>
+<tbody>
+<tr><td><b>PFD</b></td><td>2 × D-FF + NAND（reset）</td><td>最高工作頻率、死區、reset 延遲、UP/DN 對稱</td><td>死區沒消 → 鎖定後抖動變大；reset 太慢 → 速度上不去</td></tr>
+<tr><td><b>Charge pump</b></td><td>UP/DN 開關 + 電流源（cascode）</td><td>I<sub>CP</sub> 上下匹配（&lt;1%）、輸出阻抗、電荷注入</td><td>上下電流不匹配 → 固定相位誤差 → 參考突波</td></tr>
+<tr><td><b>Loop filter</b></td><td>R1 + C1（串）＋ C2（並）</td><td>ω<sub>n</sub>、ζ、第三極位置、電阻熱雜訊</td><td>C2 太小 → 控制線漣波直接調變 VCO → 突波</td></tr>
+</tbody></table>
+<figure class="fig">
+<svg viewBox="0 0 460 196" role="img" aria-label="PFD 內部電路：兩顆 D 正反器比較 FREF 與回授相位，UP 與 DN 同時為 1 時由 NAND 產生 reset">
+  <rect class="w" x="56" y="30" width="64" height="48" rx="4"/><text class="lbl" x="88" y="58" text-anchor="middle">DFF</text>
+  <rect class="w" x="56" y="112" width="64" height="48" rx="4"/><text class="lbl" x="88" y="140" text-anchor="middle">DFF</text>
+  <path class="thin" d="M56 60 L64 66 L56 72 M56 142 L64 148 L56 154"/>
+  <path class="thin" d="M24 66 H56 M24 148 H56 M88 18 V30 M88 100 V112"/>
+  <text class="lbl" x="50" y="60" text-anchor="end">FREF</text><text class="lbl" x="50" y="142" text-anchor="end">FB</text>
+  <text class="lbl" x="82" y="14">1</text><text class="lbl" x="82" y="96">1</text>
+  <path class="thin" d="M120 44 H148 M148 44 V86 H170 M148 44 H232 M120 126 H160 M160 126 V104 H170 M160 126 H232"/>
+  <polygon class="arrow" points="240,44 232,40 232,48"/><polygon class="arrow" points="240,126 232,122 232,130"/>
+  <text class="lbl" x="246" y="48">UP</text><text class="lbl" x="246" y="130">DN</text>
+  <rect class="w" x="170" y="78" width="48" height="34" rx="4"/><text class="lbl" x="194" y="100" text-anchor="middle">NAND</text>
+  <path class="thin" d="M218 95 H270 V18 H112 V30 M270 95 V168 H88 V160"/>
+  <circle class="dot" cx="148" cy="44" r="2.6"/><circle class="dot" cx="160" cy="126" r="2.6"/><circle class="dot" cx="270" cy="95" r="2.6"/>
+  <text class="val" x="230" y="188" text-anchor="middle">UP·DN 同時為 1 → reset（脈衝寬 = reset 延遲）</text>
+</svg>
+<figcaption>PFD 的真相：兩顆 D 正反器的 D 都接 1，FREF 與回授誰的邊緣先到，誰的輸出就被拉高；UP 與 DN 同時為 1 時 NAND 立刻把兩顆都清掉。<b>脈衝寬度 = reset 延遲</b>——太短會有死區（相位差極小時兩邊都不動，迴路失去靈敏度），太長則限制最高操作頻率。</figcaption>
+</figure>
+<div class="fx">二階 type-II（R1 與 C1 串聯、C2 並聯）：
+ωn = √( ICP·KVCO / (2π·N·C1) )      ← ICP 與 KVCO 一起定頻寬
+ζ  = (R1·C1/2) · ωn                  ← R1 決定阻尼（PM）
+第三極 ≈ 1/(R1·C2)                   ← 要 &gt; 10·ωn，否則 PM 被吃掉
+典型：fc ≈ FREF/10、PM 55–65°、C2 ≈ C1/10、ICP 50–500 µA</div>
+<figure class="fig">
+<svg viewBox="0 0 460 212" role="img" aria-label="Charge pump 與被動迴路濾波器：UP/DN 開關把電流打進由 R1、C1、C2 組成的濾波器，產生 Vctrl">
+  <path class="rail" d="M60 20 H440"/><path class="rail" d="M60 180 H440"/>
+  <text class="lbl" x="436" y="14" text-anchor="end">VDD</text><text class="lbl" x="436" y="194" text-anchor="end">GND</text>
+  ${fSrc(150, 52, 'Iup', false)}
+  <path class="thin" d="M150 41 V20 M150 63 V86 M150 86 L141 100 M150 104 V112"/>
+  <path class="thin" d="M150 112 V124 M150 124 L143 136"/>
+  ${fSrc(150, 158, 'Idn', true)}
+  <path class="thin" d="M150 169 V180 M150 112 H300 M300 112 V120 M300 144 V150 M290 150 H310 M290 158 H310 M300 158 V180"/>
+  ${fRes(300, 120, 24, '')}
+  <path class="thin" d="M300 112 H380 M380 112 V126 M370 126 H390 M370 134 H390 M380 134 V180"/>
+  <circle class="dot" cx="150" cy="112" r="2.6"/><circle class="dot" cx="300" cy="112" r="2.6"/>
+  <path class="thin" d="M34 112 H134"/><polygon class="arrow" points="142,112 134,108 134,116"/>
+  <text class="lbl" x="34" y="104">UP / DN</text>
+  <text class="lbl" x="200" y="106">Vctrl</text>
+  <text class="lbl" x="314" y="132">R1</text><text class="lbl" x="314" y="166">C1</text><text class="lbl" x="394" y="134">C2</text>
+  <text class="val" x="216" y="208" text-anchor="middle">C2 吸掉控制線漣波；R1·C1 定 ωn 與 ζ</text>
+</svg>
+<figcaption>Charge pump 把相位差換成<b>電流</b>：UP 導通時從 VDD 打電流進來、DN 導通時抽回地，淨電荷 = I<sub>CP</sub> × 相位誤差。迴路濾波器再把它積分成 V<sub>ctrl</sub>：R1 提供零點（相位領先）把 PM 救回來，C2 旁通高頻漣波、避免每個參考週期都去調變 VCO。</figcaption>
+</figure>
+<h2>三個最容易漏的檢查</h2>
+<ol>
+<li><b>Dead zone</b>：PFD 在相位差極小時兩邊都沒有脈衝，迴路失去靈敏度 → 鎖定後抖動變大。解法是讓 reset 延遲比脈衝寬（或加最小脈衝產生器）。</li>
+<li><b>UP/DN 電流不匹配</b>：就算鎖定，固定電流差也會造成靜態相位誤差 → 參考突波。靠 cascode 電流源 + 對稱佈局，量測時直接看控制線上的週期性漣波。</li>
+<li><b>第三極</b>：R1–C2 形成的極點若太靠近 fc，會把 PM 吃掉 10–20°。經驗值是 R1·C2 的極點至少放在 10·fc。</li>
+</ol>
+<div class="callout"><b>對回練習區</b>：「PLL 除頻鎖定」裡的 I<sub>CP</sub>、C1、R1 三根滑桿就是在動這三個方塊：I<sub>CP</sub> 改 ω<sub>n</sub>、C1 改 ω<sub>n</sub> 與鎖定時間、R1 改 ζ（PM）。實務上這三個數值是被 loop filter 的電阻與電容<b>同時</b>決定的，不能分開調。</div>`
+      },
+      {
+        t: 'SUB-BLOCK 拆解（二）VCO · 除頻器 · ΣΔ',
+        body: `
+<p>剩下兩個方塊決定「能不能跑」與「頻率能不能細調」：<b>VCO</b> 把電壓變成頻率（也貢獻大部分相位雜訊），<b>除頻器</b> 把輸出頻率拉回 PFD 的工作範圍；小數除頻則在除頻器前面再插一顆 <b>ΣΔ 調變器</b>，把量化誤差整形到高頻讓迴路濾掉。</p>
+<figure class="fig">
+<svg viewBox="0 0 460 176" role="img" aria-label="三級環形 VCO：三顆反相器串成環，Vctrl 調整尾電流或 varactor 改變延遲，輸出頻率隨之變化">
+  <polygon class="w" points="84,52 84,92 118,72"/><circle class="w" cx="122" cy="72" r="4"/>
+  <polygon class="w" points="160,52 160,92 194,72"/><circle class="w" cx="198" cy="72" r="4"/>
+  <polygon class="w" points="236,52 236,92 270,72"/><circle class="w" cx="274" cy="72" r="4"/>
+  <path class="thin" d="M126 72 H160 M202 72 H236 M278 72 H300 V128 H68 V72 H84"/>
+  <path class="thin" d="M300 72 H344"/><polygon class="arrow" points="352,72 344,68 344,76"/>
+  <text class="lbl" x="358" y="76">FOUT</text>
+  <circle class="dot" cx="300" cy="72" r="2.6"/>
+  <rect class="box" x="322" y="96" width="118" height="44" rx="4"/>
+  <text class="lbl" x="381" y="115" text-anchor="middle">Vctrl → Itail</text>
+  <text class="lbl" x="381" y="131" text-anchor="middle">（或 varactor）</text>
+  <path class="thin" d="M322 118 H308"/><polygon class="arrow" points="302,118 310,114 310,122"/>
+  <circle class="dot" cx="300" cy="118" r="2.6"/>
+  <text class="lbl" x="230" y="34" text-anchor="middle">3 級環形振盪器：每級延遲 tp → 週期 ≈ 6·tp</text>
+  <text class="val" x="230" y="166" text-anchor="middle">FOUT = F0 + KVCO · ( Vctrl − V0 )</text>
+</svg>
+<figcaption>環形 VCO 的調頻方式：V<sub>ctrl</sub> 改尾電流（或電源電壓）→ 每級反相器的延遲 t<sub>p</sub> 改變 → 頻率跟著變。它的優點是面積小、調範圍大、可以多相位輸出；缺點是 Q 很低，相位雜訊比 LC VCO 差 10–20 dB，所以高頻、低 jitter 的應用會改用 LC tank + varactor。</figcaption>
+</figure>
+<div class="fx">KVCO = ΔFOUT / ΔVctrl  (Hz/V)   ← 好調，但雜訊放大也跟著變大
+Leeson：L(f) ∝ 10·log[ (F0/(2Q·f))² · (1 + fc/f) · F·kT/P ]
+環形 VCO：面積小、調範圍大、相位雜訊差（−90 ~ −110 dBc/Hz @1 MHz）
+LC VCO：Q 高 → 好 10–20 dB，代價是面積大、調範圍窄（要 band select）
+調範圍要含 PVT：至少 ±10%，通常是「數位頻帶粗調 + 類比細調」兩段</div>
+<figure class="fig">
+<svg viewBox="0 0 460 176" role="img" aria-label="除頻鏈：雙模 prescaler 加上 B 計數器與 A 吞脈衝計數器，小數 N 再串一顆 ΣΔ 調變器">
+  <rect class="w" x="24" y="44" width="112" height="44" rx="4"/><text class="lbl" x="80" y="71" text-anchor="middle">÷P / P+1</text>
+  <rect class="w" x="176" y="26" width="126" height="40" rx="4"/><text class="lbl" x="239" y="51" text-anchor="middle">B 計數器</text>
+  <rect class="w" x="176" y="92" width="126" height="40" rx="4"/><text class="lbl" x="239" y="117" text-anchor="middle">A 吞脈衝計數器</text>
+  <rect class="box" x="330" y="92" width="112" height="40" rx="4"/>
+  <text class="lbl" x="386" y="111" text-anchor="middle">ΣΔ 調變器</text><text class="lbl" x="386" y="126" text-anchor="middle">（只有小數 N）</text>
+  <path class="thin" d="M136 66 H150 M150 66 V46 H176 M150 66 V112 H176 M302 46 H400"/>
+  <polygon class="arrow" points="408,46 400,42 400,50"/><text class="lbl" x="412" y="50">→ PFD</text>
+  <path class="thin" d="M302 104 H316 V152 H68 V92"/><polygon class="arrow" points="68,88 64,96 72,96"/>
+  <path class="thin" d="M330 120 H308"/><polygon class="arrow" points="302,120 310,116 310,124"/>
+  <circle class="dot" cx="150" cy="66" r="2.6"/>
+  <text class="lbl" x="80" y="34" text-anchor="middle">FIN（來自 VCO）</text>
+  <path class="thin" d="M80 38 V44"/><polygon class="arrow" points="80,44 76,36 84,36"/>
+  <text class="val" x="230" y="168" text-anchor="middle">整數 N：N = P·B + A　｜　小數 N：平均 N + α</text>
+</svg>
+<figcaption>除頻鏈的兩段式寫法：前級 prescaler 只會 ÷P 或 ÷(P+1)（速度最快），後面用 B 與 A 兩個計數器決定除多久——先吞 A 次 ÷(P+1)，再 ÷P 到滿 B 次，總除頻比就是 N = P·B + A。小數 N 時，把 A 換成由 ΣΔ 調變器產生的 0/1 序列，長時間平均就成了 N + α。</figcaption>
+</figure>
+<table>
+<thead><tr><th>除頻器型式</th><th>速度</th><th>功耗</th><th>用在哪</th></tr></thead>
+<tbody>
+<tr><td>Static（TSPC / CML）</td><td>高（GHz 級）</td><td>中～高</td><td>前級 prescaler</td></tr>
+<tr><td>Dynamic（clocked inverter）</td><td>中</td><td>低</td><td>後級低速計數器</td></tr>
+<tr><td>Pulse swallow</td><td>—</td><td>低</td><td>整數-N：N = P·B + A</td></tr>
+<tr><td>ΣΔ fractional</td><td>—</td><td>低</td><td>小數-N：平均除頻比 N + α</td></tr>
+</tbody></table>
+<h2>PLL vs DLL</h2>
+<p>DLL 只鎖「相位」不鎖頻率：輸入時脈走一條<b>可調延遲線（VCDL）</b>，相位比較器比較輸入與延遲後的相位，控制電壓調整延遲量。所以它是<b>一階系統</b>，天生穩定。</p>
+<table>
+<thead><tr><th></th><th>PLL</th><th>DLL</th></tr></thead>
+<tbody>
+<tr><td>狀態變數</td><td>相位（VCO 會積分 → 二階）</td><td>延遲（不會積分 → 一階）</td></tr>
+<tr><td>穩定度</td><td>要補償 ζ、PM</td><td>天生穩定，幾乎不用補償</td></tr>
+<tr><td>jitter</td><td>VCO 抖動會累積</td><td>不累積（延遲線不會記住上一週期）</td></tr>
+<tr><td>倍頻</td><td>可以（÷N 放回授）</td><td>不行，只能相位對齊／去偏斜</td></tr>
+</tbody></table>
+<div class="callout"><b>面試常問</b>：為什麼 DLL 沒有 jitter accumulation？因為 VCO 會把每個週期的相位誤差「記住」並累加，而延遲線只把輸入時脈固定延後一段時間，誤差不會回授到自己身上。</div>`
+      }
+    ],
+    subs: [
+      {
+        id: 'intn', t: 'Integer-N PLL', s: '整數除頻，架構最單純；輸出頻率只能是參考頻率的整數倍，解析度與迴路頻寬互相牽制。',
+        body: `
+<p>最經典的 PLL：除頻比只能取整數，所以 F<sub>OUT</sub> = N · F<sub>REF</sub>。硬體最簡單、雜訊最好預測，是通訊系統裡 frequency synthesizer 的起點。</p>
+<div class="fx">頻率解析度 = FREF           ← 想細一點就要降 FREF
+參考突波位於 FOUT ± k·FREF
+迴路頻寬 fc ≲ FREF / 10      ← 否則突波壓不住
+In-band 雜訊 ≈ 20log10(N) + PFD/參考雜訊</div>
+<h2>核心取捨</h2>
+<ul>
+<li><b>解析度 ↔ 迴路頻寬</b>：要 1 kHz 解析度就得用 1 kHz 的 F<sub>REF</sub>，迴路頻寬只能 ~100 Hz → 鎖定慢、VCO 低頻雜訊壓不掉。</li>
+<li><b>N 越大，in-band 雜訊越大</b>：20log(N) 的放大是整數-N 最痛的點。</li>
+<li><b>參考突波</b>：F<sub>REF</sub> 的漣波直接調變 VCO，需要好的 loop filter（C2、RC 濾波）。</li>
+</ul>
+<h2>設計重點</h2>
+<ol>
+<li>PFD 死區消除（否則鎖定後抖動變大）。</li>
+<li>CP 電流匹配（up/down 差 &lt;1%）→ 減少靜態相位誤差。</li>
+<li>VCO 頻帶切換（band select）+ 自動頻率控制（AFC），避免 K<sub>VCO</sub> 過大。</li>
+<li>除頻器用 TSPC / CML，看速度與功耗取捨。</li>
+</ol>
+<div class="callout"><b>什麼時候還用它</b>：不需要細頻率步進（例如固定頻率的時脈產生）、要求低 jitter 與低功耗，或當作 fractional-N 的基礎。</div>`
+      },
+      {
+        id: 'fracn', t: 'Fractional-N PLL', s: '小數除頻（DSM 或 injection-locked），頻率解析度細很多；代價是要處理量化雜訊與突波。',
+        body: `
+<p>把小數部分用「平均」的方式實現：除頻比在 N 與 N+1 之間快速跳動，長時間平均就是 N+α。這樣 F<sub>REF</sub> 可以很高（雜訊小、頻寬大），同時保有細頻率解析度。</p>
+<div class="fx">FOUT = (N + α) · FREF ,  α = 0.xxx
+雙模除頻器（dual-modulus）+ ΣΔ modulator 控制
+量化雜訊被 DSM 整形到高頻 → 由迴路低通濾掉
+階數 L → 雜訊斜率約 20L dB/dec</div>
+<h2>三個難題</h2>
+<ol>
+<li><b>量化雜訊</b>：DSM 的雜訊會灌進 VCO 控制端 → 需要高階 DSM，但迴路頻寬又不能太寬，兩者互相牵制。</li>
+<li><b>Fractional spur</b>：DSM 的週期性 → 用 dither、MASH 結構或多相位補償。</li>
+<li><b>Integer boundary spur</b>：α 接近 0 或 1 時最嚴重，實務上要避開這些頻道。</li>
+</ol>
+<h2>常見架構</h2>
+<table>
+<thead><tr><th>型式</th><th>特點</th></tr></thead>
+<tbody>
+<tr><td>MASH 1-1-1</td><td>最常見，三階整形、穩定、易設計</td></tr>
+<tr><td>Single-loop ΣΔ</td><td>雜訊更好但穩定性較差</td></tr>
+<tr><td>Injection-locked / ILCM</td><td>用注入鎖定取代除頻，功耗低、雜訊好，但頻率範圍窄</td></tr>
+<tr><td>DTC-based</td><td>用數位時間轉換器補償量化誤差（現代高頻應用）</td></tr>
+</tbody></table>
+<div class="callout"><b>為什麼手機裡的 PLL 幾乎都是 fractional-N</b>：需要很細的頻道步進（幾十 kHz）又要高 F<sub>REF</sub>（低雜訊、快速鎖定），整數-N 無法同時滿足。</div>`
+      },
+      {
+        id: 'dll', t: 'DLL 延遲鎖定', s: '鎖「相位」不鎖頻率，用延遲線對齊時脈；常用在 DDR 與時脈同步，穩定性比 PLL 好。',
+        body: `
+<p>DLL（delay-locked loop）用一條可調延遲線把輸入時脈延遲一個週期，讓「延遲後的時脈」與「原始時脈」相位對齊。它不產生新頻率，所以沒有 VCO 的累積 jitter，穩定性天生比 PLL 好。</p>
+<div class="fx">延遲線總延遲 = TREF（一個參考週期）
+相位偵測器比較 CLK 與 delayed CLK
+控制電壓／數位碼調整延遲單元
+無頻率倍乘 → 輸出頻率 = 輸入頻率</div>
+<h2>與 PLL 的差異</h2>
+<table>
+<thead><tr><th></th><th>PLL</th><th>DLL</th></tr></thead>
+<tbody>
+<tr><td>輸出頻率</td><td>N × F<sub>REF</sub>（可倍頻）</td><td>= F<sub>REF</sub>（只調相位）</td></tr>
+<tr><td>jitter</td><td>VCO 會累積，需迴路壓抑</td><td>不累積，只傳遞輸入 jitter</td></tr>
+<tr><td>穩定性</td><td>二階系統，可能振盪</td><td>一階系統，天生穩定</td></tr>
+<tr><td>面積／功耗</td><td>VCO + 除頻器</td><td>延遲線（長，但簡單）</td></tr>
+<tr><td>鎖定範圍</td><td>寬（可程式 N）</td><td>受限於延遲線長度（通常 &lt; 1 週期）</td></tr>
+</tbody></table>
+<h2>典型應用</h2>
+<ul>
+<li><b>DDR 記憶體介面</b>：DQS 與 CK 的相位對齊（read/write leveling）。</li>
+<li><b>Duty-cycle correction</b>：把 50% 工作週期修回來。</li>
+<li><b>Clock deskew</b>：補償時脈樹的延遲。</li>
+<li><b>Multi-phase clock generation</b>：延遲線天然產生多相位。</li>
+</ul>
+<div class="callout warn"><b>限制</b>：DLL 只能延遲「一個週期以內」，而且延遲線對 PVT 敏感（需要校正或 replica bias）。要倍頻還是得回到 PLL。</div>`
+      }
+    ]
   }
 ];
+/* ---------- 進階練習區：5 個實驗 × 4 種難度 ---------- */
+const ADL = {};
+const ADL_DIFF = ['入門', '初級', '中級', '困難'];
+function adlSeg(id, cur) {
+  return `<div class="dseg" role="tablist" aria-label="難度">${ADL_DIFF.map((n, i) =>
+    `<button class="hub-tab${i === cur ? ' on' : ''}" type="button" role="tab" aria-selected="${i === cur}" data-d="${i}" data-lab="${id}">${n}</button>`).join('')}</div>`;
+}
+function adlField(id, label, val, locked) {
+  return `<div class="field" style="${locked ? 'opacity:.4' : ''}"><span class="fl">${label}</span>
+    <input type="range" id="${id}" min="0" max="1000" step="1" value="${val}"${locked ? ' disabled' : ''}>
+    <span class="fv" id="${id}v"></span></div>`;
+}
+const lmap = (pos, lo, hi) => lo * Math.pow(hi / lo, pos / 1000);
+
+/* --- LDO 負載暫態 --- */
+function adlLdo(doc, d) {
+  const st = ADL.ldo || (ADL.ldo = { d: 0, c: 380, e: 620, b: 500 });
+  st.d = d;
+  const cfg = [
+    { di: 10, tgt: 100, lock: ['b', 'e'], pm: null },
+    { di: 10, tgt: 50, lock: ['e'], pm: null },
+    { di: 20, tgt: 30, lock: [], pm: null },
+    { di: 20, tgt: 20, lock: [], pm: [45, 80] }
+  ][d];
+  const LB = cfg.lock.includes('b'), LE = cfg.lock.includes('e');
+  doc.innerHTML = `
+<div class="hub-eyebrow">進階練習 · 電源電路 · LDO</div>
+<h1>LDO 負載暫態</h1>
+<p class="lead">負載忽然抽 ${cfg.di} mA，輸出會先掉一個 V 再回來。<b>掉多少 = ESR 壓降 + 電容放電</b>；但 ESR 太小相位裕度又不夠。兩個條件要同時顧好。</p>
+${adlSeg('ldo', d)}
+<div class="lab2">
+  <div class="panel">
+    <div class="panel-h">實驗台</div>
+    <div class="readout">
+      <div class="row"><span>負載步階 ΔI</span><b>${cfg.di} mA</b></div>
+      <div class="row"><span>目標</span><b>droop ≤ ${cfg.tgt} mV${cfg.pm ? ` ，PM ${cfg.pm[0]}–${cfg.pm[1]}°` : ''}</b></div>
+    </div>
+    ${adlField('b', '迴路頻寬', st.b, LB)}
+    ${adlField('c', 'Cout', st.c, false)}
+    ${adlField('e', 'ESR', st.e, LE)}
+    <svg class="scope" viewBox="0 0 420 190" role="img" aria-label="Vout 負載暫態波形"><path class="grid" d="M30 20 V160 H400 M30 90 H400"/><path class="lim" id="sLim"/><path class="tr" id="sTr"/><text x="30" y="178" id="sX0"></text><text x="330" y="178" id="sX1"></text><text x="4" y="24" id="sY0"></text></svg>
+    <div class="lab-msg" id="sMsg"></div>
+    <div class="lab-actions"><button class="cta" id="sNext" type="button">下一種難度 ▸</button><button class="ghost" id="sReset" type="button">重設</button></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h">即時計算</div>
+    <div class="readout" id="sOut"></div>
+    <p class="lab-hint"><b>兩個條件會打架</b>：ESR 大 → droop 大；ESR 小 → ESR 零點跑到高頻、相位補不回來（PM 掉）。<br><b>Cout 大</b>對 droop 最有效，但也會把輸出極點推低。</p>
+  </div>
+</div>`;
+  const q = id => doc.querySelector('#' + id);
+  const paint = () => {
+    const BW = LB ? 1e6 : lmap(st.b, 50e3, 5e6);
+    const C = lmap(st.c, 10e-9, 1e-6);
+    const ESR = LE ? 0.3 : lmap(st.e, 2e-3, 5);
+    const dI = cfg.di * 1e-3, tau = 1 / (2 * Math.PI * BW);
+    const dCap = dI * tau / C, dEsr = dI * ESR, droop = dCap + dEsr;
+    const x = 2 * Math.PI * ESR * C * BW;
+    const pm = 45 + 30 * x / (1 + x);
+    q('bv').textContent = fmtHz(BW);
+    q('cv').textContent = (C * 1e6).toFixed(C < 1e-7 ? 1 : 2) + ' µF';
+    q('ev').textContent = ESR < 1 ? (ESR * 1000).toFixed(0) + ' mΩ' : ESR.toFixed(2) + ' Ω';
+    const okD = droop * 1000 <= cfg.tgt, okP = !cfg.pm || (pm >= cfg.pm[0] && pm <= cfg.pm[1]);
+    q('sOut').innerHTML = `
+      <div class="row"><span>ESR 壓降 ΔI·ESR</span><b>${(dEsr * 1000).toFixed(1)} mV</b></div>
+      <div class="row"><span>電容放電 ΔI·t/C</span><b>${(dCap * 1000).toFixed(1)} mV</b></div>
+      <div class="row"><span>總 droop</span><b class="${okD ? 'ok' : 'bad'}">${(droop * 1000).toFixed(1)} mV</b></div>
+      <div class="row"><span>相位裕度 PM</span><b class="${okP ? 'ok' : 'bad'}">${pm.toFixed(0)}°</b></div>
+      <div class="row"><span>回穩時間 ≈4τ</span><b>${(4 * tau * 1e6).toFixed(1)} µs</b></div>`;
+    q('sMsg').className = 'lab-msg ' + (okD && okP ? 'ok' : '');
+    q('sMsg').innerHTML = okD && okP
+      ? `<b>兩個條件都過了</b>：droop ${(droop * 1000).toFixed(1)} mV、PM ${pm.toFixed(0)}°。這組 Cout / ESR 就是真實 LDO 在「突波」與「穩定性」之間找到的甜蜜點。`
+      : !okD
+        ? `<b>droop 太大</b>：現在 ${(droop * 1000).toFixed(1)} mV。${dEsr > dCap ? 'ESR 佔大部分 → 把 ESR 調小' : '放電佔大部分 → 加大 Cout 或提高迴路頻寬'}。`
+        : `<b>droop 過了，但 PM 不對</b>（${pm.toFixed(0)}°）：ESR 太小會讓 ESR 零點跑到高頻、相位補不回來；ESR 太大又換 droop 超標，往中間找。`;
+    const T = 8 * tau, N = 90, yN = 1.2, span = Math.max(droop * 2.2, 0.02);
+    const yOf = v => 90 - (v - yN) / span * 60;
+    let path = '';
+    for (let i = 0; i <= N; i++) {
+      const t = i / N * T;
+      let dv = t <= tau ? droop * t / tau : droop * Math.exp(-(t - tau) / (tau * 0.55));
+      if (t > tau && pm < 65) dv *= 1 + (65 - pm) / 40 * Math.sin((t - tau) / tau * 9) * Math.exp(-(t - tau) / (tau * 0.6));
+      path += (i ? ' L' : 'M') + (30 + i / N * 370).toFixed(1) + ' ' + yOf(yN - dv).toFixed(1);
+    }
+    q('sTr').setAttribute('d', path);
+    q('sLim').setAttribute('d', 'M30 ' + yOf(yN - cfg.tgt / 1000).toFixed(1) + ' H400');
+    q('sX0').textContent = '0'; q('sX1').textContent = (T * 1e6).toFixed(1) + ' µs';
+    q('sY0').textContent = (yN + span).toFixed(2) + ' V';
+  };
+  doc.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => adlOpen(b.dataset.lab, +b.dataset.d)));
+  ['b', 'c', 'e'].forEach(k => { const el = q(k); if (el) el.addEventListener('input', e => { st[k] = +e.target.value; paint(); }); });
+  q('sNext').addEventListener('click', () => adlOpen('ldo', (d + 1) % 4));
+  q('sReset').addEventListener('click', () => { ADL.ldo = { d, c: 380, e: 620, b: 500 }; adlOpen('ldo', d); });
+  paint();
+}
+/* --- BGR 溫度曲線 --- */
+function adlBgr(doc, d) {
+  const st = ADL.bgr || (ADL.bgr = { d: 0, k: 640, n: 600, u: 0 });
+  st.d = d;
+  const cfg = [{ tgt: 200, lock: ['n', 'u'] }, { tgt: 80, lock: ['u'] }, { tgt: 30, lock: [] }, { tgt: 12, lock: [] }][d];
+  const LN = cfg.lock.includes('n'), LU = cfg.lock.includes('u');
+  doc.innerHTML = `
+<div class="hub-eyebrow">進階練習 · 參考電路 · BGR</div>
+<h1>BGR 溫度曲線</h1>
+<p class="lead">調 <b>K = R2/R1</b> 把 PTAT 的斜率跟 CTAT 對平，再（中級以上）用曲度補償把兩端的「微笑」壓平。目標：TC ≤ ${cfg.tgt} ppm/°C。</p>
+${adlSeg('bgr', d)}
+<div class="lab2">
+  <div class="panel">
+    <div class="panel-h">實驗台</div>
+    ${adlField('k', 'K = R2/R1', st.k, false)}
+    ${adlField('n', 'BJT 比 N', st.n, LN)}
+    ${adlField('u', '曲度補償', st.u, LU)}
+    <svg class="scope" viewBox="0 0 420 190" role="img" aria-label="Vref 對溫度的曲線"><path class="grid" d="M34 20 V158 H400 M34 89 H400"/><path class="tr" id="bTr"/><text x="34" y="176">−40 °C</text><text x="330" y="176">125 °C</text><text x="4" y="24" id="bY0"></text></svg>
+    <div class="lab-msg" id="bMsg"></div>
+    <div class="lab-actions"><button class="cta" id="bNext" type="button">下一種難度 ▸</button><button class="ghost" id="bReset" type="button">重設</button></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h">即時計算</div>
+    <div class="readout" id="bOut"></div>
+    <p class="lab-hint"><b>一階補償</b>：K ≈ 1.9e-3 / (8.617e-5 · ln N) 會把線性項對平。<br><b>曲度</b>來自 VBE 的 T·lnT 項，只有二階補償（或 trim）能再往下壓。</p>
+  </div>
+</div>`;
+  const q = id => doc.querySelector('#' + id);
+  const paint = () => {
+    const K = lmap(st.k, 1, 20);
+    const N = LN ? 8 : Math.max(1, Math.round(lmap(st.n, 1, 32)));
+    const comp = LU ? 0 : st.u / 1000 * 5e-7;
+    const vref = T => {
+      const dT = T - 27;
+      const vbe = 0.65 - 1.9e-3 * dT - 4.5e-7 * dT * dT + comp * dT * dT;
+      const vt = 8.617e-5 * (T + 273.15);
+      return vbe + K * vt * Math.log(N);
+    };
+    const pts = []; let mx = -9, mn = 99;
+    for (let T = -40; T <= 125; T += 5) { const v = vref(T); pts.push([T, v]); mx = Math.max(mx, v); mn = Math.min(mn, v); }
+    const v27 = vref(27), tc = (mx - mn) / (v27 * 165) * 1e6;
+    const ok = tc <= cfg.tgt;
+    q('kv').textContent = K.toFixed(2);
+    q('nv').textContent = N + '×';
+    q('uv').textContent = LU ? '固定' : (comp / 4.5e-7 * 100).toFixed(0) + '%';
+    q('bOut').innerHTML = `
+      <div class="row"><span>Vref @ 27 °C</span><b>${v27.toFixed(4)} V</b></div>
+      <div class="row"><span>Vmax − Vmin</span><b>${((mx - mn) * 1000).toFixed(2)} mV</b></div>
+      <div class="row"><span>TC（box method）</span><b class="${ok ? 'ok' : 'bad'}">${tc.toFixed(1)} ppm/°C</b></div>
+      <div class="row"><span>PTAT 項 K·lnN·VT</span><b>${(K * Math.log(N) * 8.617e-5 * 300.15 * 1000).toFixed(0)} mV</b></div>
+      <div class="row"><span>建議最低電源</span><b>${(v27 + 0.25).toFixed(2)} V</b></div>`;
+    q('bMsg').className = 'lab-msg ' + (ok ? 'ok' : '');
+    q('bMsg').innerHTML = ok
+      ? `<b>達標</b>：TC = ${tc.toFixed(1)} ppm/°C。Vref ≈ ${v27.toFixed(3)} V，這就是 BGR 那把「不隨溫度走的尺」。`
+      : tc > cfg.tgt * 3
+        ? `<b>斜率沒對平</b>：TC ${tc.toFixed(0)} ppm/°C 太大，整條線還是斜的 → 調 K（R2/R1）。`
+        : `<b>斜率對了，剩下曲度</b>：兩端翹起來（TC ${tc.toFixed(1)}）。${LU ? '這一階不給曲度補償，只能靠 K 取中間值。' : '用「曲度補償」滑桿把兩端壓平。'}`;
+    const yMin = mn - 0.004, yMax = mx + 0.004, yOf = v => 158 - (v - yMin) / (yMax - yMin) * 138;
+    q('bTr').setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + (34 + (p[0] + 40) / 165 * 366).toFixed(1) + ' ' + yOf(p[1]).toFixed(1)).join(' '));
+    q('bY0').textContent = yMax.toFixed(3) + ' V';
+  };
+  doc.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => adlOpen(b.dataset.lab, +b.dataset.d)));
+  ['k', 'n', 'u'].forEach(k => { const el = q(k); if (el) el.addEventListener('input', e => { st[k] = +e.target.value; paint(); }); });
+  q('bNext').addEventListener('click', () => adlOpen('bgr', (d + 1) % 4));
+  q('bReset').addEventListener('click', () => { ADL.bgr = { d, k: 640, n: 600, u: 0 }; adlOpen('bgr', d); });
+  paint();
+}
+/* --- SAR 逐次逼近 --- */
+function adlSarNew(st, N, d) {
+  st.d = d; st.vin = 0.12 + 0.76 * Math.random();
+  st.bits = new Array(N).fill(0); st.steps = 0; st.ok = false; st.msg = '';
+}
+function adlSar(doc, d) {
+  const N = [4, 6, 8, 10][d], BUD = [N + 3, N + 1, N, N][d], FS = 1.0;
+  const st = ADL.sar || (ADL.sar = {});
+  if (st.d !== d || !st.bits || st.bits.length !== N) adlSarNew(st, N, d);
+  const LSB = FS / Math.pow(2, N);
+  const codeOf = () => st.bits.reduce((a, b, i) => a + b * Math.pow(2, N - 1 - i), 0);
+  doc.innerHTML = `
+<div class="hub-eyebrow">進階練習 · 資料轉換 · ADC</div>
+<h1>SAR 逐次逼近</h1>
+<p class="lead">你是 SAR 邏輯：每次把某個位元打開，問比較器「DAC 比輸入大還是小」，然後決定留或不留。<b>${N} bit、預算 ${BUD} 次比較</b>——用二分搜尋就是 N 次。</p>
+${adlSeg('sar', d)}
+<div class="lab2">
+  <div class="panel">
+    <div class="panel-h">轉換台</div>
+    <div class="readout">
+      <div class="row"><span>VREF / LSB</span><b>1.000 V / ${(LSB * 1000).toFixed(2)} mV</b></div>
+      <div class="row"><span>輸入 VIN</span><b>${d < 2 ? st.vin.toFixed(4) + ' V' : '？（只有比較器知道）'}</b></div>
+      <div class="row"><span>已用比較次數</span><b id="sarSteps">${st.steps} / ${BUD}</b></div>
+    </div>
+    <div class="dlbl">位元（左 = MSB）<b id="sarCode"></b></div>
+    <div class="bits" id="sarBits"></div>
+    <div class="readout" id="sarOut"></div>
+    <div class="lab-msg" id="sarMsg"></div>
+    <div class="lab-actions">
+      <button class="cta" id="sarCmp" type="button">比較</button>
+      <button class="ghost" id="sarNew" type="button">新一題</button>
+      <button class="ghost" id="sarClr" type="button">清除位元</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h">怎麼想</div>
+    <p class="lab-hint"><b>二分搜尋</b>：先試 MSB（權重 = VREF/2）。DAC 比 VIN 大 → 這一位放掉；比 VIN 小 → 留著。往下一顆位元重複。<br><br>
+    <b>為什麼要省比較次數？</b>每一次比較都要 DAC 穩定 + 比較器判斷，直接決定轉換速度與功耗。N bit 的 SAR 理想上就是 N 次。</p>
+    <div class="readout" id="sarHelp"></div>
+  </div>
+</div>`;
+  const q = id => doc.querySelector('#' + id);
+  const render = () => {
+    q('sarBits').innerHTML = st.bits.map((b, i) => `<button type="button" class="${b ? 'on' : ''}" data-i="${i}" aria-label="bit ${N - 1 - i}">${b}</button>`).join('');
+    q('sarBits').querySelectorAll('button').forEach(el => el.addEventListener('click', () => {
+      const i = +el.dataset.i; st.bits[i] = st.bits[i] ? 0 : 1; st.msg = ''; render();
+    }));
+    const code = codeOf(), vdac = code * LSB, err = st.vin - vdac;
+    q('sarCode').textContent = ' = ' + code.toString(2).padStart(N, '0') + ' (' + code + ')';
+    q('sarSteps').textContent = st.steps + ' / ' + BUD;
+    q('sarOut').innerHTML = `
+      <div class="row"><span>DAC 輸出</span><b>${vdac.toFixed(4)} V</b></div>
+      <div class="row"><span>誤差 VIN − VDAC</span><b>${(err * 1000).toFixed(2)} mV</b></div>
+      <div class="row"><span>誤差 / LSB</span><b class="${Math.abs(err) <= LSB / 2 ? 'ok' : 'bad'}">${(err / LSB).toFixed(2)} LSB</b></div>`;
+    q('sarHelp').innerHTML = d < 2
+      ? `<div class="row"><span>提示</span><b>MSB 權重 ${(FS / 2 * 1000).toFixed(0)} mV</b></div><div class="row"><span>下一步</span><b>${err > LSB / 2 ? 'VIN 比 DAC 大 → 位元太小' : err < -LSB / 2 ? 'VIN 比 DAC 小 → 位元太大' : '已在 ±½ LSB 內'}</b></div>`
+      : `<div class="row"><span>提示</span><b>從 MSB 往下，一次砍一半</b></div>`;
+    q('sarMsg').className = 'lab-msg ' + (st.msg ? (st.ok ? 'ok' : 'bad') : '');
+    q('sarMsg').innerHTML = st.msg;
+  };
+  q('sarCmp').addEventListener('click', () => {
+    if (st.ok) return;
+    st.steps++;
+    const code = codeOf(), vdac = code * LSB, err = st.vin - vdac;
+    if (Math.abs(err) <= LSB / 2) {
+      st.ok = true;
+      st.msg = st.steps <= BUD
+        ? `<b>轉換完成</b>：${st.steps} 次比較得到 ${code.toString(2).padStart(N, '0')}，誤差 ${(err / LSB).toFixed(2)} LSB。這就是 SAR：N bit 用 N 次比較，功耗幾乎只有一顆比較器。`
+        : `<b>碼是對的，但比較次數超支</b>（${st.steps} &gt; ${BUD}）：SAR 的價值在「每次砍一半」，亂試會讓速度掉下來。按「新一題」再來。`;
+    } else {
+      st.msg = err > 0
+        ? `<b>DAC 太小</b>（差 ${(err / LSB).toFixed(2)} LSB）：把目前最高權重位元留著，往低位元繼續試。`
+        : `<b>DAC 太大</b>（超出 ${(-err / LSB).toFixed(2)} LSB）：這一位要放掉，往低位元繼續試。`;
+      if (st.steps > BUD) st.msg += `<br><b>預算用完</b>——重新整理你的二分策略。`;
+    }
+    render();
+  });
+  q('sarNew').addEventListener('click', () => { adlSarNew(st, N, d); adlOpen('sar', d); });
+  q('sarClr').addEventListener('click', () => { st.bits = new Array(N).fill(0); st.steps = 0; st.ok = false; st.msg = ''; render(); });
+  doc.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => adlOpen(b.dataset.lab, +b.dataset.d)));
+  render();
+}
+/* --- PLL 除頻鎖定 --- */
+function adlPll(doc, d) {
+  const st = ADL.pll || (ADL.pll = { d: 0, n: 560, f: 380, i: 470, c: 560, r: 520 });
+  st.d = d;
+  const cfg = [
+    { tgt: 400, lock: ['f', 'i', 'c', 'r'], win: null, tl: null, note: '只有 N 可以調：FREF 固定 10 MHz。' },
+    { tgt: 800, lock: ['i', 'c', 'r'], win: [45, 90], tl: null, note: '可以調 FREF 與 N；先想清楚 N = FOUT / FREF。' },
+    { tgt: 1000, lock: ['r'], win: [50, 80], tl: 25, note: 'Icp 與 C1 也開放了：ωn 變大 → 鎖得快，但 PM 會掉。' },
+    { tgt: 1200, lock: [], win: [50, 75], tl: 12, note: '全部開放：Fout、PM、lock time 三個條件同時滿足。' }
+  ][d];
+  const L = k => cfg.lock.includes(k);
+  const fixed = { f: 10e6, i: 200e-6, c: 200e-12, r: 4e3 };
+  doc.innerHTML = `
+<div class="hub-eyebrow">進階練習 · 時脈 · PLL</div>
+<h1>PLL 除頻鎖定</h1>
+<p class="lead">F<sub>OUT</sub> = N · F<sub>REF</sub>。目標 ${cfg.tgt} MHz（±2%），${cfg.win ? `PM ${cfg.win[0]}–${cfg.win[1]}°` : '先只顧頻率'}${cfg.tl ? `，鎖定時間 ≤ ${cfg.tl} µs` : ''}。<br><span class="tagline">${cfg.note}</span></p>
+${adlSeg('pll', d)}
+<div class="lab2">
+  <div class="panel">
+    <div class="panel-h">實驗台</div>
+    ${adlField('n', '除頻比 N', st.n, false)}
+    ${adlField('f', 'FREF', st.f, L('f'))}
+    ${adlField('i', 'Icp', st.i, L('i'))}
+    ${adlField('c', 'C1', st.c, L('c'))}
+    ${adlField('r', 'R1', st.r, L('r'))}
+    <svg class="scope" viewBox="0 0 420 190" role="img" aria-label="輸出頻率隨時間鎖定"><path class="grid" d="M30 20 V160 H400 M30 90 H400"/><path class="lim" id="pLim"/><path class="tr" id="pTr"/><text x="30" y="178">0</text><text x="330" y="178" id="pX1"></text><text x="4" y="24" id="pY0"></text></svg>
+    <div class="lab-msg" id="pMsg"></div>
+    <div class="lab-actions"><button class="cta" id="pNext" type="button">下一種難度 ▸</button><button class="ghost" id="pReset" type="button">重設</button></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h">即時計算</div>
+    <div class="readout" id="pOut"></div>
+    <p class="lab-hint"><b>ωn ∝ √(Icp·KVCO / (N·C1))</b>：加大 Icp、減小 C1 或 N 都會讓迴路變快。<br><b>ζ ∝ R1·C1·ωn</b>：R1 是調阻尼（PM）的主要旋鈕。</p>
+  </div>
+</div>`;
+  const q = id => doc.querySelector('#' + id);
+  const paint = () => {
+    const N = Math.max(2, Math.round(lmap(st.n, 2, 64)));
+    const FR = L('f') ? fixed.f : lmap(st.f, 1e6, 40e6);
+    const IC = L('i') ? fixed.i : lmap(st.i, 20e-6, 600e-6);
+    const C1 = L('c') ? fixed.c : lmap(st.c, 10e-12, 2e-9);
+    const R1 = L('r') ? fixed.r : lmap(st.r, 1e3, 50e3);
+    const KV = 2 * Math.PI * 200e6;
+    const wn = Math.sqrt(IC * KV / (2 * Math.PI * N * C1));
+    const zeta = R1 * C1 * wn / 2;
+    const pm = Math.atan(2 * zeta) * 180 / Math.PI;
+    const tlock = 4 / (zeta * wn);
+    const Fout = N * FR;
+    q('nv').textContent = N + '×'; q('fv').textContent = fmtHz(FR);
+    q('iv').textContent = (IC * 1e6).toFixed(0) + ' µA';
+    q('cv').textContent = (C1 * 1e12).toFixed(0) + ' pF';
+    q('rv').textContent = (R1 / 1e3).toFixed(1) + ' kΩ';
+    const okF = Math.abs(Fout - cfg.tgt * 1e6) <= cfg.tgt * 1e6 * 0.02;
+    const okP = !cfg.win || (pm >= cfg.win[0] && pm <= cfg.win[1]);
+    const okT = !cfg.tl || tlock <= cfg.tl * 1e-6;
+    const ok = okF && okP && okT;
+    q('pOut').innerHTML = `
+      <div class="row"><span>輸出頻率 N·FREF</span><b class="${okF ? 'ok' : 'bad'}">${fmtHz(Fout)}</b></div>
+      <div class="row"><span>目標</span><b>${cfg.tgt} MHz ±2%</b></div>
+      <div class="row"><span>迴路 ωn / fn</span><b>${(wn / 1e6).toFixed(2)} Mrad/s / ${fmtHz(wn / 2 / Math.PI)}</b></div>
+      <div class="row"><span>阻尼 ζ / PM</span><b class="${okP ? 'ok' : 'bad'}">${zeta.toFixed(2)} / ${pm.toFixed(0)}°</b></div>
+      <div class="row"><span>鎖定時間 ≈4/ζωn</span><b class="${okT ? 'ok' : 'bad'}">${(tlock * 1e6).toFixed(1)} µs</b></div>`;
+    q('pMsg').className = 'lab-msg ' + (ok ? 'ok' : '');
+    q('pMsg').innerHTML = ok
+      ? `<b>鎖定成功</b>：${fmtHz(Fout)}、PM ${pm.toFixed(0)}°、${(tlock * 1e6).toFixed(1)} µs 鎖定。N 與 FREF 決定頻率、R1 決定阻尼、Icp/C1 決定速度。`
+      : !okF
+        ? `<b>頻率不對</b>：目前 ${fmtHz(Fout)}，要 ${cfg.tgt} MHz。先調 N 或 FREF（差 ${(Math.abs(Fout - cfg.tgt * 1e6) / 1e6).toFixed(0)} MHz）。`
+        : !okP
+          ? `<b>頻率對了，PM 不對</b>（${pm.toFixed(0)}°）：${pm < (cfg.win ? cfg.win[0] : 50) ? 'ζ 太小會振鈴 → 加大 R1' : 'ζ 太大反應過阻尼 → 減小 R1'}。`
+          : `<b>其他都對，鎖太慢</b>（${(tlock * 1e6).toFixed(1)} µs）：加大 Icp 或減小 C1 / N，把 ωn 推高（注意 PM 會跟著掉）。`;
+    const T = Math.max(tlock * 5, 2e-6), n2 = 80, yMax = Fout * 1.15;
+    const yOf = f => 158 - Math.max(0, Math.min(1, f / yMax)) * 138;
+    let path = '';
+    for (let i = 0; i <= n2; i++) {
+      const t = i / n2 * T;
+      const f = Fout * (1 - Math.exp(-t / (tlock / 4)));
+      path += (i ? ' L' : 'M') + (30 + i / n2 * 370).toFixed(1) + ' ' + yOf(f).toFixed(1);
+    }
+    q('pTr').setAttribute('d', path);
+    q('pLim').setAttribute('d', 'M30 ' + yOf(cfg.tgt * 1e6 * 1.02).toFixed(1) + ' H400');
+    q('pX1').textContent = (T * 1e6).toFixed(1) + ' µs';
+    q('pY0').textContent = fmtHz(Fout);
+  };
+  doc.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => adlOpen(b.dataset.lab, +b.dataset.d)));
+  ['n', 'f', 'i', 'c', 'r'].forEach(k => { const el = q(k); if (el) el.addEventListener('input', e => { st[k] = +e.target.value; paint(); }); });
+  q('pNext').addEventListener('click', () => adlOpen('pll', (d + 1) % 4));
+  q('pReset').addEventListener('click', () => { ADL.pll = { d, n: 560, f: 380, i: 470, c: 560, r: 520 }; adlOpen('pll', d); });
+  paint();
+}
+/* --- Charge Pump 升壓 --- */
+function adlCp(doc, d) {
+  const st = ADL.cp || (ADL.cp = { d: 0, n: 500, c: 500, f: 420, i: 300 });
+  st.d = d;
+  const cfg = [
+    { vlo: 2.6, vhi: 99, rip: null, lock: ['c', 'f', 'i'] },
+    { vlo: 2.8, vhi: 99, rip: 60, lock: ['f', 'i'] },
+    { vlo: 3.5, vhi: 99, rip: 25, lock: ['i'] },
+    { vlo: 3.8, vhi: 4.6, rip: 12, lock: [] }
+  ][d];
+  const L = k => cfg.lock.includes(k);
+  const VIN = 1.2, VD = 0.2;
+  doc.innerHTML = `
+<div class="hub-eyebrow">進階練習 · 電源電路 · Charge Pump</div>
+<h1>Charge Pump 升壓</h1>
+<p class="lead">用飛馳電容把 1.2 V 一階一階墊高：<b>Vout ≈ N·(Vin − Vd) − N·I/(f·C)</b>。級數決定電壓，f·C 決定「載得動多少」與漣波。</p>
+${adlSeg('cp', d)}
+<div class="lab2">
+  <div class="panel">
+    <div class="panel-h">實驗台</div>
+    <div class="readout">
+      <div class="row"><span>Vin / 二極體壓降</span><b>1.2 V / 0.2 V</b></div>
+      <div class="row"><span>目標</span><b>Vout ${cfg.vhi > 90 ? '≥ ' + cfg.vlo : cfg.vlo + '–' + cfg.vhi} V${cfg.rip ? ' ，漣波 ≤ ' + cfg.rip + ' mV' : ''}</b></div>
+    </div>
+    ${adlField('n', '級數 N', st.n, false)}
+    ${adlField('c', '飛馳電容 C', st.c, L('c'))}
+    ${adlField('f', '時脈 f', st.f, L('f'))}
+    ${adlField('i', '負載電流', st.i, L('i'))}
+    <div class="lab-msg" id="cpMsg"></div>
+    <div class="lab-actions"><button class="cta" id="cpNext" type="button">下一種難度 ▸</button><button class="ghost" id="cpReset" type="button">重設</button></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h">即時計算</div>
+    <div class="readout" id="cpOut"></div>
+    <p class="lab-hint"><b>級數 N</b>：每級加一個 (Vin − Vd)，所以電壓幾乎只看 N。<br><b>f·C</b>：每級每週期搬的電荷 = C·ΔV，所以乘上 f 才是電流能力；不夠就掉壓、漣波變大。<br><b>效率上限 ≈ N/(N+1)</b>（寄生電容與驅動損耗會再吃掉一些）。</p>
+  </div>
+</div>`;
+  const q = id => doc.querySelector('#' + id);
+  const paint = () => {
+    const N = Math.round(lmap(st.n, 2, 6));
+    const C = L('c') ? 1e-9 : lmap(st.c, 10e-12, 10e-9);
+    const F = L('f') ? 1e6 : lmap(st.f, 100e3, 20e6);
+    const IL = L('i') ? 10e-6 : lmap(st.i, 5e-6, 200e-6);
+    const fC = F * C, drain = IL / fC;
+    const vout = N * (VIN - VD) - N * drain;
+    const ripple = drain, eff = vout / ((N + 1) * VIN);
+    q('nv').textContent = N + ' 級';
+    q('cv').textContent = (C * 1e9).toFixed(C < 1e-9 ? 2 : 1) + ' nF';
+    q('fv').textContent = fmtHz(F);
+    q('iv').textContent = (IL * 1e6).toFixed(0) + ' µA';
+    const okV = vout >= cfg.vlo && vout <= cfg.vhi;
+    const okR = !cfg.rip || ripple * 1000 <= cfg.rip;
+    const ok = okV && okR;
+    q('cpOut').innerHTML = `
+      <div class="row"><span>理想 N·(Vin−Vd)</span><b>${(N * (VIN - VD)).toFixed(2)} V</b></div>
+      <div class="row"><span>負載掉壓 N·I/(fC)</span><b>${(N * drain).toFixed(2)} V</b></div>
+      <div class="row"><span>Vout</span><b class="${okV ? 'ok' : 'bad'}">${vout.toFixed(2)} V</b></div>
+      <div class="row"><span>漣波 I/(fC)</span><b class="${okR ? 'ok' : 'bad'}">${(ripple * 1000).toFixed(1)} mV</b></div>
+      <div class="row"><span>效率上限 N/(N+1)</span><b>${(N / (N + 1) * 100).toFixed(0)}%</b></div>
+      <div class="row"><span>實際效率估計</span><b>${(eff * 100).toFixed(0)}%</b></div>`;
+    q('cpMsg').className = 'lab-msg ' + (ok ? 'ok' : '');
+    q('cpMsg').innerHTML = ok
+      ? `<b>達標</b>：${N} 級、f·C = ${(fC).toExponential(2)} → Vout ${vout.toFixed(2)} V、漣波 ${(ripple * 1000).toFixed(1)} mV。級數決定電壓，f·C 決定載重。`
+      : !okV
+        ? vout < cfg.vlo
+          ? `<b>電壓不夠</b>（${vout.toFixed(2)} V）：${vout < N * (VIN - VD) - 0.05 ? '掉壓太多 → 加大 f 或 C（提高 f·C）' : '級數不足 → 增加 N'}。`
+          : `<b>電壓太高</b>（${vout.toFixed(2)} V &gt; ${cfg.vhi}）：級數太多，會被後級打穿；減 N 或加重負載。`
+        : `<b>電壓對了，漣波太大</b>（${(ripple * 1000).toFixed(1)} mV）：把 f·C 再提高（加 C 或加速時脈）。`;
+  };
+  doc.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => adlOpen(b.dataset.lab, +b.dataset.d)));
+  ['n', 'c', 'f', 'i'].forEach(k => { const el = q(k); if (el) el.addEventListener('input', e => { st[k] = +e.target.value; paint(); }); });
+  q('cpNext').addEventListener('click', () => adlOpen('cp', (d + 1) % 4));
+  q('cpReset').addEventListener('click', () => { ADL.cp = { d, n: 500, c: 500, f: 420, i: 300 }; adlOpen('cp', d); });
+  paint();
+}
+
+const ADV_LAB_FN = { ldo: adlLdo, bgr: adlBgr, sar: adlSar, pll: adlPll, cp: adlCp };
+const ADV_LABS = [
+  { id: 'padlo', lab: 'ldo', grp: 'lab', tag: '練習 01 · 電源', st: 'ready', min: '4 難度', t: 'LDO 負載暫態', s: '負載步階下輸出掉多少、多久回來；ESR 與 Cout 的甜蜜點在哪裡。' },
+  { id: 'pabgr', lab: 'bgr', grp: 'lab', tag: '練習 02 · 參考', st: 'ready', min: '4 難度', t: 'BGR 溫度曲線（TC 掃描）', s: '調 K = R2/R1 把 CTAT 與 PTAT 對平，再用曲度補償把 TC 壓到 ppm 等級。' },
+  { id: 'pasar', lab: 'sar', grp: 'lab', tag: '練習 03 · 資料轉換', st: 'ready', min: '4 難度', t: 'SAR 逐次逼近', s: '自己當 SAR 邏輯：4/6/8/10 bit，用最少的比較次數找到正確碼。' },
+  { id: 'papll', lab: 'pll', grp: 'lab', tag: '練習 04 · 時脈', st: 'ready', min: '4 難度', t: 'PLL 除頻鎖定', s: '調 N、FREF、Icp、C1、R1，同時滿足輸出頻率、相位裕度與鎖定時間。' },
+  { id: 'pacp', lab: 'cp', grp: 'lab', tag: '練習 05 · 電源', st: 'ready', min: '4 難度', t: 'Charge Pump 升壓', s: '級數、飛馳電容、時脈與負載：把 1.2 V 升到目標電壓，同時把漣波壓下來。' }
+];
+
+function adlOpen(id, diff) {
+  const fn = ADV_LAB_FN[id]; if (!fn) return;
+  S.view = 'adv'; S.running = false; S.tutorial = false; S.sprint = false;
+  hide();
+  $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
+  hideStudy(); $('advView').hidden = false;
+  const cur = diff === undefined ? ((ADL[id] && ADL[id].d) || 0) : diff;
+  const meta = ADV_LABS.find(a => a.lab === id);
+  $('advCrumb').textContent = `題目練習區 · ${meta ? meta.t : ''} · ${ADL_DIFF[cur]}`;
+  fn($('advDoc'), cur);
+  window.scrollTo(0, 0);
+}
+const ADV = ADV_KB.concat(ADV_IP, ADV_LABS);
 
 
-let advCur = { id: null, sub: null };
+let advCur = { id: null, sub: null, pg: 0, tab: 'kb' };
+
+function advGroup(tab) {
+  return tab === 'lab' ? ADV_LABS : tab === 'ip' ? ADV_IP : ADV_KB;
+}
 
 function renderAdvList() {
-  $('advList').innerHTML = ADV.map(a => `<button type="button" class="lesson adv" data-adv="${a.id}">
-    <span class="ln">${a.tag}<span class="badge${a.st === 'soon' ? ' soon' : ''}" style="margin-left:6px">${a.st === 'soon' ? '即將推出' : '可閱讀'}</span></span>
+  const tab = advCur.tab || 'kb';
+  const items = advGroup(tab);
+  $('advList').innerHTML = items.map(a => {
+    const meta = tab === 'lab' ? '4 種難度' : a.pages ? a.pages.length + ' 頁' : a.subs ? a.subs.length + ' 個架構' : (a.min || '');
+    return `<button type="button" class="lesson adv" data-adv="${a.id}">
+    <span class="ln">${a.tag}<span class="badge" style="margin-left:6px">${tab === 'lab' ? '可練習' : '可閱讀'}</span></span>
     <span class="lt">${a.t}</span>
     <span class="ls">${a.s}</span>
     ${a.subs ? `<span class="adv-subs">${a.subs.map(s => `<span>${s.t}</span>`).join('')}</span>` : ''}
-    <span class="lm"><span>${a.st === 'soon' ? (a.subs ? a.subs.length + ' 個主題' : '先看大綱') : '閱讀 ' + a.min}</span><span class="go2">${a.st === 'soon' ? '預覽 ▸' : '開始 ▸'}</span></span>
-  </button>`).join('');
+    <span class="lm"><span>${meta}</span><span class="go2">${tab === 'lab' ? '開始 ▸' : '閱讀 ▸'}</span></span>
+  </button>`;
+  }).join('');
   $('advList').querySelectorAll('[data-adv]').forEach(b => b.addEventListener('click', () => openAdv(b.dataset.adv)));
+  $('advNote').innerHTML = tab === 'kb'
+    ? '<b>AIC 知識區</b>　十篇工程師日常最常用的知識：body effect、CLM、gm/ID、失配、雜訊、佈局匹配、米勒補償、PSRR、slew rate、偏壓與 startup。每一篇都盡量對回主遊戲的滑桿與規格卡。'
+    : tab === 'ip'
+      ? '<b>熱門類比 IP</b>　BGR（5 頁）、LDO（4 頁）、Charge Pump（2 頁）、ADC（4 種架構）、PLL（4 頁 + 3 種架構）。BGR 與 PLL 這次補上了電路圖（OPA / 電流模式核心、PFD、charge pump + loop filter、VCO、除頻鏈）；卡片點進去可翻頁，ADC / PLL 的架構卡片在頁面裡面。'
+      : '<b>題目練習區</b>　五道題（BGR / LDO / CP / PLL / ADC），每道都有<b>入門 / 初級 / 中級 / 困難</b>：入門只留一個旋鈕，困難要兩三個規格同時顧好。不計分、不扣血、不寫入紀錄。';
 }
 
-function showAdvHub() {
+function advTab(which) {
+  advCur.tab = which;
+  const map = { kb: 'tabKb', ip: 'tabIp', lab: 'tabAdvLab' };
+  Object.keys(map).forEach(k => {
+    const b = $(map[k]); if (!b) return;
+    b.classList.toggle('on', k === which);
+    b.setAttribute('aria-selected', String(k === which));
+  });
+  renderAdvList();
+}
+
+function showAdvHub(tab) {
   S.view = 'adv'; S.running = false; S.tutorial = false; S.sprint = false;
   hide();
   $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
   hideStudy(); $('advHub').hidden = false;
   $('pTut').hidden = true; $('statLives').hidden = false; $('statScore').hidden = false;
   $('btnCheck').textContent = 'Check'; $('btnSkip').hidden = true;
-  advCur = { id: null, sub: null };
-  renderAdvList();
+  advCur.id = null; advCur.sub = null; advCur.pg = 0;
+  if (tab) advCur.tab = tab;
+  advTab(advCur.tab || 'kb');
   window.scrollTo(0, 0);
 }
 
-function openAdv(id, subId) {
+function bindAdvDoc(a) {
+  const d = $('advDoc');
+  d.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => openAdv(a.id, null, +b.dataset.pg)));
+  d.querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', () => openAdv(a.id, b.dataset.sub)));
+  d.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => openAdv(b.dataset.back)));
+}
+
+function advPage(a) {
+  const n = a.pages.length;
+  const i = Math.max(0, Math.min(n - 1, advCur.pg || 0));
+  advCur.pg = i;
+  const pg = a.pages[i];
+  $('advCrumb').textContent = `${a.tag} · ${a.t} · ${i + 1} / ${n}`;
+  $('advDoc').innerHTML = `<div class="hub-eyebrow">${a.tag} · 第 ${i + 1} / ${n} 頁</div>
+    <h1>${a.t}</h1><p class="lead">${a.s}</p>
+    <div class="dlbl">本頁：<b>${pg.t}</b></div>
+    ${pg.body}
+    <div class="pager">
+      <button class="cta alt" type="button" data-pg="${i - 1}"${i === 0 ? ' disabled' : ''}>◂ 上一頁</button>
+      <span class="dots">${a.pages.map((p, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</span>
+      <button class="cta alt" type="button" data-pg="${i + 1}"${i === n - 1 ? ' disabled' : ''}>下一頁 ▸</button>
+      <span class="sp"></span><span class="pgn">${i + 1} / ${n}</span>
+    </div>`;
+  bindAdvDoc(a);
+}
+
+function openAdv(id, subId, pg) {
   const a = ADV.find(x => x.id === id); if (!a) return;
-  const sub = subId ? (a.subs || []).find(s => s.id === subId) : null;
-  advCur = { id, sub: sub ? subId : null };
+  if (a.lab) { adlOpen(a.lab); return; }
+  advCur.id = id; advCur.sub = subId || null;
+  if (pg !== undefined) advCur.pg = pg;
   S.view = 'adv'; S.running = false; S.tutorial = false; S.sprint = false;
   hide();
   $('home').hidden = true; $('game').hidden = true; $('actionbar').hidden = true; $('hud').hidden = true;
   hideStudy(); $('advView').hidden = false;
 
-  if (sub) {
-    $('advCrumb').textContent = `${a.tag} · ${sub.t} · 即將推出`;
-    $('advDoc').innerHTML = `<div class="hub-eyebrow">${a.tag} · 即將推出</div><h1>${sub.t}</h1>
-      <p class="lead">${sub.s}</p>
-      <div class="callout"><b>現況</b>：這一層的完整教學、電路方塊與互動練習還在製作中，之後會補上。介面先留好，不會影響成績。</div>
-      <p class="lab-hint">◂ 按左上角「${a.t}」回到上一層。</p>`;
+  if (subId) {
+    const sub = (a.subs || []).find(s => s.id === subId);
+    if (!sub) { openAdv(id); return; }
+    $('advCrumb').textContent = `${a.tag} · ${a.t} · ${sub.t}`;
+    $('advDoc').innerHTML = `<div class="hub-eyebrow">${a.tag} · ${a.t}</div><h1>${sub.t}</h1>
+      <p class="lead">${sub.s}</p>${sub.body || '<div class="callout">這一頁還在製作中。</div>'}
+      <div class="pager"><button class="cta alt" type="button" data-back="${a.id}">◂ 回到 ${a.t}</button></div>`;
+    bindAdvDoc(a);
     window.scrollTo(0, 0);
     return;
   }
 
-  if (a.subs) {
-    $('advCrumb').textContent = `${a.tag} · ${a.t}`;
-    $('advDoc').innerHTML = `<div class="hub-eyebrow">進階專區 · ${a.tag}</div><h1>${a.t}</h1>
-      <p class="lead">${a.s}</p>
-      <div class="lessons" id="advSubList">
-        ${a.subs.map(s => `<button type="button" class="lesson" data-sub="${s.id}">
-          <span class="ln">${a.t} · 子主題</span>
-          <span class="lt" style="font-size:21px">${s.t}</span>
-          <span class="ls">${s.s}</span>
-          <span class="lm"><span>內容製作中</span><span class="done">敬請期待 ▸</span></span>
-        </button>`).join('')}
-      </div>
-      <p class="lab-hint" style="margin-top:16px">◂ 按左上角回到進階專區。</p>`;
-    $('advSubList').querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', () => openAdv(a.id, b.dataset.sub)));
-    window.scrollTo(0, 0);
-    return;
-  }
+  if (a.pages) { advPage(a); window.scrollTo(0, 0); return; }
 
-  $('advCrumb').textContent = `${a.tag} · ${a.t}${a.st === 'soon' ? ' · 預覽' : ''}`;
-  $('advDoc').innerHTML = `<div class="hub-eyebrow">進階專區 · ${a.tag}</div><h1>${a.t}</h1><p class="lead">${a.s}</p>${a.body}`;
+  $('advCrumb').textContent = `${a.tag} · ${a.t}`;
+  $('advDoc').innerHTML = `<div class="hub-eyebrow">進階專區 · ${a.tag}</div><h1>${a.t}</h1><p class="lead">${a.s}</p>${a.body || ''}`;
+  bindAdvDoc(a);
   window.scrollTo(0, 0);
 }
-
 /* ---------- home ---------- */
 function showHome() {
   S.view = 'home'; S.running = false; S.tutorial = false; S.sprint = false; hide();
@@ -2941,7 +5126,7 @@ function showHome() {
   $('livesSeg').innerHTML = [3, 5, 7].map(n => `<button type="button" class="seg-b ${n === L ? 'on' : ''}" data-n="${n}" aria-pressed="${n === L}"><b>${n} 點血</b><span>總分 ×${Math.round(LIFE_MULT[n] * 100)}%</span></button>`).join('');
   document.querySelectorAll('.seg-b').forEach(b => b.addEventListener('click', () => { prog.lives = +b.dataset.n; save(); showHome(); }));
   
-  $('notice').innerHTML = `<b>公告</b>　選 3 點血：總分 ×100%；5 點血：×90%；7 點血：×80%。每次按 Check 若 5 項沒有全過，就扣 1 點血，結算時每用掉 1 點血再扣 ${PENALTY} 分。血歸零後一般模式仍可繼續（每次失敗照扣），競速模式會直接結束。`;
+  $('notice').innerHTML = `<b>公告</b>　選 3 點血：總分 ×100%；5 點血：×90%；7 點血：×80%。每次按 Check 若 5 項沒有全過，就扣 1 點血，結算時每用掉 1 點血再扣 ${PENALTY} 分。血歸零後一般模式仍可繼續（每次失敗照扣），競速模式會直接結束。<br><b style="color:var(--amber)">V4 新增</b>　① 題目變化：部分關卡會<b>鎖定一根滑桿</b>或<b>收緊一項規格</b>（開場彈窗會標示「本關限制」），同一種電路不再只有一套解法。<br>② 進階專區：AIC 知識區 10 篇、熱門類比 IP 5 項（BGR 5 頁 / LDO 4 頁 / CP 2 頁 / ADC 4 架構 / PLL 3 架構）、題目練習區 5 道 × 4 難度。<br>③ 電路圖電流方向、M6 飽和提示、跳過扣分時機已修正。`;
   
   // 生成分類按鈕
     // 生成分類按鈕
@@ -2956,8 +5141,8 @@ function showHome() {
     </span><span class="cat-f"><span>最高 <b class="num">${prog.best.sprint || 0}</b></span><span>最遠 <b class="num">${prog.cleared.sprint || 0} 關</b></span></span></button>`;
 
   catHtml += `<button type="button" class="cat tutor" data-c="tutor"><span class="cat-n">新手專區</span><span class="cat-s">TUTORIAL · 教學與練習</span>
-    <span class="cat-d">六篇紙上教學：規格卡、V = I × R、MOS 的 gm/ro、5T OTA、Two-Stage Miller 補償、電流鏡 cascode/wide-swing；再加五個互動實驗（歐姆定律、功率分壓、Vds–Id 曲線、規格計算器、電流鏡比較）與 7 步引導練習。<br><b style="color:var(--green)">不計分、不扣血、不影響成績</b>，隨時可以回首頁。</span>
-    <span class="cat-f"><span>教學選單 · 6 課 + 6 練習</span><span><b>進入 ▸</b></span></span></button>`;
+    <span class="cat-d">七篇紙上教學：規格卡、V = I × R、MOS 的 gm/ro、<b>CIC018 元件關係圖</b>（gm/ID、gm·ro、fT、ID/W、FOM）、5T OTA、Two-Stage Miller 補償、電流鏡 cascode/wide-swing；再加五個互動實驗（歐姆定律、功率分壓、Vds–Id 曲線、規格計算器、電流鏡比較）與 7 步引導練習。<br><b style="color:var(--green)">不計分、不扣血、不影響成績</b>，隨時可以回首頁。</span>
+    <span class="cat-f"><span>教學選單 · 7 課 + 6 練習</span><span><b>進入 ▸</b></span></span></button>`;
 
    $('cats').innerHTML = catHtml;
   document.querySelectorAll('.cat').forEach(b => b.addEventListener('click', () => {
@@ -2996,6 +5181,7 @@ function startRun(cat) {
 function loadLevel(i) {
   S.idx = i; S.lv = S.levels[i]; S.mod = MODS[S.lv.modId]; S.curBest = 0; S.time = LEVEL_TIME;
   S.pos = {}; S.mod.sliders.forEach(s => { S.pos[s.k] = 500; }); S.tog = {}; S.mod.toggles.forEach(t => { S.tog[t.k] = 0; });
+  if (S.lv.lock) S.pos[S.lv.lock.k] = S.lv.lock.pos;
   buildGame(); renderHud(); refresh(); showIntro();
 }
 
@@ -3005,6 +5191,7 @@ function nextSprintLevel(first) {
   const r = sprintRng(), id = MOD_ORDER[Math.floor(r() * 4)], d = sprintD(S.sprintN, r);
   S.lv = genLevel(id, d, (r() * 1e9) | 0); S.mod = MODS[id]; S.curBest = 0;
   S.pos = {}; S.mod.sliders.forEach(s => { S.pos[s.k] = 500; }); S.tog = {}; S.mod.toggles.forEach(t => { S.tog[t.k] = 0; });
+  if (S.lv.lock) S.pos[S.lv.lock.k] = S.lv.lock.pos;
   S.levelStart = S.time; S.idxW = SPRINT_W[sprintTier(S.sprintN)];
   buildGame(); renderHud(); refresh();
   if (first) showIntro(); else S.running = true;
@@ -3014,6 +5201,7 @@ function showIntro() {
   const lv = S.lv, m = S.mod;
   show(`<div class="eyebrow">${S.sprint ? '競速模式' : `第 ${S.idx + 1} / ${S.cat === 'test' ? '1' : NLEV} 關`} · ${m.name}</div><h2>${S.sprint ? '60 秒倒數' : m.full}</h2>
     <p>${S.sprint ? `五項全過按 Check 才會計分並 +${SPRINT_BONUS} 秒；沒全過扣 1 點血。可以按「跳過」換題，但每跳過 1 關結算會扣 30 分。` : `每關 ${LEVEL_TIME} 秒。調整滑桿讓 5 項規格達標後按 Check；沒有全過會扣 1 點血，但會進入下一關。`}</p>
+    ${lv.lock ? `<div class="callout"><b>本關限制</b>：<b class="num">${lv.lock.name}</b> 已固定在 ${sigf(lv.lock.val)} ${lv.lock.unit}，不能調整——換一條路湊規格。</div>` : ''}
     ${specList(lv)}<div class="btns"><button class="cta" id="btnGo" type="button">開始</button></div>`);
   bind('btnGo', () => { hide(); S.running = true; S.levelStart = S.time; });
 }
@@ -3226,6 +5414,9 @@ bind('tabPractice', () => tutTab('practice'));
 bind('labBack', () => showTutHub('practice'));
 bind('labHome', () => showHome());
 bind('btnAdvHub', () => showAdvHub());
+bind('tabKb', () => advTab('kb'));
+bind('tabIp', () => advTab('ip'));
+bind('tabAdvLab', () => advTab('lab'));
 bind('advHome', () => showHome());
 bind('advHome2', () => showHome());
 bind('advBack', () => { if (advCur.sub) openAdv(advCur.id); else showAdvHub(); });
@@ -3241,9 +5432,44 @@ function onQuizClick(e) {
 }
 ['lessonDoc', 'labDoc', 'advDoc'].forEach(id => { const e = $(id); if (e) e.addEventListener('click', onQuizClick); });
 
+/* ---------- UI 風格：預設（工程藍圖） / 鯊魚女僕（深海） ---------- */
+const THEME_KEY = 'ota-tuner:theme';
+const THEMES = {
+  default: { name: '預設 · 工程藍圖' },
+  shark: { name: '鯊魚女僕 · 深海' }
+};
+let theme = 'default';
+try { const t = localStorage.getItem(THEME_KEY); if (t && THEMES[t]) theme = t; } catch (e) {}
+function paintTheme() {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-swp').forEach(b => {
+    const on = b.dataset.themeOpt === theme;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.js-theme').forEach(b => {
+    b.textContent = theme === 'shark' ? '🦈 鯊魚' : '🎨 風格';
+    b.title = '目前風格：' + THEMES[theme].name + '（點一下切換）';
+  });
+}
+function setTheme(t) {
+  theme = THEMES[t] ? t : 'default';
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+  paintTheme();
+}
+function cycleTheme() {
+  setTheme(theme === 'shark' ? 'default' : 'shark');
+  toast('已切換風格：' + THEMES[theme].name, 'ok');
+}
+document.querySelectorAll('.theme-swp').forEach(b => {
+  b.addEventListener('click', () => setTheme(b.dataset.themeOpt));
+});
+document.querySelectorAll('.js-theme').forEach(b => b.addEventListener('click', cycleTheme));
+paintTheme();
+
 showHome();
 requestAnimationFrame(t => { last = t; requestAnimationFrame(tick); });
-window.__otaDebug = { S, doCheck, startRun, genLevel, MODS, startTutorial, leaveTutorial, tutorialCheck, refresh, TUT, TUT_STEPS, TUT_LESSONS, TUT_READ, showTutHub, showHome, openLesson, LABS, LAB, openLab, labOhm, labPwr, labIvid, labCalc, labMirror, tutTab, ADV, showAdvHub, openAdv, lbEncode, lbDecode, lbRead, lbWrite, showLeaderboard, showLbCode };
+window.__otaDebug = { setTheme, cycleTheme, THEMES, S, doCheck, C18P, c18Id, c18Pt, GM, GM_CH, initGmChart, paintGm, gmSvg, gmRows, startRun, loadLevel, genLevel, MODS, startTutorial, leaveTutorial, tutorialCheck, refresh, TUT, TUT_STEPS, TUT_LESSONS, TUT_READ, showTutHub, showHome, openLesson, LABS, LAB, openLab, labOhm, labPwr, labIvid, labCalc, labMirror, tutTab, ADV, ADV_KB, ADV_IP, ADV_LABS, ADL, adlOpen, advTab, showAdvHub, openAdv, lbEncode, lbDecode, lbRead, lbWrite, showLeaderboard, showLbCode };
 
 })();
 </script>
